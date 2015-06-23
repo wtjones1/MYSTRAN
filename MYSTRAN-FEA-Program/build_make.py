@@ -36,7 +36,7 @@ def get_files_of_type(dirname, extensions='.txt', maxSize=100., recursive=False)
                  and os.path.getsize(os.path.join(dirname, f)) / (1048576.) <= maxSize]
 
 def main():
-    src_dir_base = os.path.join('1-SRC', 'a-Windows-version')
+    src_dir_base = os.path.join('src', 'Windows')
 
     #f90_files = get_files_of_type(src_dir, ['f90', 'f'], recursive=True)
 
@@ -60,7 +60,7 @@ def main():
         base, ext = os.path.splitext(basename)
         #build_msg_mv += 'mv %s.mod mod/%s.mod\n' % (base, base)
         build_msg += 'gfortran -c %s\n' % fname
-    build_msg_mv += 'mv *.mod mod/\n'
+    build_msg_mv += 'cp *.mod mod/\n'
     build_msg += build_msg_mv
 
     for dirname in dirs:
