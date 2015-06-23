@@ -284,8 +284,8 @@
                                                            'TEXT FILE DESCRIPTOR FOR OUTPUT4 MATRICES IN OU4 FILE 25',             &
                                                            'TEXT FILE DESCRIPTOR FOR OUTPUT4 MATRICES IN OU4 FILE 26',             &
                                                            'TEXT FILE DESCRIPTOR FOR OUTPUT4 MATRICES IN OU4 FILE 27',             &
-                                                           'TEXT FILE DESCRIPTOR FOR GRID RELATED OTMs    ',                       &
-                                                           'TEXT FILE DESCRIPTOR FOR ELEM RELATED OTMs    '/)
+                                                           'TEXT FILE DESCRIPTOR FOR GRID RELATED OTMs              ',             &
+                                                           'TEXT FILE DESCRIPTOR FOR ELEM RELATED OTMs              '/)
 
 ! The following are unit numbers for all files used by the program
 
