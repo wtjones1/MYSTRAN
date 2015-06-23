@@ -4,13 +4,15 @@
 ! **********************************************************************************************************************************
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
 
-      INTEGER  MA ,NUM ,MB
+      !INTEGER  MA, NUM, MB
+      CHARACTER(len=1) :: MA
+      CHARACTER(len=1) :: MB
+      CHARACTER(len=1) :: NUM
 
 !              1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26
       DATA MA/'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'/
 
 !     Alphabet key for MA array - - -
-
 !        A - 1          N - 14
 !        B - 2          O - 15
 !        C - 3          P - 16
@@ -42,9 +44,9 @@
                           /1006 , 1007 ,1008  , 1009 , 1010,  1011,  1012,  1013,  1014,  1015,  1016,  1017,  1018,  1019,  1020/
 
 ! **********************************************************************************************************************************
-      COMMON /A/ MAXGRD,MAXDEG,KMOD
+      COMMON /A/ MAXGRD, MAXDEG, KMOD
 
-      INTEGER  MAXGRD ,MAXDEG ,KMOD
+      INTEGER  MAXGRD, MAXDEG, KMOD
 
 ! **********************************************************************************************************************************
 ! To add new B.D. element connection entries to the Bandit library, the only code changes required occur in this section of code
@@ -71,10 +73,14 @@
 !      (e.g., CELAS1 or CPENTA), set   LESSOK=.TRUE.   in subroutine ELTYPE.
 ! For long-field cards, set LEN=2 in ELTYPE.
 
-      COMMON /ELEM/ NTYPE, VYPE(160), TYPE(160), WYPE(160), ME(160), NELEM(160),MDIM
+      COMMON /ELEM/ NTYPE, VYPE(160), TYPE(160), WYPE(160), ME(160), NELEM(160), MDIM
       
-      INTEGER vype, TYPE, WYPE
-      INTEGER  NTYPE  ,ME     ,NELEM  ,MDIM
+      !INTEGER vype, TYPE, WYPE
+      INTEGER vype
+      Character(len=4) :: TYPE
+      Character(len=3) :: WYPE
+      
+      INTEGER NTYPE, ME, NELEM, MDIM
 
       DATA MDIM/160/
 

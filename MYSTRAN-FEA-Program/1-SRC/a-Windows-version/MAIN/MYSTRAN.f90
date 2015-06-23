@@ -72,7 +72,7 @@
       IMPLICIT NONE
 
 
-      CHARACTER( 1*BYTE)              :: INI_EXIST         ! 'Y' if file MYSTRAN.INI exists or 'N' otherwise
+      CHARACTER(1*BYTE)               :: INI_EXIST         ! 'Y' if file MYSTRAN.INI exists or 'N' otherwise
 
 
       INTEGER(LONG)                   :: I,J                ! DO loop indices
