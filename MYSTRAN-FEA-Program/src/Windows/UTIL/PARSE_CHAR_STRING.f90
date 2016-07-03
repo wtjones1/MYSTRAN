@@ -203,7 +203,7 @@ one_wrd:       DO
 
    21 FORMAT('   Word num, I, CHAR_STRING(I:I) = ',I3,I4,2X,A)
 
-   41 FORMAT('   There are ',I2,' word(s) in the ',I3,' character variable CHAR_STRING:',/,                                          &
+   41 FORMAT('   There are ',I2,' word(s) in the ',I3,' character variable CHAR_STRING:',/,                                        &
              '   --------------------------------------------------------------')
 
    42 FORMAT('     Word ',I2,' = "',A,'"')

@@ -102,7 +102,7 @@
 
 ! Open SC1 with carriage control (that will validate use of the "+" in my write to screen in ?2345 FORMAT statements)
 
-      OPEN(SC1,CARRIAGECONTROL='FORTRAN')
+      OPEN(SC1)
 
 ! Get SP environment variables and reset PROTECTED if necessary. NOTE: PROTECTED = 'Y' is default in module SCONTR
 
@@ -484,7 +484,8 @@ iters:      DO
       CALL VECTOR_NORM ( UG_COL, NDOFG, NL_NORM, UG_NORM(LOAD_ISTEP,NL_ITER_NUM), IERR )
       IF (NL_ITER_NUM > 1) THEN
 !zzzzz   IF (DABS(UG_NORM(LOAD_ISTEP,NL_ITER_NUM-1)) > EPS1) THEN
-            PERCENT_CHANGE(LOAD_ISTEP,NL_ITER_NUM) = 1.0D2*(UG_NORM(LOAD_ISTEP,NL_ITER_NUM) - UG_NORM(LOAD_ISTEP,NL_ITER_NUM-1))/UG_NORM(LOAD_ISTEP,NL_ITER_NUM-1)
+            PERCENT_CHANGE(LOAD_ISTEP,NL_ITER_NUM) = 1.0D2*(UG_NORM(LOAD_ISTEP,NL_ITER_NUM) - UG_NORM(LOAD_ISTEP,NL_ITER_NUM-1))/  &
+              UG_NORM(LOAD_ISTEP,NL_ITER_NUM-1)
 !zzzzz   ELSE
 !zzzzz      IF (DABS(UG_NORM(LOAD_ISTEP,NL_ITER_NUM) - UG_NORM(LOAD_ISTEP,NL_ITER_NUM-1)) > EPS1) THEN
 !zzzzz         PERCENT_CHANGE(LOAD_ISTEP,NL_ITER_NUM) = ONE_HUNDRED                ! It is really indeterminant but set it to a large number

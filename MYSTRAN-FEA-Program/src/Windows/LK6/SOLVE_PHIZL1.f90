@@ -225,8 +225,8 @@
       CALL ALLOCATE_SPARSE_MAT ( 'PHIZL1', NDOFL, NTERM_PHIZL1, SUBR_NAME )
       CALL ALLOCATE_L6_2 ( 'PHIZL1', SUBR_NAME )
                                                            ! J_PHIZL1t is same as I2_PHIZL1 and I2_PHIZL1t is same as J_PHIZL1
-      CALL READ_MATRIX_2 ( SCRFIL, SCR(1), OPND, CLOSE_IT, CLOSE_STAT, MESSAG, 'PHIZL1t', NDOFL, NTERM_PHIZL1, NTERM_READ, J_PHIZL1t, &
-                          I2_PHIZL1t, PHIZL1t)
+      CALL READ_MATRIX_2 ( SCRFIL, SCR(1), OPND, CLOSE_IT, CLOSE_STAT, MESSAG, 'PHIZL1t', NDOFL, NTERM_PHIZL1, NTERM_READ,         &
+                          J_PHIZL1t, I2_PHIZL1t, PHIZL1t)
 
 ! Now get PHIZL1 from PHIZL1t
 

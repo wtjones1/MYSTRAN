@@ -179,7 +179,7 @@
       OPND       = 'Y'
       CLOSE_IT   = 'Y'
       CLOSE_STAT = 'DELETE  '
-      CALL READ_MATRIX_1 ( SCRFIL, SCR(1), OPND, CLOSE_IT, CLOSE_STAT, MESSAG, 'GOA', NTERM_GOA, NTERM_READ, NDOFO,                   &
+      CALL READ_MATRIX_1 ( SCRFIL, SCR(1), OPND, CLOSE_IT, CLOSE_STAT, MESSAG, 'GOA', NTERM_GOA, NTERM_READ, NDOFO,                &
                            I_GOA, J_GOA, GOA)
 
       CALL FILE_CLOSE ( SCR(1), SCRFIL, 'DELETE', 'Y' )

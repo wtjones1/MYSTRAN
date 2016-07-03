@@ -12,7 +12,7 @@
       USE TIMDAT, ONLY                :  TSEC
       USE SUBR_BEGEND_LEVELS, ONLY    :  REDUCE_KGGD_TO_KNND_BEGEND
       USE CONSTANTS_1, ONLY           :  ONE 
-      USE SPARSE_MATRICES, ONLY       :  I_HMN, J_HMN, HMN, I_KGGD, J_KGGD, KGGD, I_KNND, J_KNND, KNND, I_KNMD, J_KNMD, KNMD,         &
+      USE SPARSE_MATRICES, ONLY       :  I_HMN, J_HMN, HMN, I_KGGD, J_KGGD, KGGD, I_KNND, J_KNND, KNND, I_KNMD, J_KNMD, KNMD,      &
                                          I_KMMD, J_KMMD, KMMD, I_KMND, J_KMND, KMND, I_GMN, J_GMN, GMN,  I_GMNt, J_GMNt, GMNt
       USE SPARSE_MATRICES, ONLY       :  SYM_GMN, SYM_HMN, SYM_KGGD, SYM_KNND, SYM_KNMD, SYM_KMMD, SYM_KMND
       USE SCRATCH_MATRICES
@@ -145,13 +145,13 @@
          IF (NTERM_KNMD > 0) THEN                           ! Part I of reduced KNND: calc KNMD*GMN & add it & transpose to orig KNND
 
                                                            ! I-1, sparse multiply to get CRS1 = KNMD*GMN. Use CCS1 for GMN CCS
-            CALL MATMULT_SSS_NTERM ( 'KNMD' , NDOFN, NTERM_KNMD , SYM_KNMD, I_KNMD , J_KNMD ,                                          &
+            CALL MATMULT_SSS_NTERM ( 'KNMD' , NDOFN, NTERM_KNMD , SYM_KNMD, I_KNMD , J_KNMD ,                                      &
                                      'GMN' , NDOFN, NTERM_GMN , SYM_GMN, J_CCS1, I_CCS1, AROW_MAX_TERMS,                           &
                                      'CRS1',        NTERM_CRS1 )
 
             CALL ALLOCATE_SCR_CRS_MAT ( 'CRS1', NDOFN, NTERM_CRS1, SUBR_NAME )
 
-            CALL MATMULT_SSS ( 'KNMD' , NDOFN, NTERM_KNMD , SYM_KNMD, I_KNMD , J_KNMD , KNMD ,                                          &
+            CALL MATMULT_SSS ( 'KNMD' , NDOFN, NTERM_KNMD , SYM_KNMD, I_KNMD , J_KNMD , KNMD ,                                     &
                                'GMN' , NDOFN, NTERM_GMN , SYM_GMN, J_CCS1, I_CCS1, CCS1, AROW_MAX_TERMS,                           &
                                'CRS1', ONE  , NTERM_CRS1,          I_CRS1, J_CRS1, CRS1 )
 
@@ -162,10 +162,10 @@
             CALL MATTRNSP_SS ( NDOFN, NDOFN, NTERM_CRS1, 'CRS1', I_CRS1, J_CRS1, CRS1, 'CRS2', I_CRS2, J_CRS2, CRS2 )
 
                                                            ! I-4, sparse add to get CRS3 = CRS1 + CRS2 = (KNMD*GMN) + (KNMD*GMN)t
-            CALL MATADD_SSS_NTERM (NDOFN,'KNMD*GMN', NTERM_CRS1, I_CRS1, J_CRS1, 'N', '(KNMD*GMN)t', NTERM_CRS2, I_CRS2, J_CRS2, 'N',&
-                                         'CRS3', NTERM_CRS3)
+            CALL MATADD_SSS_NTERM (NDOFN,'KNMD*GMN', NTERM_CRS1, I_CRS1, J_CRS1, 'N', '(KNMD*GMN)t', NTERM_CRS2, I_CRS2, J_CRS2,   &
+                                         'N', 'CRS3', NTERM_CRS3)
             CALL ALLOCATE_SCR_CRS_MAT ( 'CRS3', NDOFN, NTERM_CRS3, SUBR_NAME )
-            CALL MATADD_SSS ( NDOFN, 'KNMD*GMN', NTERM_CRS1, I_CRS1, J_CRS1, CRS1, ONE, '(KNMD*GMN)t', NTERM_CRS2,                   &
+            CALL MATADD_SSS ( NDOFN, 'KNMD*GMN', NTERM_CRS1, I_CRS1, J_CRS1, CRS1, ONE, '(KNMD*GMN)t', NTERM_CRS2,                 &
                               I_CRS2, J_CRS2, CRS2, ONE, 'CRS3', NTERM_CRS3, I_CRS3, J_CRS3, CRS3 )
 
             CALL DEALLOCATE_SCR_MAT ( 'CRS1' )             ! I-5, deallocate CRS1 which was KNMD*GMN
@@ -176,8 +176,9 @@
 
                CALL SPARSE_CRS_TERM_COUNT ( NDOFN, NTERM_CRS3, '(KNMD*GMN) + (KNMD*GMN)t', I_CRS3, J_CRS3, NTERM_CRS1 )
                CALL ALLOCATE_SCR_CRS_MAT ( 'CRS1', NDOFN, NTERM_CRS1, SUBR_NAME )
-               CALL CRS_NONSYM_TO_CRS_SYM ( 'CRS3 = (KNMD*GMN) + (KNMD*GMN)t all nonzeros', NDOFN, NTERM_CRS3, I_CRS3, J_CRS3, CRS3, &
-                                            'CRS1 = (KNMD*GMN) + (KNMD*GMN)t stored sym'  ,        NTERM_CRS1, I_CRS1, J_CRS1, CRS1 )
+               CALL CRS_NONSYM_TO_CRS_SYM ( 'CRS3 = (KNMD*GMN) + (KNMD*GMN)t all nonzeros', NDOFN, NTERM_CRS3, I_CRS3, J_CRS3,     &
+                                            CRS3, 'CRS1 = (KNMD*GMN) + (KNMD*GMN)t stored sym'  ,        NTERM_CRS1, I_CRS1,       &
+                                            J_CRS1, CRS1 )
                SYM_CRS1 = 'Y'
 
             ELSE IF (SPARSTOR == 'NONSYM') THEN            !      If SPARSTOR == 'NONSYM', rewrite CRS3 in CRS1 with NTERM_CRS3
@@ -205,10 +206,10 @@
             CALL DEALLOCATE_SCR_MAT ( 'CRS3' )             ! I-8, deallocate CRS3 which was KNMD*GMN + (KNMD*GMN)t and now is in CRS1
 
                                                            ! I-9, add to get CRS3 = KNND-bar + CRS1 = KNND-bar + KNMD*GMN + (KNMD*GMN)t
-            CALL MATADD_SSS_NTERM ( NDOFN, 'KNND-bar', NTERM_KNND , I_KNND , J_KNND , SYM_KNND , 'KNMD*GMN + (KNMD*GMN)t',           &
+            CALL MATADD_SSS_NTERM ( NDOFN, 'KNND-bar', NTERM_KNND , I_KNND , J_KNND , SYM_KNND , 'KNMD*GMN + (KNMD*GMN)t',         &
                                                       NTERM_CRS1, I_CRS1, J_CRS1, SYM_CRS1, 'CRS3', NTERM_CRS3 )
             CALL ALLOCATE_SCR_CRS_MAT ( 'CRS3', NDOFN, NTERM_CRS3, SUBR_NAME )
-            CALL MATADD_SSS ( NDOFN, 'KNND-bar', NTERM_KNND, I_KNND, J_KNND, KNND, ONE, 'KNMD*GMN + (KNMD*GMN)t', NTERM_CRS1,        &
+            CALL MATADD_SSS ( NDOFN, 'KNND-bar', NTERM_KNND, I_KNND, J_KNND, KNND, ONE, 'KNMD*GMN + (KNMD*GMN)t', NTERM_CRS1,      &
                                       I_CRS1, J_CRS1, CRS1, ONE, 'CRS1', NTERM_CRS3, I_CRS3, J_CRS3, CRS3 )
 
             CALL DEALLOCATE_SCR_MAT ( 'CRS1' )             ! I-10, deallocate CRS1 = KNMD*GMN + (KNMD*GMN)t 
@@ -235,22 +236,22 @@
 
                                                            ! II-1, sparse multiply to get CRS1 = KMMD*GMN using CCS1 for GMN CCS
 
-            CALL MATMULT_SSS_NTERM ( 'KMMD' , NDOFM, NTERM_KMMD , SYM_KMMD, I_KMMD , J_KMMD ,                                          &
+            CALL MATMULT_SSS_NTERM ( 'KMMD' , NDOFM, NTERM_KMMD , SYM_KMMD, I_KMMD , J_KMMD ,                                      &
                                      'GMN' , NDOFN, NTERM_GMN , SYM_GMN, J_CCS1, I_CCS1, AROW_MAX_TERMS,                           &
                                      'CRS1',        NTERM_CRS1 )
             CALL ALLOCATE_SCR_CRS_MAT ( 'CRS1', NDOFM, NTERM_CRS1, SUBR_NAME )
-            CALL MATMULT_SSS ( 'KMMD' , NDOFM, NTERM_KMMD , SYM_KMMD, I_KMMD , J_KMMD , KMMD ,                                          &
+            CALL MATMULT_SSS ( 'KMMD' , NDOFM, NTERM_KMMD , SYM_KMMD, I_KMMD , J_KMMD , KMMD ,                                     &
                                'GMN' , NDOFN, NTERM_GMN , SYM_GMN, J_CCS1, I_CCS1, CCS1, AROW_MAX_TERMS,                           &
                                'CRS1', ONE  , NTERM_CRS1,          I_CRS1, J_CRS1, CRS1 )
 
             IF (NTERM_KMND > 0) THEN
-               CALL MATADD_SSS_NTERM (NDOFM, 'KMMD*GMN', NTERM_CRS1, I_CRS1, J_CRS1, 'N', 'KMND', NTERM_KMND, I_KMND, J_KMND, SYM_KMND, &
-                                             'HMN', NTERM_HMN)
+               CALL MATADD_SSS_NTERM (NDOFM, 'KMMD*GMN', NTERM_CRS1, I_CRS1, J_CRS1, 'N', 'KMND', NTERM_KMND, I_KMND, J_KMND,      &
+                                             SYM_KMND, 'HMN', NTERM_HMN)
 
                CALL ALLOCATE_SPARSE_MAT ( 'HMN', NDOFM, NTERM_HMN, SUBR_NAME )
 
-               CALL MATADD_SSS ( NDOFM, 'KMMD*GM', NTERM_CRS1, I_CRS1, J_CRS1, CRS1, ONE, 'KMND', NTERM_KMND, I_KMND, J_KMND, KMND,      &
-                                 ONE, 'HMN', NTERM_HMN, I_HMN, J_HMN, HMN )
+               CALL MATADD_SSS ( NDOFM, 'KMMD*GM', NTERM_CRS1, I_CRS1, J_CRS1, CRS1, ONE, 'KMND', NTERM_KMND, I_KMND, J_KMND,      &
+                                 KMND, ONE, 'HMN', NTERM_HMN, I_HMN, J_HMN, HMN )
             ELSE
                NTERM_HMN = NTERM_CRS1
                CALL ALLOCATE_SPARSE_MAT ( 'HMN', NDOFM, NTERM_HMN, SUBR_NAME )
@@ -290,7 +291,7 @@
 
                CALL SPARSE_CRS_TERM_COUNT ( NDOFN, NTERM_CRS1, 'GMNt*KMMD*GMN all nonzeros', I_CRS1, J_CRS1, NTERM_CRS3 )
                CALL ALLOCATE_SCR_CRS_MAT ( 'CRS3', NDOFN, NTERM_CRS3, SUBR_NAME )
-               CALL CRS_NONSYM_TO_CRS_SYM ( 'CRS1 = GMNt*KMMD*GMN all nonzeros', NDOFN, NTERM_CRS1, I_CRS1, J_CRS1, CRS1,           &
+               CALL CRS_NONSYM_TO_CRS_SYM ( 'CRS1 = GMNt*KMMD*GMN all nonzeros', NDOFN, NTERM_CRS1, I_CRS1, J_CRS1, CRS1,          &
                                             'CRS3 = GMNt*KMMD*GMN stored sym'  ,        NTERM_CRS3, I_CRS3, J_CRS3, CRS3 )
                SYM_CRS3 = 'Y'
 
@@ -316,10 +317,10 @@
 
             ENDIF
                                                            ! II-8, sparse add to get CRS2 = KNND + CRS3 = KNND + GMNt*KMMD*GMN
-            CALL MATADD_SSS_NTERM ( NDOFN, 'KNND-bar + KNMD*GMN + (KNMD*GMN)t', NTERM_KNND, I_KNND, J_KNND, SYM_KNND, 'GMNt*KMMD*GMN',&
-                                    NTERM_CRS3, I_CRS3, J_CRS3, SYM_CRS3, 'CRS2', NTERM_CRS2 )
+            CALL MATADD_SSS_NTERM ( NDOFN, 'KNND-bar + KNMD*GMN + (KNMD*GMN)t', NTERM_KNND, I_KNND, J_KNND, SYM_KNND,              &
+                                    'GMNt*KMMD*GMN', NTERM_CRS3, I_CRS3, J_CRS3, SYM_CRS3, 'CRS2', NTERM_CRS2 )
             CALL ALLOCATE_SCR_CRS_MAT ( 'CRS2', NDOFN, NTERM_CRS2, SUBR_NAME )
-            CALL MATADD_SSS ( NDOFN, 'KNND-bar + KNMD*GMN + (KNMD*GMN)t' , NTERM_KNND ,I_KNND, J_KNND, KNND, ONE, 'GMNt*KMMD*GMN',    &
+            CALL MATADD_SSS ( NDOFN, 'KNND-bar + KNMD*GMN + (KNMD*GMN)t' , NTERM_KNND ,I_KNND, J_KNND, KNND, ONE, 'GMNt*KMMD*GMN', &
                               NTERM_CRS3, I_CRS3, J_CRS3, CRS3, ONE, 'CRS2', NTERM_CRS2, I_CRS2, J_CRS2, CRS2 )
 
             CALL DEALLOCATE_SCR_MAT ( 'CRS1' )             ! II-9, deallocate CRS1

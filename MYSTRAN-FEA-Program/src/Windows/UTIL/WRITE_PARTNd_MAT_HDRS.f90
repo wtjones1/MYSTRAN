@@ -127,7 +127,7 @@
 ! **********************************************************************************************************************************
   101 FORMAT(5X,'G R I D - C O M P   N U M B E R S   F O R   T H E   ',A,'   O F   P A R T I T I O N E D   M A T R I X  "',A,'"')
 
-  201 FORMAT(47X,A,' ARE FROM THE "',A2,'"',' DISPLACEMENT SET',/,                                                                                       &
+  201 FORMAT(47X,A,' ARE FROM THE "',A2,'"',' DISPLACEMENT SET',/,                                                                 &
                16X,'-1-        -2-        -3-        -4-        -5-        -6-        -7-        -8-        -9-       -10-',/)
 
   301 FORMAT(1X,I6,'=', 1(I9,'-',I1),9(11X))

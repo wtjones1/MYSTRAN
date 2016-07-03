@@ -102,7 +102,7 @@
 
             IF      (SPARSTOR == 'SYM   ') THEN
    
-               CALL SYM_MAT_DECOMP_IntMKL ( 'KLL,', HANDLE, MKLFAC62, NDOFL, NTERM_KLL, I_KLL, J_KLL, KLL, DETERMINANT,             &
+               CALL SYM_MAT_DECOMP_IntMKL ( 'KLL,', HANDLE, MKLFAC62, NDOFL, NTERM_KLL, I_KLL, J_KLL, KLL, DETERMINANT,            &
                                              CALC_INERTIA, INERTIA, IER_DECOMP )
    
             ELSE IF (SPARSTOR == 'NONSYM') THEN
@@ -222,7 +222,7 @@
       CALL ALLOCATE_SPARSE_MAT ( 'DLR', NDOFL, NTERM_DLR, SUBR_NAME )
       CALL ALLOCATE_L6_2 ( 'DLR', SUBR_NAME )
                                                            ! J_DLRt is same as I2_DLR and I2_DLRt is same as J_DLR
-      CALL READ_MATRIX_2 ( SCRFIL, SCR(1), OPND, CLOSE_IT, CLOSE_STAT, MESSAG, 'DLRt', NDOFR, NTERM_DLR, NTERM_READ,                  &
+      CALL READ_MATRIX_2 ( SCRFIL, SCR(1), OPND, CLOSE_IT, CLOSE_STAT, MESSAG, 'DLRt', NDOFR, NTERM_DLR, NTERM_READ,               &
                            J_DLRt, I2_DLRt, DLRt)
 
 ! Now get DLR from DLRt

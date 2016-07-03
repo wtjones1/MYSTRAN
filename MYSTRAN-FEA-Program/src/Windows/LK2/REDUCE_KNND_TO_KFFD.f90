@@ -84,8 +84,9 @@
                CALL ALLOCATE_SPARSE_MAT ( 'KFSDe', NDOFF, NTERM_KFSDe, SUBR_NAME )
 
                IF (NTERM_KFSDe > 0) THEN
-                  CALL PARTITION_SS ( 'KFSD', NTERM_KFSD, NDOFF, NDOFS, SYM_KFSD, I_KFSD, J_KFSD, KFSD, PART_VEC_F   , PART_VEC_S_SzSe, &
-                                       NUM1, NUM2, KFSDe_ROW_MAX_TERMS, 'KFSDe', NTERM_KFSDe, NDOFF, SYM_KFSDe, I_KFSDe, J_KFSDe, KFSDe )
+                  CALL PARTITION_SS ( 'KFSD', NTERM_KFSD, NDOFF, NDOFS, SYM_KFSD, I_KFSD, J_KFSD, KFSD, PART_VEC_F   ,             &
+                                       PART_VEC_S_SzSe, NUM1, NUM2, KFSDe_ROW_MAX_TERMS, 'KFSDe', NTERM_KFSDe, NDOFF, SYM_KFSDe,   &
+                                       I_KFSDe, J_KFSDe,  KFSDe )
                ENDIF
 
             ENDIF
@@ -140,8 +141,9 @@
                CALL ALLOCATE_SPARSE_MAT ( 'KSSDe', NDOFS, NTERM_KSSDe, SUBR_NAME )
 
                IF (NTERM_KSSDe > 0) THEN
-                  CALL PARTITION_SS ( 'KSSD', NTERM_KSSD, NDOFS, NDOFS, SYM_KSSD, I_KSSD, J_KSSD, KSSD, PART_VEC_S   , PART_VEC_S_SzSe, &
-                                       NUM1, NUM2, KSSDe_ROW_MAX_TERMS, 'KSSDe', NTERM_KSSDe, NDOFS, SYM_KSSDe, I_KSSDe, J_KSSDe, KSSDe )
+                  CALL PARTITION_SS ( 'KSSD', NTERM_KSSD, NDOFS, NDOFS, SYM_KSSD, I_KSSD, J_KSSD, KSSD, PART_VEC_S   ,             &
+                                       PART_VEC_S_SzSe, NUM1, NUM2, KSSDe_ROW_MAX_TERMS, 'KSSDe', NTERM_KSSDe, NDOFS, SYM_KSSDe,   &
+                                       I_KSSDe, J_KSSDe, KSSDe )
                ENDIF
 
             ENDIF
@@ -161,7 +163,8 @@
 
 ! **********************************************************************************************************************************
   936 FORMAT(' *ERROR   936: PROGRAMMING ERROR IN SUBROUTINE ',A                                                                   &
-                    ,/,14X,' THE NUMBER OF NONZERO TERMS IN SPARSE MATRIX KSFD = ',I12,' IS NOT EQUAL TO THOSE IN MATRIX KFSD = ',I12)
+                    ,/,14X,' THE NUMBER OF NONZERO TERMS IN SPARSE MATRIX KSFD = ',I12,' IS NOT EQUAL TO THOSE IN MATRIX KFSD = ', &
+                    I12)
 
 ! **********************************************************************************************************************************
 
