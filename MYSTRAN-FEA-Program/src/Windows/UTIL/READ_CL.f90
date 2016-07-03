@@ -17,7 +17,7 @@
       INTEGER(LONG), INTENT(OUT)      :: NC_FILNAM         ! Length, in chars, of FILNAM (with leading blanks removed)
       INTEGER(LONG)                   :: I                 ! DO loop index
  
-      INTRINSIC                       :: GETCL
+      INTRINSIC                       :: GET_COMMAND_ARGUMENT
 
 ! **********************************************************************************************************************************
 ! Initialize outputs
@@ -29,7 +29,7 @@
  
       FILNAM(1:FILE_NAM_MAXLEN) = ' '
  
-      CALL GETCL ( FILNAM )
+      CALL GET_COMMAND_ARGUMENT ( 1, FILNAM )
  
       DO I=1,FILE_NAM_MAXLEN
          IF (FILNAM(I:I) == ' ') THEN
