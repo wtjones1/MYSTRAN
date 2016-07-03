@@ -19,7 +19,7 @@
                                          L1U,     L1V,     L1W,     L1X,     L1Y,     L1Z,                                         &
                                          L2A,     L2B,     L2C,     L2D,     L2E,     L2F,     L2G,     L2H,     L2I,     L2J,     &
                                          L2K,     L2L,     L2M,     L2N,     L2O,     L2P,     L2Q,     L2R,     L2S,     L2T,     &
-                                         L3A,     L4A,     L4B,     L4C,     L4D,     L5A,     L5B,                                                  &
+                                         L3A,     L4A,     L4B,     L4C,     L4D,     L5A,     L5B,                                &
                                          NEU,     F21,     F22,     F23,     F24,     F25,     OT4,     OU4
 
       USE IOUNT1, ONLY                :  ANSFIL,  BUGFIL,  EINFIL,  ENFFIL,  ERRFIL,  F04FIL,  F06FIL,  IN0FIL,  INFILE,  OT4FIL,  &
@@ -29,7 +29,7 @@
                                          LINK1U,  LINK1V,  LINK1W,  LINK1X,  LINK1Y,  LINK1Z,                                      &
                                          LINK2A,  LINK2B,  LINK2C,  LINK2D,  LINK2E,  LINK2F,  LINK2G,  LINK2H,  LINK2I,  LINK2J,  &
                                          LINK2K,  LINK2L,  LINK2M,  LINK2N,  LINK2O,  LINK2P,  LINK2Q,  LINK2R,  LINK2S,  LINK2T,  &
-                                         LINK3A,  LINK4A,  LINK4B,  LINK4C,  LINK4D,  LINK5A,  LINK5B,                                               &
+                                         LINK3A,  LINK4A,  LINK4B,  LINK4C,  LINK4D,  LINK5A,  LINK5B,                             &
                                          NEUFIL,  F21FIL,  F22FIL,  F23FIL,  F24FIL,  F25FIL,  OT4FIL,  OU4FIL
 
       USE IOUNT1, ONLY                :  ANS_MSG, BUG_MSG, EIN_MSG, ENF_MSG, ERR_MSG, F04_MSG, F06_MSG, IN0_MSG, OT4_MSG, SEQ_MSG, &
@@ -38,7 +38,7 @@
                                          L1U_MSG, L1V_MSG, L1W_MSG, L1X_MSG, L1Y_MSG, L1Z_MSG,                                     &
                                          L2A_MSG, L2B_MSG, L2C_MSG, L2D_MSG, L2E_MSG, L2F_MSG, L2G_MSG, L2H_MSG, L2I_MSG, L2J_MSG, &
                                          L2K_MSG, L2L_MSG, L2M_MSG, L2N_MSG, L2O_MSG, L2P_MSG, L2Q_MSG, L2R_MSG, L2S_MSG, L2T_MSG, &
-                                         L3A_MSG, L4A_MSG, L4B_MSG, L4C_MSG, L4D_MSG, L5A_MSG, L5B_MSG,                                              &
+                                         L3A_MSG, L4A_MSG, L4B_MSG, L4C_MSG, L4D_MSG, L5A_MSG, L5B_MSG,                            &
                                          NEU_MSG, F21_MSG, F22_MSG, F23_MSG, F24_MSG, F25_MSG, OT4_MSG, OU4_MSG, SPC_MSG 
 
       USE SCONTR, ONLY                :  BLNK_SUB_NAM, RESTART
