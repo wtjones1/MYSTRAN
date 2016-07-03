@@ -8,7 +8,7 @@
       USE IOUNT1, ONLY                  :  ERR, F04, F06, SC1, WRT_LOG
       USE SCONTR, ONLY                  :  BLNK_SUB_NAM, FATAL_ERR
       USE TIMDAT, ONLY                  :  HOUR, MINUTE, SEC,                  &
-     &                                     SFRAC, TSEC
+                                           SFRAC, TSEC
       USE SUBR_BEGEND_LEVELS, ONLY      :  LAPACK_BEGEND
 
       USE OUTA_HERE_Interface
@@ -841,8 +841,8 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX,
-     $                   BETA, Y, INCY )
+      SUBROUTINE DGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX,                  &
+                         BETA, Y, INCY )
 !     .. Scalar Arguments ..
       REAL(DOUBLE)   ALPHA, BETA
       INTEGER            INCX, INCY, LDA, M, N
@@ -958,9 +958,9 @@
 !     Test the input parameters.
 !
       INFO = 0
-      IF     ( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      IF     ( .NOT.LSAME( TRANS, 'N' ).AND.                                   &
+               .NOT.LSAME( TRANS, 'T' ).AND.                                   &
+               .NOT.LSAME( TRANS, 'C' )      )THEN
          INFO = 1
       ELSE IF( M.LT.0 )THEN
          INFO = 2
@@ -980,9 +980,9 @@
 !
 !     Quick return if possible.
 !
-      IF( ( M.EQ.0 ).OR.( N.EQ.0 ).OR.
-     $    ( ( ALPHA.EQ.ZERO ).AND.( BETA.EQ.ONE ) ) )
-     $   RETURN
+      IF( ( M.EQ.0 ).OR.( N.EQ.0 ).OR.                                         &
+          ( ( ALPHA.EQ.ZERO ).AND.( BETA.EQ.ONE ) ) )                          &
+         RETURN
 !
 !     Set  LENX  and  LENY, the lengths of the vectors x and y, and set
 !     up the start points in  X  and  Y.
@@ -1036,8 +1036,8 @@
             END IF
          END IF
       END IF
-      IF( ALPHA.EQ.ZERO )
-     $   RETURN
+      IF( ALPHA.EQ.ZERO )                                                      &
+         RETURN
       IF( LSAME( TRANS, 'N' ) )THEN
 !
 !        Form  y := alpha*A*x + y.
@@ -1214,8 +1214,8 @@
 !
 !     Quick return if possible.
 !
-      IF( ( M.EQ.0 ).OR.( N.EQ.0 ).OR.( ALPHA.EQ.ZERO ) )
-     $   RETURN
+      IF( ( M.EQ.0 ).OR.( N.EQ.0 ).OR.( ALPHA.EQ.ZERO ) )                      &
+         RETURN
 !
 !     Start the operations. In this version the elements of A are
 !     accessed sequentially with one pass through A.
@@ -1367,8 +1367,8 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DSBMV ( UPLO, N, K, ALPHA, A, LDA, X, INCX,
-     $                   BETA, Y, INCY, col_num )
+      SUBROUTINE DSBMV ( UPLO, N, K, ALPHA, A, LDA, X, INCX,                   &
+                         BETA, Y, INCY, col_num )
 
 !     .. Scalar Arguments ..
       REAL(DOUBLE)   ALPHA, BETA
@@ -1519,8 +1519,8 @@
 !     Test the input parameters.
 !
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.                                    &
+               .NOT.LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -1540,8 +1540,8 @@
 !
 !     Quick return if possible.
 !
-      IF( ( N.EQ.0 ).OR.( ( ALPHA.EQ.ZERO ).AND.( BETA.EQ.ONE ) ) )
-     $   RETURN
+      IF( ( N.EQ.0 ).OR.( ( ALPHA.EQ.ZERO ).AND.( BETA.EQ.ONE ) ) )            &
+         RETURN
 
 !
 !     Set up the start points in  X  and  Y.
@@ -1588,8 +1588,8 @@
             END IF
          END IF
       END IF
-      IF( ALPHA.EQ.ZERO )
-     $   RETURN
+      IF( ALPHA.EQ.ZERO )                                                      &
+         RETURN
       IF( LSAME( UPLO, 'U' ) )THEN
 !
 !        Form  y  when upper triangle of A is stored.
@@ -1673,8 +1673,8 @@
 !
       RETURN
 !
-12345 FORMAT("+",7X,'mult row ',I8,' of ',I8,' times col ',i8,'         
-     &              ')
+12345 FORMAT("+",7X,'mult row ',I8,' of ',I8,' times col ',i8,                 &
+             '                       ')
  
 !     End of DSBMV .
 !
@@ -1789,8 +1789,8 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DSYMV ( UPLO, N, ALPHA, A, LDA, X, INCX,
-     $                   BETA, Y, INCY )
+      SUBROUTINE DSYMV ( UPLO, N, ALPHA, A, LDA, X, INCX,                      &
+                         BETA, Y, INCY )
 
 !     .. Scalar Arguments ..
       REAL(DOUBLE)   ALPHA, BETA
@@ -1905,8 +1905,8 @@
 !     Test the input parameters.
 !
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.                                    &
+               .NOT.LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -1924,8 +1924,8 @@
 !
 !     Quick return if possible.
 !
-      IF( ( N.EQ.0 ).OR.( ( ALPHA.EQ.ZERO ).AND.( BETA.EQ.ONE ) ) )
-     $   RETURN
+      IF( ( N.EQ.0 ).OR.( ( ALPHA.EQ.ZERO ).AND.( BETA.EQ.ONE ) ) )            &
+         RETURN
 !
 !     Set up the start points in  X  and  Y.
 !
@@ -1972,8 +1972,8 @@
             END IF
          END IF
       END IF
-      IF( ALPHA.EQ.ZERO )
-     $   RETURN
+      IF( ALPHA.EQ.ZERO )                                                      &
+         RETURN
       IF( LSAME( UPLO, 'U' ) )THEN
 !
 !        Form  y  when A is stored in upper triangle.
@@ -2154,8 +2154,8 @@
 !     Test the input parameters.
 !
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.                                    &
+               .NOT.LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -2171,8 +2171,8 @@
 !
 !     Quick return if possible.
 !
-      IF( ( N.EQ.0 ).OR.( ALPHA.EQ.ZERO ) )
-     $   RETURN
+      IF( ( N.EQ.0 ).OR.( ALPHA.EQ.ZERO ) )                                    &
+         RETURN
 !
 !     Set the start point in X if the increment is not unity.
 !
@@ -2363,8 +2363,8 @@
 !     Test the input parameters.
 !
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.
-     $         .NOT.LSAME( UPLO, 'L' )      )THEN
+      IF     ( .NOT.LSAME( UPLO, 'U' ).AND.                                    &
+               .NOT.LSAME( UPLO, 'L' )      )THEN
          INFO = 1
       ELSE IF( N.LT.0 )THEN
          INFO = 2
@@ -2382,8 +2382,8 @@
 !
 !     Quick return if possible.
 !
-      IF( ( N.EQ.0 ).OR.( ALPHA.EQ.ZERO ) )
-     $   RETURN
+      IF( ( N.EQ.0 ).OR.( ALPHA.EQ.ZERO ) )                                    &
+         RETURN
 !
 !     Set up the start points in X and Y if the increments are not both
 !     unity.
@@ -2429,8 +2429,8 @@
                   IX    = KX
                   IY    = KY
                   DO 30, I = 1, J
-                     A( I, J ) = A( I, J ) + X( IX )*TEMP1
-     $                                     + Y( IY )*TEMP2
+                     A( I, J ) = A( I, J ) + X( IX )*TEMP1                     &
+                                           + Y( IY )*TEMP2
                      IX        = IX        + INCX
                      IY        = IY        + INCY
    30             CONTINUE
@@ -2461,8 +2461,8 @@
                   IX    = JX
                   IY    = JY
                   DO 70, I = J, N
-                     A( I, J ) = A( I, J ) + X( IX )*TEMP1
-     $                                     + Y( IY )*TEMP2
+                     A( I, J ) = A( I, J ) + X( IX )*TEMP1                     &
+                                           + Y( IY )*TEMP2
                      IX        = IX        + INCX
                      IY        = IY        + INCY
    70             CONTINUE
@@ -2481,8 +2481,8 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DSYR2K( UPLO, TRANS, N, K, ALPHA, A, LDA, B, LDB,
-     $                   BETA, C, LDC )
+      SUBROUTINE DSYR2K( UPLO, TRANS, N, K, ALPHA, A, LDA, B, LDB,             &
+                         BETA, C, LDC )
 
 !     .. Scalar Arguments ..
       CHARACTER*1        UPLO, TRANS
@@ -2643,12 +2643,12 @@
       UPPER = LSAME( UPLO, 'U' )
 !
       INFO = 0
-      IF(      ( .NOT.UPPER               ).AND.
-     $         ( .NOT.LSAME( UPLO , 'L' ) )      )THEN
+      IF(      ( .NOT.UPPER               ).AND.                               &
+               ( .NOT.LSAME( UPLO , 'L' ) )      )THEN
          INFO = 1
-      ELSE IF( ( .NOT.LSAME( TRANS, 'N' ) ).AND.
-     $         ( .NOT.LSAME( TRANS, 'T' ) ).AND.
-     $         ( .NOT.LSAME( TRANS, 'C' ) )      )THEN
+      ELSE IF( ( .NOT.LSAME( TRANS, 'N' ) ).AND.                               &
+               ( .NOT.LSAME( TRANS, 'T' ) ).AND.                               &
+               ( .NOT.LSAME( TRANS, 'C' ) )      )THEN
          INFO = 2
       ELSE IF( N  .LT.0               )THEN
          INFO = 3
@@ -2668,9 +2668,9 @@
 !
 !     Quick return if possible.
 !
-      IF( ( N.EQ.0 ).OR.
-     $    ( ( ( ALPHA.EQ.ZERO ).OR.( K.EQ.0 ) ).AND.( BETA.EQ.ONE ) ) )
-     $   RETURN
+      IF( ( N.EQ.0 ).OR.                                                       &
+          ( ( ( ALPHA.EQ.ZERO ).OR.( K.EQ.0 ) ).AND.( BETA.EQ.ONE ) ) )        &
+         RETURN
 !
 !     And when  alpha.eq.zero.
 !
@@ -2725,13 +2725,13 @@
   100             CONTINUE
                END IF
                DO 120, L = 1, K
-                  IF( ( A( J, L ).NE.ZERO ).OR.
-     $                ( B( J, L ).NE.ZERO )     )THEN
+                  IF( ( A( J, L ).NE.ZERO ).OR.                                &
+                      ( B( J, L ).NE.ZERO )     )THEN
                      TEMP1 = ALPHA*B( J, L )
                      TEMP2 = ALPHA*A( J, L )
                      DO 110, I = 1, J
-                        C( I, J ) = C( I, J ) +
-     $                              A( I, L )*TEMP1 + B( I, L )*TEMP2
+                        C( I, J ) = C( I, J ) +                                &
+                                    A( I, L )*TEMP1 + B( I, L )*TEMP2
   110                CONTINUE
                   END IF
   120          CONTINUE
@@ -2748,13 +2748,13 @@
   150             CONTINUE
                END IF
                DO 170, L = 1, K
-                  IF( ( A( J, L ).NE.ZERO ).OR.
-     $                ( B( J, L ).NE.ZERO )     )THEN
+                  IF( ( A( J, L ).NE.ZERO ).OR.                                &
+                      ( B( J, L ).NE.ZERO )     )THEN
                      TEMP1 = ALPHA*B( J, L )
                      TEMP2 = ALPHA*A( J, L )
                      DO 160, I = J, N
-                        C( I, J ) = C( I, J ) +
-     $                              A( I, L )*TEMP1 + B( I, L )*TEMP2
+                        C( I, J ) = C( I, J ) +                                &
+                                    A( I, L )*TEMP1 + B( I, L )*TEMP2
   160                CONTINUE
                   END IF
   170          CONTINUE
@@ -2776,8 +2776,8 @@
                   IF( BETA.EQ.ZERO )THEN
                      C( I, J ) = ALPHA*TEMP1 + ALPHA*TEMP2
                   ELSE
-                     C( I, J ) = BETA *C( I, J ) +
-     $                           ALPHA*TEMP1 + ALPHA*TEMP2
+                     C( I, J ) = BETA *C( I, J ) +                             &
+                                 ALPHA*TEMP1 + ALPHA*TEMP2
                   END IF
   200          CONTINUE
   210       CONTINUE
@@ -2793,8 +2793,8 @@
                   IF( BETA.EQ.ZERO )THEN
                      C( I, J ) = ALPHA*TEMP1 + ALPHA*TEMP2
                   ELSE
-                     C( I, J ) = BETA *C( I, J ) +
-     $                           ALPHA*TEMP1 + ALPHA*TEMP2
+                     C( I, J ) = BETA *C( I, J ) +                             &
+                                 ALPHA*TEMP1 + ALPHA*TEMP2
                   END IF
   230          CONTINUE
   240       CONTINUE
@@ -2809,8 +2809,8 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DSYRK ( UPLO, TRANS, N, K, ALPHA, A, LDA,
-     $                   BETA, C, LDC )
+      SUBROUTINE DSYRK ( UPLO, TRANS, N, K, ALPHA, A, LDA,                     &
+                         BETA, C, LDC )
 
 !     .. Scalar Arguments ..
       CHARACTER*1        UPLO, TRANS
@@ -2952,12 +2952,12 @@
       UPPER = LSAME( UPLO, 'U' )
 !
       INFO = 0
-      IF(      ( .NOT.UPPER               ).AND.
-     $         ( .NOT.LSAME( UPLO , 'L' ) )      )THEN
+      IF(      ( .NOT.UPPER               ).AND.                               &
+               ( .NOT.LSAME( UPLO , 'L' ) )      )THEN
          INFO = 1
-      ELSE IF( ( .NOT.LSAME( TRANS, 'N' ) ).AND.
-     $         ( .NOT.LSAME( TRANS, 'T' ) ).AND.
-     $         ( .NOT.LSAME( TRANS, 'C' ) )      )THEN
+      ELSE IF( ( .NOT.LSAME( TRANS, 'N' ) ).AND.                               &
+               ( .NOT.LSAME( TRANS, 'T' ) ).AND.                               &
+               ( .NOT.LSAME( TRANS, 'C' ) )      )THEN
          INFO = 2
       ELSE IF( N  .LT.0               )THEN
          INFO = 3
@@ -2975,9 +2975,9 @@
 !
 !     Quick return if possible.
 !
-      IF( ( N.EQ.0 ).OR.
-     $    ( ( ( ALPHA.EQ.ZERO ).OR.( K.EQ.0 ) ).AND.( BETA.EQ.ONE ) ) )
-     $   RETURN
+      IF( ( N.EQ.0 ).OR.                                                       &
+          ( ( ( ALPHA.EQ.ZERO ).OR.( K.EQ.0 ) ).AND.( BETA.EQ.ONE ) ) )        &
+         RETURN
 !
 !     And when  alpha.eq.zero.
 !
@@ -3104,8 +3104,8 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DTBSV ( UPLO, TRANS, DIAG, N, K, A, LDA, X, INCX,
-     &                   dtbsv_msg )     ! my addition
+      SUBROUTINE DTBSV ( UPLO, TRANS, DIAG, N, K, A, LDA, X, INCX,             &
+                         dtbsv_msg )     ! my addition
 
       USE PENTIUM_II_KIND, ONLY       :  BYTE, LONG, DOUBLE
 
@@ -3277,15 +3277,15 @@
 !*     Test the input parameters.
 !
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.
-     $         .NOT.LSAME( UPLO , 'L' )      )THEN
+      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.                                   &
+               .NOT.LSAME( UPLO , 'L' )      )THEN
          INFO = 1
-      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.                                   &
+               .NOT.LSAME( TRANS, 'T' ).AND.                                   &
+               .NOT.LSAME( TRANS, 'C' )      )THEN
          INFO = 2
-      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.
-     $         .NOT.LSAME( DIAG , 'N' )      )THEN
+      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.                                   &
+               .NOT.LSAME( DIAG , 'N' )      )THEN
          INFO = 3
       ELSE IF( N.LT.0 )THEN
          INFO = 4
@@ -3303,8 +3303,8 @@
 !
 !     Quick return if possible.
 !
-      IF( N.EQ.0 )
-     $   RETURN
+      IF( N.EQ.0 )                                                             &
+         RETURN
 !
       NOUNIT = LSAME( DIAG, 'N' )
 !
@@ -3333,8 +3333,8 @@
                   endif
                   IF( X( J ).NE.ZERO )THEN
                      L = KPLUS1 - J
-                     IF( NOUNIT )
-     $                  X( J ) = X( J )/A( KPLUS1, J )
+                     IF( NOUNIT )                                              &
+                        X( J ) = X( J )/A( KPLUS1, J )
                      TEMP = X( J )
                      DO 10, I = J - 1, MAX( 1, J - K ), -1
                         X( I ) = X( I ) - TEMP*A( L + I, J )
@@ -3352,8 +3352,8 @@
                   IF( X( JX ).NE.ZERO )THEN
                      IX = KX
                      L  = KPLUS1 - J
-                     IF( NOUNIT )
-     $                  X( JX ) = X( JX )/A( KPLUS1, J )
+                     IF( NOUNIT )                                              &
+                        X( JX ) = X( JX )/A( KPLUS1, J )
                      TEMP = X( JX )
                      DO 30, I = J - 1, MAX( 1, J - K ), -1
                         X( IX ) = X( IX ) - TEMP*A( L + I, J )
@@ -3371,8 +3371,8 @@
                   endif
                   IF( X( J ).NE.ZERO )THEN
                      L = 1 - J
-                     IF( NOUNIT )
-     $                  X( J ) = X( J )/A( 1, J )
+                     IF( NOUNIT )                                              &
+                        X( J ) = X( J )/A( 1, J )
                      TEMP = X( J )
                      DO 50, I = J + 1, MIN( N, J + K )
                         X( I ) = X( I ) - TEMP*A( L + I, J )
@@ -3389,8 +3389,8 @@
                   IF( X( JX ).NE.ZERO )THEN
                      IX = KX
                      L  = 1  - J
-                     IF( NOUNIT )
-     $                  X( JX ) = X( JX )/A( 1, J )
+                     IF( NOUNIT )                                              &
+                        X( JX ) = X( JX )/A( 1, J )
                      TEMP = X( JX )
                      DO 70, I = J + 1, MIN( N, J + K )
                         X( IX ) = X( IX ) - TEMP*A( L + I, J )
@@ -3417,8 +3417,8 @@
                   DO 90, I = MAX( 1, J - K ), J - 1
                      TEMP = TEMP - A( L + I, J )*X( I )
    90             CONTINUE
-                  IF( NOUNIT )
-     $               TEMP = TEMP/A( KPLUS1, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP/A( KPLUS1, J )
                   X( J ) = TEMP
   100          CONTINUE
             ELSE
@@ -3434,12 +3434,12 @@
                      TEMP = TEMP - A( L + I, J )*X( IX )
                      IX   = IX   + INCX
   110             CONTINUE
-                  IF( NOUNIT )
-     $               TEMP = TEMP/A( KPLUS1, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP/A( KPLUS1, J )
                   X( JX ) = TEMP
                   JX      = JX   + INCX
-                  IF( J.GT.K )
-     $               KX = KX + INCX
+                  IF( J.GT.K )                                                 &
+                     KX = KX + INCX
   120          CONTINUE
             END IF
          ELSE
@@ -3453,8 +3453,8 @@
                   DO 130, I = MIN( N, J + K ), J + 1, -1
                      TEMP = TEMP - A( L + I, J )*X( I )
   130             CONTINUE
-                  IF( NOUNIT )
-     $               TEMP = TEMP/A( 1, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP/A( 1, J )
                   X( J ) = TEMP
   140          CONTINUE
             ELSE
@@ -3471,12 +3471,12 @@
                      TEMP = TEMP - A( L + I, J )*X( IX )
                      IX   = IX   - INCX
   150             CONTINUE
-                  IF( NOUNIT )
-     $               TEMP = TEMP/A( 1, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP/A( 1, J )
                   X( JX ) = TEMP
                   JX      = JX   - INCX
-                  IF( ( N - J ).GE.K )
-     $               KX = KX - INCX
+                  IF( ( N - J ).GE.K )                                         &
+                     KX = KX - INCX
   160          CONTINUE
             END IF
          END IF
@@ -3484,7 +3484,7 @@
 !
       RETURN
 !
-12345 format("+",7X,'Forward  pass, row ',i8,' to ',i8,'   ')               
+12345 format("+",7X,'Forward  pass, row ',i8,' to ',i8,'   ')
 
 22345 format("+",7X,'Backward pass, row ',i8,' to        1 ')
 
@@ -3506,8 +3506,8 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DTRMM ( SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA,
-     $                   B, LDB )
+      SUBROUTINE DTRMM ( SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA,        &
+                         B, LDB )
 
 !     .. Scalar Arguments ..
       CHARACTER*1        SIDE, UPLO, TRANSA, DIAG
@@ -3659,18 +3659,18 @@
       UPPER  = LSAME( UPLO  , 'U' )
 !
       INFO   = 0
-      IF(      ( .NOT.LSIDE                ).AND.
-     $         ( .NOT.LSAME( SIDE  , 'R' ) )      )THEN
+      IF(      ( .NOT.LSIDE                ).AND.                              &
+               ( .NOT.LSAME( SIDE  , 'R' ) )      )THEN
          INFO = 1
-      ELSE IF( ( .NOT.UPPER                ).AND.
-     $         ( .NOT.LSAME( UPLO  , 'L' ) )      )THEN
+      ELSE IF( ( .NOT.UPPER                ).AND.                              &
+               ( .NOT.LSAME( UPLO  , 'L' ) )      )THEN
          INFO = 2
-      ELSE IF( ( .NOT.LSAME( TRANSA, 'N' ) ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'T' ) ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'C' ) )      )THEN
+      ELSE IF( ( .NOT.LSAME( TRANSA, 'N' ) ).AND.                              &
+               ( .NOT.LSAME( TRANSA, 'T' ) ).AND.                              &
+               ( .NOT.LSAME( TRANSA, 'C' ) )      )THEN
          INFO = 3
-      ELSE IF( ( .NOT.LSAME( DIAG  , 'U' ) ).AND.
-     $         ( .NOT.LSAME( DIAG  , 'N' ) )      )THEN
+      ELSE IF( ( .NOT.LSAME( DIAG  , 'U' ) ).AND.                              &
+               ( .NOT.LSAME( DIAG  , 'N' ) )      )THEN
          INFO = 4
       ELSE IF( M  .LT.0               )THEN
          INFO = 5
@@ -3688,8 +3688,8 @@
 !
 !     Quick return if possible.
 !
-      IF( N.EQ.0 )
-     $   RETURN
+      IF( N.EQ.0 )                                                             &
+         RETURN
 !
 !     And when  alpha.eq.zero.
 !
@@ -3717,8 +3717,8 @@
                         DO 30, I = 1, K - 1
                            B( I, J ) = B( I, J ) + TEMP*A( I, K )
    30                   CONTINUE
-                        IF( NOUNIT )
-     $                     TEMP = TEMP*A( K, K )
+                        IF( NOUNIT )                                           &
+                           TEMP = TEMP*A( K, K )
                         B( K, J ) = TEMP
                      END IF
    40             CONTINUE
@@ -3729,8 +3729,8 @@
                      IF( B( K, J ).NE.ZERO )THEN
                         TEMP      = ALPHA*B( K, J )
                         B( K, J ) = TEMP
-                        IF( NOUNIT )
-     $                     B( K, J ) = B( K, J )*A( K, K )
+                        IF( NOUNIT )                                           &
+                           B( K, J ) = B( K, J )*A( K, K )
                         DO 60, I = K + 1, M
                            B( I, J ) = B( I, J ) + TEMP*A( I, K )
    60                   CONTINUE
@@ -3746,8 +3746,8 @@
                DO 110, J = 1, N
                   DO 100, I = M, 1, -1
                      TEMP = B( I, J )
-                     IF( NOUNIT )
-     $                  TEMP = TEMP*A( I, I )
+                     IF( NOUNIT )                                              &
+                        TEMP = TEMP*A( I, I )
                      DO 90, K = 1, I - 1
                         TEMP = TEMP + A( K, I )*B( K, J )
    90                CONTINUE
@@ -3758,8 +3758,8 @@
                DO 140, J = 1, N
                   DO 130, I = 1, M
                      TEMP = B( I, J )
-                     IF( NOUNIT )
-     $                  TEMP = TEMP*A( I, I )
+                     IF( NOUNIT )                                              &
+                        TEMP = TEMP*A( I, I )
                      DO 120, K = I + 1, M
                         TEMP = TEMP + A( K, I )*B( K, J )
   120                CONTINUE
@@ -3776,8 +3776,8 @@
             IF( UPPER )THEN
                DO 180, J = N, 1, -1
                   TEMP = ALPHA
-                  IF( NOUNIT )
-     $               TEMP = TEMP*A( J, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP*A( J, J )
                   DO 150, I = 1, M
                      B( I, J ) = TEMP*B( I, J )
   150             CONTINUE
@@ -3793,8 +3793,8 @@
             ELSE
                DO 220, J = 1, N
                   TEMP = ALPHA
-                  IF( NOUNIT )
-     $               TEMP = TEMP*A( J, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP*A( J, J )
                   DO 190, I = 1, M
                      B( I, J ) = TEMP*B( I, J )
   190             CONTINUE
@@ -3823,8 +3823,8 @@
                      END IF
   240             CONTINUE
                   TEMP = ALPHA
-                  IF( NOUNIT )
-     $               TEMP = TEMP*A( K, K )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP*A( K, K )
                   IF( TEMP.NE.ONE )THEN
                      DO 250, I = 1, M
                         B( I, K ) = TEMP*B( I, K )
@@ -3842,8 +3842,8 @@
                      END IF
   280             CONTINUE
                   TEMP = ALPHA
-                  IF( NOUNIT )
-     $               TEMP = TEMP*A( K, K )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP*A( K, K )
                   IF( TEMP.NE.ONE )THEN
                      DO 290, I = 1, M
                         B( I, K ) = TEMP*B( I, K )
@@ -3979,15 +3979,15 @@
 !     Test the input parameters.
 !
       INFO = 0
-      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.
-     $         .NOT.LSAME( UPLO , 'L' )      )THEN
+      IF     ( .NOT.LSAME( UPLO , 'U' ).AND.                                   &
+               .NOT.LSAME( UPLO , 'L' )      )THEN
          INFO = 1
-      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.
-     $         .NOT.LSAME( TRANS, 'T' ).AND.
-     $         .NOT.LSAME( TRANS, 'C' )      )THEN
+      ELSE IF( .NOT.LSAME( TRANS, 'N' ).AND.                                   &
+               .NOT.LSAME( TRANS, 'T' ).AND.                                   &
+               .NOT.LSAME( TRANS, 'C' )      )THEN
          INFO = 2
-      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.
-     $         .NOT.LSAME( DIAG , 'N' )      )THEN
+      ELSE IF( .NOT.LSAME( DIAG , 'U' ).AND.                                   &
+               .NOT.LSAME( DIAG , 'N' )      )THEN
          INFO = 3
       ELSE IF( N.LT.0 )THEN
          INFO = 4
@@ -4003,8 +4003,8 @@
 !
 !     Quick return if possible.
 !
-      IF( N.EQ.0 )
-     $   RETURN
+      IF( N.EQ.0 )                                                             &
+         RETURN
 !
       NOUNIT = LSAME( DIAG, 'N' )
 !
@@ -4032,8 +4032,8 @@
                      DO 10, I = 1, J - 1
                         X( I ) = X( I ) + TEMP*A( I, J )
    10                CONTINUE
-                     IF( NOUNIT )
-     $                  X( J ) = X( J )*A( J, J )
+                     IF( NOUNIT )                                              &
+                        X( J ) = X( J )*A( J, J )
                   END IF
    20          CONTINUE
             ELSE
@@ -4046,8 +4046,8 @@
                         X( IX ) = X( IX ) + TEMP*A( I, J )
                         IX      = IX      + INCX
    30                CONTINUE
-                     IF( NOUNIT )
-     $                  X( JX ) = X( JX )*A( J, J )
+                     IF( NOUNIT )                                              &
+                        X( JX ) = X( JX )*A( J, J )
                   END IF
                   JX = JX + INCX
    40          CONTINUE
@@ -4060,8 +4060,8 @@
                      DO 50, I = N, J + 1, -1
                         X( I ) = X( I ) + TEMP*A( I, J )
    50                CONTINUE
-                     IF( NOUNIT )
-     $                  X( J ) = X( J )*A( J, J )
+                     IF( NOUNIT )                                              &
+                        X( J ) = X( J )*A( J, J )
                   END IF
    60          CONTINUE
             ELSE
@@ -4075,8 +4075,8 @@
                         X( IX ) = X( IX ) + TEMP*A( I, J )
                         IX      = IX      - INCX
    70                CONTINUE
-                     IF( NOUNIT )
-     $                  X( JX ) = X( JX )*A( J, J )
+                     IF( NOUNIT )                                              &
+                        X( JX ) = X( JX )*A( J, J )
                   END IF
                   JX = JX - INCX
    80          CONTINUE
@@ -4090,8 +4090,8 @@
             IF( INCX.EQ.1 )THEN
                DO 100, J = N, 1, -1
                   TEMP = X( J )
-                  IF( NOUNIT )
-     $               TEMP = TEMP*A( J, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP*A( J, J )
                   DO 90, I = J - 1, 1, -1
                      TEMP = TEMP + A( I, J )*X( I )
    90             CONTINUE
@@ -4102,8 +4102,8 @@
                DO 120, J = N, 1, -1
                   TEMP = X( JX )
                   IX   = JX
-                  IF( NOUNIT )
-     $               TEMP = TEMP*A( J, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP*A( J, J )
                   DO 110, I = J - 1, 1, -1
                      IX   = IX   - INCX
                      TEMP = TEMP + A( I, J )*X( IX )
@@ -4116,8 +4116,8 @@
             IF( INCX.EQ.1 )THEN
                DO 140, J = 1, N
                   TEMP = X( J )
-                  IF( NOUNIT )
-     $               TEMP = TEMP*A( J, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP*A( J, J )
                   DO 130, I = J + 1, N
                      TEMP = TEMP + A( I, J )*X( I )
   130             CONTINUE
@@ -4128,8 +4128,8 @@
                DO 160, J = 1, N
                   TEMP = X( JX )
                   IX   = JX
-                  IF( NOUNIT )
-     $               TEMP = TEMP*A( J, J )
+                  IF( NOUNIT )                                                 &
+                     TEMP = TEMP*A( J, J )
                   DO 150, I = J + 1, N
                      IX   = IX   + INCX
                      TEMP = TEMP + A( I, J )*X( IX )
@@ -4149,8 +4149,8 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DTRSM ( SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA,
-     $                   B, LDB )
+      SUBROUTINE DTRSM ( SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA,        &
+                         B, LDB )
 
 !     .. Scalar Arguments ..
       CHARACTER*1        SIDE, UPLO, TRANSA, DIAG
@@ -4305,18 +4305,18 @@
       UPPER  = LSAME( UPLO  , 'U' )
 !
       INFO   = 0
-      IF(      ( .NOT.LSIDE                ).AND.
-     $         ( .NOT.LSAME( SIDE  , 'R' ) )      )THEN
+      IF(      ( .NOT.LSIDE                ).AND.                              &
+               ( .NOT.LSAME( SIDE  , 'R' ) )      )THEN
          INFO = 1
-      ELSE IF( ( .NOT.UPPER                ).AND.
-     $         ( .NOT.LSAME( UPLO  , 'L' ) )      )THEN
+      ELSE IF( ( .NOT.UPPER                ).AND.                              &
+               ( .NOT.LSAME( UPLO  , 'L' ) )      )THEN
          INFO = 2
-      ELSE IF( ( .NOT.LSAME( TRANSA, 'N' ) ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'T' ) ).AND.
-     $         ( .NOT.LSAME( TRANSA, 'C' ) )      )THEN
+      ELSE IF( ( .NOT.LSAME( TRANSA, 'N' ) ).AND.                              &
+               ( .NOT.LSAME( TRANSA, 'T' ) ).AND.                              &
+               ( .NOT.LSAME( TRANSA, 'C' ) )      )THEN
          INFO = 3
-      ELSE IF( ( .NOT.LSAME( DIAG  , 'U' ) ).AND.
-     $         ( .NOT.LSAME( DIAG  , 'N' ) )      )THEN
+      ELSE IF( ( .NOT.LSAME( DIAG  , 'U' ) ).AND.                              &
+               ( .NOT.LSAME( DIAG  , 'N' ) )      )THEN
          INFO = 4
       ELSE IF( M  .LT.0               )THEN
          INFO = 5
@@ -4334,8 +4334,8 @@
 !
 !     Quick return if possible.
 !
-      IF( N.EQ.0 )
-     $   RETURN
+      IF( N.EQ.0 )                                                             &
+         RETURN
 !
 !     And when  alpha.eq.zero.
 !
@@ -4364,8 +4364,8 @@
                   END IF
                   DO 50, K = M, 1, -1
                      IF( B( K, J ).NE.ZERO )THEN
-                        IF( NOUNIT )
-     $                     B( K, J ) = B( K, J )/A( K, K )
+                        IF( NOUNIT )                                           &
+                           B( K, J ) = B( K, J )/A( K, K )
                         DO 40, I = 1, K - 1
                            B( I, J ) = B( I, J ) - B( K, J )*A( I, K )
    40                   CONTINUE
@@ -4381,8 +4381,8 @@
                   END IF
                   DO 90 K = 1, M
                      IF( B( K, J ).NE.ZERO )THEN
-                        IF( NOUNIT )
-     $                     B( K, J ) = B( K, J )/A( K, K )
+                        IF( NOUNIT )                                           &
+                           B( K, J ) = B( K, J )/A( K, K )
                         DO 80, I = K + 1, M
                            B( I, J ) = B( I, J ) - B( K, J )*A( I, K )
    80                   CONTINUE
@@ -4401,8 +4401,8 @@
                      DO 110, K = 1, I - 1
                         TEMP = TEMP - A( K, I )*B( K, J )
   110                CONTINUE
-                     IF( NOUNIT )
-     $                  TEMP = TEMP/A( I, I )
+                     IF( NOUNIT )                                              &
+                        TEMP = TEMP/A( I, I )
                      B( I, J ) = TEMP
   120             CONTINUE
   130          CONTINUE
@@ -4413,8 +4413,8 @@
                      DO 140, K = I + 1, M
                         TEMP = TEMP - A( K, I )*B( K, J )
   140                CONTINUE
-                     IF( NOUNIT )
-     $                  TEMP = TEMP/A( I, I )
+                     IF( NOUNIT )                                              &
+                        TEMP = TEMP/A( I, I )
                      B( I, J ) = TEMP
   150             CONTINUE
   160          CONTINUE
@@ -4787,16 +4787,16 @@
       ESTOLD = EST
       EST = DASUM( N, V, 1 )
       DO 80 I = 1, N
-         IF( NINT( SIGN( ONE, X( I ) ) ).NE.ISGN( I ) )
-     $      GO TO 90
+         IF( NINT( SIGN( ONE, X( I ) ) ).NE.ISGN( I ) )                        &
+            GO TO 90
    80 CONTINUE
 !     REPEATED SIGN VECTOR DETECTED, HENCE ALGORITHM HAS CONVERGED.
       GO TO 120
 !
    90 CONTINUE
 !     TEST FOR CYCLING.
-      IF( EST.LE.ESTOLD )
-     $   GO TO 120
+      IF( EST.LE.ESTOLD )                                                      &
+         GO TO 120
 !
       DO 100 I = 1, N
          X( I ) = SIGN( ONE, X( I ) )
@@ -5076,9 +5076,9 @@
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DLAEBZ( IJOB, NITMAX, N, MMAX, MINP, NBMIN, ABSTOL,
-     $                   RELTOL, PIVMIN, D, E, E2, NVAL, AB, C, MOUT,
-     $                   NAB, WORK, IWORK, INFO )
+      SUBROUTINE DLAEBZ( IJOB, NITMAX, N, MMAX, MINP, NBMIN, ABSTOL,           &
+                         RELTOL, PIVMIN, D, E, E2, NVAL, AB, C, MOUT,          &
+                         NAB, WORK, IWORK, INFO )
 
 !  -- LAPACK auxiliary routine (version 3.0) --
 !     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -5091,8 +5091,8 @@
 !     ..
 !     .. Array Arguments ..
       INTEGER            IWORK( * ), NAB( MMAX, * ), NVAL( * )
-      REAL(DOUBLE)   AB( MMAX, * ), C( * ), D( * ), E( * ), E2( * ),
-     $                   WORK( * )
+      REAL(DOUBLE)   AB( MMAX, * ), C( * ), D( * ), E( * ), E2( * ),           &
+                         WORK( * )
 !     ..
 !
 !  Purpose
@@ -5301,12 +5301,12 @@
 !
 !     .. Parameters ..
       REAL(DOUBLE)   ZERO, TWO, HALF
-      PARAMETER          ( ZERO = 0.0D0, TWO = 2.0D0,
-     $                   HALF = 1.0D0 / TWO )
+      PARAMETER          ( ZERO = 0.0D0, TWO = 2.0D0,                          &
+                         HALF = 1.0D0 / TWO )
 !     ..
 !     .. Local Scalars ..
-      INTEGER            ITMP1, ITMP2, J, JI, JIT, JP, KF, KFNEW, KL,
-     $                   KLNEW
+      INTEGER            ITMP1, ITMP2, J, JI, JIT, JP, KF, KFNEW, KL,          &
+                         KLNEW
       REAL(DOUBLE)   TMP1, TMP2
 !     ..
 !     .. Intrinsic Functions ..
@@ -5333,18 +5333,18 @@
          DO 30 JI = 1, MINP
             DO 20 JP = 1, 2
                TMP1 = D( 1 ) - AB( JI, JP )
-               IF( ABS( TMP1 ).LT.PIVMIN )
-     $            TMP1 = -PIVMIN
+               IF( ABS( TMP1 ).LT.PIVMIN )                                     &
+                  TMP1 = -PIVMIN
                NAB( JI, JP ) = 0
-               IF( TMP1.LE.ZERO )
-     $            NAB( JI, JP ) = 1
+               IF( TMP1.LE.ZERO )                                              &
+                  NAB( JI, JP ) = 1
 !
                DO 10 J = 2, N
                   TMP1 = D( J ) - E2( J-1 ) / TMP1 - AB( JI, JP )
-                  IF( ABS( TMP1 ).LT.PIVMIN )
-     $               TMP1 = -PIVMIN
-                  IF( TMP1.LE.ZERO )
-     $               NAB( JI, JP ) = NAB( JI, JP ) + 1
+                  IF( ABS( TMP1 ).LT.PIVMIN )                                  &
+                     TMP1 = -PIVMIN
+                  IF( TMP1.LE.ZERO )                                           &
+                     NAB( JI, JP ) = NAB( JI, JP ) + 1
    10          CONTINUE
    20       CONTINUE
             MOUT = MOUT + NAB( JI, 2 ) - NAB( JI, 1 )
@@ -5409,8 +5409,8 @@
 !
 !                 Insure that N(w) is monotone
 !
-                  IWORK( JI ) = MIN( NAB( JI, 2 ),
-     $                          MAX( NAB( JI, 1 ), IWORK( JI ) ) )
+                  IWORK( JI ) = MIN( NAB( JI, 2 ),                             &
+                                MAX( NAB( JI, 1 ), IWORK( JI ) ) )
 !
 !                 Update the Queue -- add intervals if both halves
 !                 contain eigenvalues.
@@ -5446,8 +5446,8 @@
                      END IF
                   END IF
    70          CONTINUE
-               IF( INFO.NE.0 )
-     $            RETURN
+               IF( INFO.NE.0 )                                                 &
+                  RETURN
                KL = KLNEW
             ELSE
 !
@@ -5489,15 +5489,15 @@
 !              for the next loop
 !
 !$PL$ CMCHAR=' '
-CDIR$          NEXTSCALAR
-C$DIR          SCALAR
-CDIR$          NEXT SCALAR
-CVD$L          NOVECTOR
-CDEC$          NOVECTOR
-CVD$           NOVECTOR
-!VDIR          NOVECTOR
-!VOCL          LOOP,SCALAR
-CIBM           PREFER SCALAR
+!CDIR$          NEXTSCALAR
+!C$DIR          SCALAR
+!CDIR$          NEXT SCALAR
+!CVD$L          NOVECTOR
+!CDEC$          NOVECTOR
+!CVD$           NOVECTOR
+!!VDIR          NOVECTOR
+!!VOCL          LOOP,SCALAR
+!CIBM           PREFER SCALAR
 !$PL$ CMCHAR='*'
 !
                DO 90 J = 2, N
@@ -5514,8 +5514,8 @@ CIBM           PREFER SCALAR
 !
 !                 Insure that N(w) is monotone
 !
-                  ITMP1 = MIN( NAB( JI, 2 ),
-     $                    MAX( NAB( JI, 1 ), ITMP1 ) )
+                  ITMP1 = MIN( NAB( JI, 2 ),                                   &
+                          MAX( NAB( JI, 1 ), ITMP1 ) )
 !
 !                 Update the Queue -- add intervals if both halves
 !                 contain eigenvalues.
@@ -5575,8 +5575,8 @@ CIBM           PREFER SCALAR
          DO 110 JI = KF, KL
             TMP1 = ABS( AB( JI, 2 )-AB( JI, 1 ) )
             TMP2 = MAX( ABS( AB( JI, 2 ) ), ABS( AB( JI, 1 ) ) )
-            IF( TMP1.LT.MAX( ABSTOL, PIVMIN, RELTOL*TMP2 ) .OR.
-     $          NAB( JI, 1 ).GE.NAB( JI, 2 ) ) THEN
+            IF( TMP1.LT.MAX( ABSTOL, PIVMIN, RELTOL*TMP2 ) .OR.                &
+                NAB( JI, 1 ).GE.NAB( JI, 2 ) ) THEN
 !
 !              Converged -- Swap with position KFNEW,
 !                           then increment KFNEW
@@ -5613,8 +5613,8 @@ CIBM           PREFER SCALAR
 !
 !        If no more intervals to refine, quit.
 !
-         IF( KF.GT.KL )
-     $      GO TO 140
+         IF( KF.GT.KL )                                                        &
+            GO TO 140
   130 CONTINUE
 !
 !     Converged
@@ -5708,8 +5708,8 @@ CIBM           PREFER SCALAR
 !     ..
 !     .. Local Scalars ..
       INTEGER            SGN1, SGN2
-      REAL(DOUBLE)   AB, ACMN, ACMX, ACS, ADF, CS, CT, DF, RT, SM,
-     $                   TB, TN
+      REAL(DOUBLE)   AB, ACMN, ACMX, ACS, ADF, CS, CT, DF, RT, SM,             &
+                         TB, TN
 !     ..
 !     .. Intrinsic Functions ..
       INTRINSIC          ABS, SQRT
@@ -5933,8 +5933,8 @@ CIBM           PREFER SCALAR
          RETURN
       END IF
 !
-      IF( N.EQ.0 )
-     $   RETURN
+      IF( N.EQ.0 )                                                             &
+         RETURN
 !
       EPS = DLAMCH( 'Epsilon' )
       SFMIN = DLAMCH( 'Safe minimum' )
@@ -5943,15 +5943,15 @@ CIBM           PREFER SCALAR
       IF( JOB.LT.0 ) THEN
          IF( TOL.LE.ZERO ) THEN
             TOL = ABS( A( 1 ) )
-            IF( N.GT.1 )
-     $         TOL = MAX( TOL, ABS( A( 2 ) ), ABS( B( 1 ) ) )
+            IF( N.GT.1 )                                                       &
+               TOL = MAX( TOL, ABS( A( 2 ) ), ABS( B( 1 ) ) )
             DO 10 K = 3, N
-               TOL = MAX( TOL, ABS( A( K ) ), ABS( B( K-1 ) ),
-     $               ABS( D( K-2 ) ) )
+               TOL = MAX( TOL, ABS( A( K ) ), ABS( B( K-1 ) ),                 &
+                     ABS( D( K-2 ) ) )
    10       CONTINUE
             TOL = TOL*EPS
-            IF( TOL.EQ.ZERO )
-     $         TOL = EPS
+            IF( TOL.EQ.ZERO )                                                  &
+               TOL = EPS
          END IF
       END IF
 !
@@ -5978,8 +5978,8 @@ CIBM           PREFER SCALAR
                ABSAK = ABS( AK )
                IF( ABSAK.LT.ONE ) THEN
                   IF( ABSAK.LT.SFMIN ) THEN
-                     IF( ABSAK.EQ.ZERO .OR. ABS( TEMP )*SFMIN.GT.ABSAK )
-     $                    THEN
+                     IF( ABSAK.EQ.ZERO .OR. ABS( TEMP )*SFMIN.GT.ABSAK )       &
+                          THEN
                         INFO = K
                         RETURN
                      ELSE
@@ -6008,8 +6008,8 @@ CIBM           PREFER SCALAR
                ABSAK = ABS( AK )
                IF( ABSAK.LT.ONE ) THEN
                   IF( ABSAK.LT.SFMIN ) THEN
-                     IF( ABSAK.EQ.ZERO .OR. ABS( TEMP )*SFMIN.GT.ABSAK )
-     $                    THEN
+                     IF( ABSAK.EQ.ZERO .OR. ABS( TEMP )*SFMIN.GT.ABSAK)        &
+                          THEN
                         AK = AK + PERT
                         PERT = 2*PERT
                         GO TO 40
@@ -6043,8 +6043,8 @@ CIBM           PREFER SCALAR
                ABSAK = ABS( AK )
                IF( ABSAK.LT.ONE ) THEN
                   IF( ABSAK.LT.SFMIN ) THEN
-                     IF( ABSAK.EQ.ZERO .OR. ABS( TEMP )*SFMIN.GT.ABSAK )
-     $                    THEN
+                     IF( ABSAK.EQ.ZERO .OR. ABS( TEMP )*SFMIN.GT.ABSAK)        &
+                          THEN
                         INFO = K
                         RETURN
                      ELSE
@@ -6073,8 +6073,8 @@ CIBM           PREFER SCALAR
                ABSAK = ABS( AK )
                IF( ABSAK.LT.ONE ) THEN
                   IF( ABSAK.LT.SFMIN ) THEN
-                     IF( ABSAK.EQ.ZERO .OR. ABS( TEMP )*SFMIN.GT.ABSAK )
-     $                    THEN
+                     IF( ABSAK.EQ.ZERO .OR. ABS( TEMP )*SFMIN.GT.ABSAK)        &
+                          THEN
                         AK = AK + PERT
                         PERT = 2*PERT
                         GO TO 70
@@ -6163,16 +6163,16 @@ CIBM           PREFER SCALAR
 !     .. Local Scalars ..
       LOGICAL            FIRST, LRND
       INTEGER            BETA, IMAX, IMIN, IT
-      REAL(DOUBLE)   BASE, EMAX, EMIN, EPS, PREC, RMACH, RMAX, RMIN,
-     $                   RND, SFMIN, SMALL, T
+      REAL(DOUBLE)   BASE, EMAX, EMIN, EPS, PREC, RMACH, RMAX, RMIN,           &
+                         RND, SFMIN, SMALL, T
 !     ..
 !     .. External Functions ..
 !     ..
 !     .. External Subroutines ..
 !     ..
 !     .. Save statement ..
-      SAVE               FIRST, EPS, SFMIN, BASE, T, RND, EMIN, RMIN,
-     $                   EMAX, RMAX, PREC
+      SAVE               FIRST, EPS, SFMIN, BASE, T, RND, EMIN, RMIN,          &
+                         EMAX, RMAX, PREC
 !     ..
 !     .. Data statements ..
       DATA               FIRST / .TRUE. /
@@ -6372,8 +6372,8 @@ CIBM           PREFER SCALAR
          END IF
          F = DLAMC3( B / 2, B / 100 )
          C = DLAMC3( F, A )
-         IF( ( LRND ) .AND. ( C.EQ.A ) )
-     $      LRND = .FALSE.
+         IF( ( LRND ) .AND. ( C.EQ.A ) )                                       &
+            LRND = .FALSE.
 !
 !        Try and decide whether rounding is done in the  IEEE  'round to
 !        nearest' style. B/2 is half a unit in the last place of the two
@@ -6488,10 +6488,10 @@ CIBM           PREFER SCALAR
 !
 !     .. Local Scalars ..
       LOGICAL            FIRST, IEEE, IWARN, LIEEE1, LRND
-      INTEGER            GNMIN, GPMIN, I, LBETA, LEMAX, LEMIN, LT,
-     $                   NGNMIN, NGPMIN
-      REAL(DOUBLE)   A, B, C, HALF, LEPS, LRMAX, LRMIN, ONE, RBASE,
-     $                   SIXTH, SMALL, THIRD, TWO, ZERO
+      INTEGER            GNMIN, GPMIN, I, LBETA, LEMAX, LEMIN, LT,             &
+                         NGNMIN, NGPMIN
+      REAL(DOUBLE)   A, B, C, HALF, LEPS, LRMAX, LRMIN, ONE, RBASE,            &
+                         SIXTH, SMALL, THIRD, TWO, ZERO
 !     ..
 !     .. External Functions ..
 !     ..
@@ -6501,8 +6501,8 @@ CIBM           PREFER SCALAR
       INTRINSIC          ABS, MAX, MIN
 !     ..
 !     .. Save statement ..
-      SAVE               FIRST, IWARN, LBETA, LEMAX, LEMIN, LEPS, LRMAX,
-     $                   LRMIN, LT
+      SAVE               FIRST, IWARN, LBETA, LEMAX, LEMIN, LEPS, LRMAX,       &
+                         LRMIN, LT
 !     ..
 !     .. Data statements ..
       DATA               FIRST / .TRUE. / , IWARN / .FALSE. /
@@ -6541,8 +6541,8 @@ CIBM           PREFER SCALAR
          B = DLAMC3( THIRD, -HALF )
          B = DLAMC3( B, SIXTH )
          B = ABS( B )
-         IF( B.LT.LEPS )
-     $      B = LEPS
+         IF( B.LT.LEPS )                                                       &
+            B = LEPS
 !
          LEPS = 1
 !
@@ -6559,8 +6559,8 @@ CIBM           PREFER SCALAR
          END IF
 !+       END WHILE
 !
-         IF( A.LT.LEPS )
-     $      LEPS = A
+         IF( A.LT.LEPS )                                                       &
+            LEPS = A
 !
 !        Computation of EPS complete.
 !
@@ -6607,8 +6607,8 @@ CIBM           PREFER SCALAR
                IWARN = .TRUE.
             END IF
 !
-         ELSE IF( ( ABS( NGPMIN-NGNMIN ).EQ.1 ) .AND.
-     $            ( GPMIN.EQ.GNMIN ) ) THEN
+         ELSE IF( ( ABS( NGPMIN-NGNMIN ).EQ.1 ) .AND.                          &
+                  ( GPMIN.EQ.GNMIN ) ) THEN
             IF( ( GPMIN-MIN( NGPMIN, NGNMIN ) ).EQ.3 ) THEN
                LEMIN = MAX( NGPMIN, NGNMIN ) - 1 + LT
 !            ( Twos-complement machines with gradual underflow;
@@ -6664,12 +6664,12 @@ CIBM           PREFER SCALAR
 !
       RETURN
 !
- 9999 FORMAT( / / ' WARNING. The value EMIN may be incorrect:-',
-     $      '  EMIN = ', I8, /
-     $      ' If, after inspection, the value EMIN looks',
-     $      ' acceptable please comment out ',
-     $      / ' the IF block as marked within the code of routine',
-     $      ' DLAMC2,', / ' otherwise supply EMIN explicitly.', / )
+ 9999 FORMAT( / / ' WARNING. The value EMIN may be incorrect:-',               &
+            '  EMIN = ', I8, /                                                 &
+            ' If, after inspection, the value EMIN looks',                     &
+            ' acceptable please comment out ',                                 &
+            / ' the IF block as marked within the code of routine',            &
+            ' DLAMC2,', / ' otherwise supply EMIN explicitly.', / )
 !
 !     End of DLAMC2
 !
@@ -6769,8 +6769,8 @@ CIBM           PREFER SCALAR
 !+    WHILE( ( C1.EQ.A ).AND.( C2.EQ.A ).AND.
 !    $       ( D1.EQ.A ).AND.( D2.EQ.A )      )LOOP
    10 CONTINUE
-      IF( ( C1.EQ.A ) .AND. ( C2.EQ.A ) .AND. ( D1.EQ.A ) .AND.
-     $    ( D2.EQ.A ) ) THEN
+      IF( ( C1.EQ.A ) .AND. ( C2.EQ.A ) .AND. ( D1.EQ.A ) .AND.                &
+          ( D2.EQ.A ) ) THEN
          EMIN = EMIN - 1
          A = B1
          B1 = DLAMC3( A / BASE, ZERO )
@@ -6935,12 +6935,12 @@ CIBM           PREFER SCALAR
       Y = ZERO
       DO 20 I = 1, P
          Z = Z*RECBAS
-         IF( Y.LT.ONE )
-     $      OLDY = Y
+         IF( Y.LT.ONE )                                                        &
+            OLDY = Y
          Y = DLAMC3( Y, Z )
    20 CONTINUE
-      IF( Y.GE.ONE )
-     $   Y = OLDY
+      IF( Y.GE.ONE )                                                           &
+         Y = OLDY
 !
 !     Now multiply by BETA**EMAX to get RMAX.
 !
@@ -6957,8 +6957,8 @@ CIBM           PREFER SCALAR
 
 ! ##################################################################################################################################
 
-      DOUBLE PRECISION FUNCTION DLANSB( NORM, UPLO, N, K, AB, LDAB,
-     $                 WORK )
+      DOUBLE PRECISION FUNCTION DLANSB( NORM, UPLO, N, K, AB, LDAB,            &
+                       WORK )
 !
 !  -- LAPACK auxiliary routine (version 3.0) --
 !     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -7074,8 +7074,8 @@ CIBM           PREFER SCALAR
    30          CONTINUE
    40       CONTINUE
          END IF
-      ELSE IF( ( LSAME( NORM, 'I' ) ) .OR. ( LSAME( NORM, 'O' ) ) .OR.
-     $         ( NORM.EQ.'1' ) ) THEN
+      ELSE IF( ( LSAME( NORM, 'I' ) ) .OR. ( LSAME( NORM, 'O' ) ) .OR.         &
+               ( NORM.EQ.'1' ) ) THEN
 !
 !        Find normI(A) ( = norm1(A), since A is symmetric).
 !
@@ -7122,15 +7122,15 @@ CIBM           PREFER SCALAR
             IF( LSAME( UPLO, 'U' ) ) THEN
                DO 110 J = 2, N
                   write(sc1,12345) j, n
-                  CALL DLASSQ( MIN( J-1, K ), AB( MAX( K+2-J, 1 ), J ),
-     $                         1, SCALE, SUM )
+                  CALL DLASSQ( MIN( J-1, K ), AB( MAX( K+2-J, 1 ), J ),        &
+                               1, SCALE, SUM )
   110          CONTINUE
                L = K + 1
             ELSE
                DO 120 J = 1, N - 1
                   write(sc1,12345) j, n
-                  CALL DLASSQ( MIN( N-J, K ), AB( 2, J ), 1, SCALE,
-     $                         SUM )
+                  CALL DLASSQ( MIN( N-J, K ), AB( 2, J ), 1, SCALE,            &
+                               SUM )
   120          CONTINUE
                L = 1
             END IF
@@ -7147,8 +7147,8 @@ CIBM           PREFER SCALAR
 !
 !     End of DLANSB
 !
-12345 format("+",5x,'Row ',i8,' of ',i8,
-     &'                                                 ')
+12345 format("+",5x,'Row ',i8,' of ',i8,                                       &
+      '                                                 ')
 
       END FUNCTION DLANSB
 
@@ -7241,19 +7241,19 @@ CIBM           PREFER SCALAR
             ANORM = MAX( ANORM, ABS( D( I ) ) )
             ANORM = MAX( ANORM, ABS( E( I ) ) )
    10    CONTINUE
-      ELSE IF( LSAME( NORM, 'O' ) .OR. NORM.EQ.'1' .OR.
-     $         LSAME( NORM, 'I' ) ) THEN
+      ELSE IF( LSAME( NORM, 'O' ) .OR. NORM.EQ.'1' .OR.                        &
+               LSAME( NORM, 'I' ) ) THEN
 !
 !        Find norm1(A).
 !
          IF( N.EQ.1 ) THEN
             ANORM = ABS( D( 1 ) )
          ELSE
-            ANORM = MAX( ABS( D( 1 ) )+ABS( E( 1 ) ),
-     $              ABS( E( N-1 ) )+ABS( D( N ) ) )
+            ANORM = MAX( ABS( D( 1 ) )+ABS( E( 1 ) ),                          &
+                    ABS( E( N-1 ) )+ABS( D( N ) ) )
             DO 20 I = 2, N - 1
-               ANORM = MAX( ANORM, ABS( D( I ) )+ABS( E( I ) )+
-     $                 ABS( E( I-1 ) ) )
+               ANORM = MAX( ANORM, ABS( D( I ) )+ABS( E( I ) )+                &
+                       ABS( E( I-1 ) ) )
    20       CONTINUE
          END IF
       ELSE IF( ( LSAME( NORM, 'F' ) ) .OR. ( LSAME( NORM, 'E' ) ) ) THEN
@@ -7391,8 +7391,8 @@ CIBM           PREFER SCALAR
    30          CONTINUE
    40       CONTINUE
          END IF
-      ELSE IF( ( LSAME( NORM, 'I' ) ) .OR. ( LSAME( NORM, 'O' ) ) .OR.
-     $         ( NORM.EQ.'1' ) ) THEN
+      ELSE IF( ( LSAME( NORM, 'I' ) ) .OR. ( LSAME( NORM, 'O' ) ) .OR.         &
+               ( NORM.EQ.'1' ) ) THEN
 !
 !        Find normI(A) ( = norm1(A), since A is symmetric).
 !
@@ -7510,8 +7510,8 @@ CIBM           PREFER SCALAR
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DLAQSB( UPLO, N, KD, AB, LDAB, S, SCOND, AMAX, EQUED
-     &                 , thresh, small, large )            ! My line
+      SUBROUTINE DLAQSB( UPLO, N, KD, AB, LDAB, S, SCOND, AMAX, EQUED          &
+                       , thresh, small, large )            ! My line
 !
 !  -- LAPACK auxiliary routine (version 3.0) --
 !     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -7845,8 +7845,8 @@ CIBM           PREFER SCALAR
 !
 !           w := C' * v
 !
-            CALL DGEMV( 'Transpose', M, N, ONE, C, LDC, V, INCV, ZERO,
-     $                  WORK, 1 )
+            CALL DGEMV( 'Transpose', M, N, ONE, C, LDC, V, INCV, ZERO,         &
+                        WORK, 1 )
 !
 !           C := C - v * w'
 !
@@ -7860,8 +7860,8 @@ CIBM           PREFER SCALAR
 !
 !           w := C * v
 !
-            CALL DGEMV( 'No transpose', M, N, ONE, C, LDC, V, INCV,
-     $                  ZERO, WORK, 1 )
+            CALL DGEMV( 'No transpose', M, N, ONE, C, LDC, V, INCV,            &
+                        ZERO, WORK, 1 )
 !
 !           C := C - w * v'
 !
@@ -7876,8 +7876,8 @@ CIBM           PREFER SCALAR
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DLARFB( SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV,
-     $                   T, LDT, C, LDC, WORK, LDWORK )
+      SUBROUTINE DLARFB( SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV,         &
+                         T, LDT, C, LDC, WORK, LDWORK )
 !
 !  -- LAPACK auxiliary routine (version 3.0) --
 !     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
@@ -7890,8 +7890,8 @@ CIBM           PREFER SCALAR
 !     ..
 !     .. Array Arguments ..
 ! B 02/07/04 //////////////////////////////////////////////////////////B
-      REAL(DOUBLE)   C( LDC, * ), T( LDT, * ), V( LDV, * ),
-     $                   WORK( LDWORK, * )
+      REAL(DOUBLE)   C( LDC, * ), T( LDT, * ), V( LDV, * ),                    &
+                         WORK( LDWORK, * )
 ! Double the first dimension
 
 !     REAL(DOUBLE)   C( LDC, * ), T( LDT, * ), V( LDV, * ),
@@ -7989,8 +7989,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( M.LE.0 .OR. N.LE.0 )
-     $   RETURN
+      IF( M.LE.0 .OR. N.LE.0 )                                                 &
+         RETURN
 !
       IF( LSAME( TRANS, 'N' ) ) THEN
          TRANST = 'T'
@@ -8021,21 +8021,21 @@ CIBM           PREFER SCALAR
 !
 !              W := W * V1
 !
-               CALL DTRMM( 'Right', 'Lower', 'No transpose', 'Unit', N,
-     $                     K, ONE, V, LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', 'No transpose', 'Unit', N,        &
+                           K, ONE, V, LDV, WORK, LDWORK )
                IF( M.GT.K ) THEN
 !
 !                 W := W + C2'*V2
 !
-                  CALL DGEMM( 'Transpose', 'No transpose', N, K, M-K,
-     $                        ONE, C( K+1, 1 ), LDC, V( K+1, 1 ), LDV,
-     $                        ONE, WORK, LDWORK )
+                  CALL DGEMM( 'Transpose', 'No transpose', N, K, M-K,          &
+                              ONE, C( K+1, 1 ), LDC, V( K+1, 1 ), LDV,         &
+                              ONE, WORK, LDWORK )
                END IF
 !
 !              W := W * T'  or  W * T
 !
-               CALL DTRMM( 'Right', 'Upper', TRANST, 'Non-unit', N, K,
-     $                     ONE, T, LDT, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', TRANST, 'Non-unit', N, K,         &
+                           ONE, T, LDT, WORK, LDWORK )
 !
 !              C := C - V * W'
 !
@@ -8043,15 +8043,15 @@ CIBM           PREFER SCALAR
 !
 !                 C2 := C2 - V2 * W'
 !
-                  CALL DGEMM( 'No transpose', 'Transpose', M-K, N, K,
-     $                        -ONE, V( K+1, 1 ), LDV, WORK, LDWORK, ONE,
-     $                        C( K+1, 1 ), LDC )
+                  CALL DGEMM( 'No transpose', 'Transpose', M-K, N, K,          &
+                              -ONE, V( K+1, 1 ), LDV, WORK, LDWORK, ONE,       &
+                              C( K+1, 1 ), LDC )
                END IF
 !
 !              W := W * V1'
 !
-               CALL DTRMM( 'Right', 'Lower', 'Transpose', 'Unit', N, K,
-     $                     ONE, V, LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', 'Transpose', 'Unit', N, K,        &
+                           ONE, V, LDV, WORK, LDWORK )
 !
 !              C1 := C1 - W'
 !
@@ -8075,21 +8075,21 @@ CIBM           PREFER SCALAR
 !
 !              W := W * V1
 !
-               CALL DTRMM( 'Right', 'Lower', 'No transpose', 'Unit', M,
-     $                     K, ONE, V, LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', 'No transpose', 'Unit', M,        &
+                           K, ONE, V, LDV, WORK, LDWORK )
                IF( N.GT.K ) THEN
 !
 !                 W := W + C2 * V2
 !
-                  CALL DGEMM( 'No transpose', 'No transpose', M, K, N-K,
-     $                        ONE, C( 1, K+1 ), LDC, V( K+1, 1 ), LDV,
-     $                        ONE, WORK, LDWORK )
+                  CALL DGEMM( 'No transpose', 'No transpose', M, K, N-K,       &
+                              ONE, C( 1, K+1 ), LDC, V( K+1, 1 ), LDV,         &
+                              ONE, WORK, LDWORK )
                END IF
 !
 !              W := W * T  or  W * T'
 !
-               CALL DTRMM( 'Right', 'Upper', TRANS, 'Non-unit', M, K,
-     $                     ONE, T, LDT, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', TRANS, 'Non-unit', M, K,          &
+                           ONE, T, LDT, WORK, LDWORK )
 !
 !              C := C - W * V'
 !
@@ -8097,15 +8097,15 @@ CIBM           PREFER SCALAR
 !
 !                 C2 := C2 - W * V2'
 !
-                  CALL DGEMM( 'No transpose', 'Transpose', M, N-K, K,
-     $                        -ONE, WORK, LDWORK, V( K+1, 1 ), LDV, ONE,
-     $                        C( 1, K+1 ), LDC )
+                  CALL DGEMM( 'No transpose', 'Transpose', M, N-K, K,          &
+                              -ONE, WORK, LDWORK, V( K+1, 1 ), LDV, ONE,       &
+                              C( 1, K+1 ), LDC )
                END IF
 !
 !              W := W * V1'
 !
-               CALL DTRMM( 'Right', 'Lower', 'Transpose', 'Unit', M, K,
-     $                     ONE, V, LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', 'Transpose', 'Unit', M, K,        &
+                           ONE, V, LDV, WORK, LDWORK )
 !
 !              C1 := C1 - W
 !
@@ -8137,20 +8137,20 @@ CIBM           PREFER SCALAR
 !
 !              W := W * V2
 !
-               CALL DTRMM( 'Right', 'Upper', 'No transpose', 'Unit', N,
-     $                     K, ONE, V( M-K+1, 1 ), LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', 'No transpose', 'Unit', N,        &
+                           K, ONE, V( M-K+1, 1 ), LDV, WORK, LDWORK )
                IF( M.GT.K ) THEN
 !
 !                 W := W + C1'*V1
 !
-                  CALL DGEMM( 'Transpose', 'No transpose', N, K, M-K,
-     $                        ONE, C, LDC, V, LDV, ONE, WORK, LDWORK )
+                  CALL DGEMM( 'Transpose', 'No transpose', N, K, M-K,          &
+                              ONE, C, LDC, V, LDV, ONE, WORK, LDWORK )
                END IF
 !
 !              W := W * T'  or  W * T
 !
-               CALL DTRMM( 'Right', 'Lower', TRANST, 'Non-unit', N, K,
-     $                     ONE, T, LDT, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', TRANST, 'Non-unit', N, K,         &
+                           ONE, T, LDT, WORK, LDWORK )
 !
 !              C := C - V * W'
 !
@@ -8158,14 +8158,14 @@ CIBM           PREFER SCALAR
 !
 !                 C1 := C1 - V1 * W'
 !
-                  CALL DGEMM( 'No transpose', 'Transpose', M-K, N, K,
-     $                        -ONE, V, LDV, WORK, LDWORK, ONE, C, LDC )
+                  CALL DGEMM( 'No transpose', 'Transpose', M-K, N, K,          &
+                              -ONE, V, LDV, WORK, LDWORK, ONE, C, LDC )
                END IF
 !
 !              W := W * V2'
 !
-               CALL DTRMM( 'Right', 'Upper', 'Transpose', 'Unit', N, K,
-     $                     ONE, V( M-K+1, 1 ), LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', 'Transpose', 'Unit', N, K,        &
+                           ONE, V( M-K+1, 1 ), LDV, WORK, LDWORK )
 !
 !              C2 := C2 - W'
 !
@@ -8189,20 +8189,20 @@ CIBM           PREFER SCALAR
 !
 !              W := W * V2
 !
-               CALL DTRMM( 'Right', 'Upper', 'No transpose', 'Unit', M,
-     $                     K, ONE, V( N-K+1, 1 ), LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', 'No transpose', 'Unit', M,        &
+                           K, ONE, V( N-K+1, 1 ), LDV, WORK, LDWORK )
                IF( N.GT.K ) THEN
 !
 !                 W := W + C1 * V1
 !
-                  CALL DGEMM( 'No transpose', 'No transpose', M, K, N-K,
-     $                        ONE, C, LDC, V, LDV, ONE, WORK, LDWORK )
+                  CALL DGEMM( 'No transpose', 'No transpose', M, K, N-K,       &
+                              ONE, C, LDC, V, LDV, ONE, WORK, LDWORK )
                END IF
 !
 !              W := W * T  or  W * T'
 !
-               CALL DTRMM( 'Right', 'Lower', TRANS, 'Non-unit', M, K,
-     $                     ONE, T, LDT, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', TRANS, 'Non-unit', M, K,          &
+                           ONE, T, LDT, WORK, LDWORK )
 !
 !              C := C - W * V'
 !
@@ -8210,14 +8210,14 @@ CIBM           PREFER SCALAR
 !
 !                 C1 := C1 - W * V1'
 !
-                  CALL DGEMM( 'No transpose', 'Transpose', M, N-K, K,
-     $                        -ONE, WORK, LDWORK, V, LDV, ONE, C, LDC )
+                  CALL DGEMM( 'No transpose', 'Transpose', M, N-K, K,          &
+                              -ONE, WORK, LDWORK, V, LDV, ONE, C, LDC )
                END IF
 !
 !              W := W * V2'
 !
-               CALL DTRMM( 'Right', 'Upper', 'Transpose', 'Unit', M, K,
-     $                     ONE, V( N-K+1, 1 ), LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', 'Transpose', 'Unit', M, K,        &
+                           ONE, V( N-K+1, 1 ), LDV, WORK, LDWORK )
 !
 !              C2 := C2 - W
 !
@@ -8251,21 +8251,21 @@ CIBM           PREFER SCALAR
 !
 !              W := W * V1'
 !
-               CALL DTRMM( 'Right', 'Upper', 'Transpose', 'Unit', N, K,
-     $                     ONE, V, LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', 'Transpose', 'Unit', N, K,        &
+                           ONE, V, LDV, WORK, LDWORK )
                IF( M.GT.K ) THEN
 !
 !                 W := W + C2'*V2'
 !
-                  CALL DGEMM( 'Transpose', 'Transpose', N, K, M-K, ONE,
-     $                        C( K+1, 1 ), LDC, V( 1, K+1 ), LDV, ONE,
-     $                        WORK, LDWORK )
+                  CALL DGEMM( 'Transpose', 'Transpose', N, K, M-K, ONE,        &
+                              C( K+1, 1 ), LDC, V( 1, K+1 ), LDV, ONE,         &
+                              WORK, LDWORK )
                END IF
 !
 !              W := W * T'  or  W * T
 !
-               CALL DTRMM( 'Right', 'Upper', TRANST, 'Non-unit', N, K,
-     $                     ONE, T, LDT, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', TRANST, 'Non-unit', N, K,         &
+                           ONE, T, LDT, WORK, LDWORK )
 !
 !              C := C - V' * W'
 !
@@ -8273,15 +8273,15 @@ CIBM           PREFER SCALAR
 !
 !                 C2 := C2 - V2' * W'
 !
-                  CALL DGEMM( 'Transpose', 'Transpose', M-K, N, K, -ONE,
-     $                        V( 1, K+1 ), LDV, WORK, LDWORK, ONE,
-     $                        C( K+1, 1 ), LDC )
+                  CALL DGEMM( 'Transpose', 'Transpose', M-K, N, K, -ONE,       &
+                              V( 1, K+1 ), LDV, WORK, LDWORK, ONE,             &
+                              C( K+1, 1 ), LDC )
                END IF
 !
 !              W := W * V1
 !
-               CALL DTRMM( 'Right', 'Upper', 'No transpose', 'Unit', N,
-     $                     K, ONE, V, LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', 'No transpose', 'Unit', N,        &
+                           K, ONE, V, LDV, WORK, LDWORK )
 !
 !              C1 := C1 - W'
 !
@@ -8305,21 +8305,21 @@ CIBM           PREFER SCALAR
 !
 !              W := W * V1'
 !
-               CALL DTRMM( 'Right', 'Upper', 'Transpose', 'Unit', M, K,
-     $                     ONE, V, LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', 'Transpose', 'Unit', M, K,        &
+                           ONE, V, LDV, WORK, LDWORK )
                IF( N.GT.K ) THEN
 !
 !                 W := W + C2 * V2'
 !
-                  CALL DGEMM( 'No transpose', 'Transpose', M, K, N-K,
-     $                        ONE, C( 1, K+1 ), LDC, V( 1, K+1 ), LDV,
-     $                        ONE, WORK, LDWORK )
+                  CALL DGEMM( 'No transpose', 'Transpose', M, K, N-K,          &
+                              ONE, C( 1, K+1 ), LDC, V( 1, K+1 ), LDV,         &
+                              ONE, WORK, LDWORK )
                END IF
 !
 !              W := W * T  or  W * T'
 !
-               CALL DTRMM( 'Right', 'Upper', TRANS, 'Non-unit', M, K,
-     $                     ONE, T, LDT, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', TRANS, 'Non-unit', M, K,          &
+                           ONE, T, LDT, WORK, LDWORK )
 !
 !              C := C - W * V
 !
@@ -8327,15 +8327,15 @@ CIBM           PREFER SCALAR
 !
 !                 C2 := C2 - W * V2
 !
-                  CALL DGEMM( 'No transpose', 'No transpose', M, N-K, K,
-     $                        -ONE, WORK, LDWORK, V( 1, K+1 ), LDV, ONE,
-     $                        C( 1, K+1 ), LDC )
+                  CALL DGEMM( 'No transpose', 'No transpose', M, N-K, K,       &
+                              -ONE, WORK, LDWORK, V( 1, K+1 ), LDV, ONE,       &
+                              C( 1, K+1 ), LDC )
                END IF
 !
 !              W := W * V1
 !
-               CALL DTRMM( 'Right', 'Upper', 'No transpose', 'Unit', M,
-     $                     K, ONE, V, LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Upper', 'No transpose', 'Unit', M,        &
+                           K, ONE, V, LDV, WORK, LDWORK )
 !
 !              C1 := C1 - W
 !
@@ -8367,20 +8367,20 @@ CIBM           PREFER SCALAR
 !
 !              W := W * V2'
 !
-               CALL DTRMM( 'Right', 'Lower', 'Transpose', 'Unit', N, K,
-     $                     ONE, V( 1, M-K+1 ), LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', 'Transpose', 'Unit', N, K,        &
+                           ONE, V( 1, M-K+1 ), LDV, WORK, LDWORK )
                IF( M.GT.K ) THEN
 !
 !                 W := W + C1'*V1'
 !
-                  CALL DGEMM( 'Transpose', 'Transpose', N, K, M-K, ONE,
-     $                        C, LDC, V, LDV, ONE, WORK, LDWORK )
+                  CALL DGEMM( 'Transpose', 'Transpose', N, K, M-K, ONE,        &
+                              C, LDC, V, LDV, ONE, WORK, LDWORK )
                END IF
 !
 !              W := W * T'  or  W * T
 !
-               CALL DTRMM( 'Right', 'Lower', TRANST, 'Non-unit', N, K,
-     $                     ONE, T, LDT, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', TRANST, 'Non-unit', N, K,         &
+                           ONE, T, LDT, WORK, LDWORK )
 !
 !              C := C - V' * W'
 !
@@ -8388,14 +8388,14 @@ CIBM           PREFER SCALAR
 !
 !                 C1 := C1 - V1' * W'
 !
-                  CALL DGEMM( 'Transpose', 'Transpose', M-K, N, K, -ONE,
-     $                        V, LDV, WORK, LDWORK, ONE, C, LDC )
+                  CALL DGEMM( 'Transpose', 'Transpose', M-K, N, K, -ONE,      &
+                              V, LDV, WORK, LDWORK, ONE, C, LDC )
                END IF
 !
 !              W := W * V2
 !
-               CALL DTRMM( 'Right', 'Lower', 'No transpose', 'Unit', N,
-     $                     K, ONE, V( 1, M-K+1 ), LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', 'No transpose', 'Unit', N,        &
+                           K, ONE, V( 1, M-K+1 ), LDV, WORK, LDWORK )
 !
 !              C2 := C2 - W'
 !
@@ -8419,20 +8419,20 @@ CIBM           PREFER SCALAR
 !
 !              W := W * V2'
 !
-               CALL DTRMM( 'Right', 'Lower', 'Transpose', 'Unit', M, K,
-     $                     ONE, V( 1, N-K+1 ), LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', 'Transpose', 'Unit', M, K,        &
+                           ONE, V( 1, N-K+1 ), LDV, WORK, LDWORK )
                IF( N.GT.K ) THEN
 !
 !                 W := W + C1 * V1'
 !
-                  CALL DGEMM( 'No transpose', 'Transpose', M, K, N-K,
-     $                        ONE, C, LDC, V, LDV, ONE, WORK, LDWORK )
+                  CALL DGEMM( 'No transpose', 'Transpose', M, K, N-K,          &
+                              ONE, C, LDC, V, LDV, ONE, WORK, LDWORK )
                END IF
 !
 !              W := W * T  or  W * T'
 !
-               CALL DTRMM( 'Right', 'Lower', TRANS, 'Non-unit', M, K,
-     $                     ONE, T, LDT, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', TRANS, 'Non-unit', M, K,          &
+                           ONE, T, LDT, WORK, LDWORK )
 !
 !              C := C - W * V
 !
@@ -8440,14 +8440,14 @@ CIBM           PREFER SCALAR
 !
 !                 C1 := C1 - W * V1
 !
-                  CALL DGEMM( 'No transpose', 'No transpose', M, N-K, K,
-     $                        -ONE, WORK, LDWORK, V, LDV, ONE, C, LDC )
+                  CALL DGEMM( 'No transpose', 'No transpose', M, N-K, K,       &
+                              -ONE, WORK, LDWORK, V, LDV, ONE, C, LDC )
                END IF
 !
 !              W := W * V2
 !
-               CALL DTRMM( 'Right', 'Lower', 'No transpose', 'Unit', M,
-     $                     K, ONE, V( 1, N-K+1 ), LDV, WORK, LDWORK )
+               CALL DTRMM( 'Right', 'Lower', 'No transpose', 'Unit', M,        &
+                           K, ONE, V( 1, N-K+1 ), LDV, WORK, LDWORK )
 !
 !              C1 := C1 - W
 !
@@ -8577,8 +8577,8 @@ CIBM           PREFER SCALAR
             CALL DSCAL( N-1, RSAFMN, X, INCX )
             BETA = BETA*RSAFMN
             ALPHA = ALPHA*RSAFMN
-            IF( ABS( BETA ).LT.SAFMIN )
-     $         GO TO 10
+            IF( ABS( BETA ).LT.SAFMIN )                                        &
+               GO TO 10
 !
 !           New BETA is at most 1, at least SAFMIN
 !
@@ -8729,8 +8729,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.EQ.0 )
-     $   RETURN
+      IF( N.EQ.0 )                                                             &
+         RETURN
 !
       IF( LSAME( DIRECT, 'F' ) ) THEN
          DO 20 I = 1, K
@@ -8751,23 +8751,23 @@ CIBM           PREFER SCALAR
 !
 !                 T(1:i-1,i) := - tau(i) * V(i:n,1:i-1)' * V(i:n,i)
 !
-                  CALL DGEMV( 'Transpose', N-I+1, I-1, -TAU( I ),
-     $                        V( I, 1 ), LDV, V( I, I ), 1, ZERO,
-     $                        T( 1, I ), 1 )
+                  CALL DGEMV( 'Transpose', N-I+1, I-1, -TAU( I ),              &
+                              V( I, 1 ), LDV, V( I, I ), 1, ZERO,              &
+                              T( 1, I ), 1 )
                ELSE
 !
 !                 T(1:i-1,i) := - tau(i) * V(1:i-1,i:n) * V(i,i:n)'
 !
-                  CALL DGEMV( 'No transpose', I-1, N-I+1, -TAU( I ),
-     $                        V( 1, I ), LDV, V( I, I ), LDV, ZERO,
-     $                        T( 1, I ), 1 )
+                  CALL DGEMV( 'No transpose', I-1, N-I+1, -TAU( I ),           &
+                              V( 1, I ), LDV, V( I, I ), LDV, ZERO,            &
+                              T( 1, I ), 1 )
                END IF
                V( I, I ) = VII
 !
 !              T(1:i-1,i) := T(1:i-1,1:i-1) * T(1:i-1,i)
 !
-               CALL DTRMV( 'Upper', 'No transpose', 'Non-unit', I-1, T,
-     $                     LDT, T( 1, I ), 1 )
+               CALL DTRMV( 'Upper', 'No transpose', 'Non-unit', I-1, T,        &
+                           LDT, T( 1, I ), 1 )
                T( I, I ) = TAU( I )
             END IF
    20    CONTINUE
@@ -8792,9 +8792,9 @@ CIBM           PREFER SCALAR
 !                    T(i+1:k,i) :=
 !                            - tau(i) * V(1:n-k+i,i+1:k)' * V(1:n-k+i,i)
 !
-                     CALL DGEMV( 'Transpose', N-K+I, K-I, -TAU( I ),
-     $                           V( 1, I+1 ), LDV, V( 1, I ), 1, ZERO,
-     $                           T( I+1, I ), 1 )
+                     CALL DGEMV( 'Transpose', N-K+I, K-I, -TAU( I ),           &
+                                 V( 1, I+1 ), LDV, V( 1, I ), 1, ZERO,         &
+                                 T( I+1, I ), 1 )
                      V( N-K+I, I ) = VII
                   ELSE
                      VII = V( I, N-K+I )
@@ -8803,16 +8803,16 @@ CIBM           PREFER SCALAR
 !                    T(i+1:k,i) :=
 !                            - tau(i) * V(i+1:k,1:n-k+i) * V(i,1:n-k+i)'
 !
-                     CALL DGEMV( 'No transpose', K-I, N-K+I, -TAU( I ),
-     $                           V( I+1, 1 ), LDV, V( I, 1 ), LDV, ZERO,
-     $                           T( I+1, I ), 1 )
+                     CALL DGEMV( 'No transpose', K-I, N-K+I, -TAU( I ),        &
+                                 V( I+1, 1 ), LDV, V( I, 1 ), LDV, ZERO,       &
+                                 T( I+1, I ), 1 )
                      V( I, N-K+I ) = VII
                   END IF
 !
 !                 T(i+1:k,i) := T(i+1:k,i+1:k) * T(i+1:k,i)
 !
-                  CALL DTRMV( 'Lower', 'No transpose', 'Non-unit', K-I,
-     $                        T( I+1, I+1 ), LDT, T( I+1, I ), 1 )
+                  CALL DTRMV( 'Lower', 'No transpose', 'Non-unit', K-I,        &
+                              T( I+1, I+1 ), LDT, T( I+1, I ), 1 )
                END IF
                T( I, I ) = TAU( I )
             END IF
@@ -9034,8 +9034,8 @@ CIBM           PREFER SCALAR
 !           Convert generated numbers to normal (0,1) distribution
 !
             DO 30 I = 1, IL
-               X( IV+I-1 ) = SQRT( -TWO*LOG( U( 2*I-1 ) ) )*
-     $                       COS( TWOPI*U( 2*I ) )
+               X( IV+I-1 ) = SQRT( -TWO*LOG( U( 2*I-1 ) ) )*                   &
+                             COS( TWOPI*U( 2*I ) )
    30       CONTINUE
          END IF
    40 CONTINUE
@@ -9126,8 +9126,8 @@ CIBM           PREFER SCALAR
          FIRST = .FALSE.
          SAFMIN = DLAMCH( 'S' )
          EPS = DLAMCH( 'E' )
-         SAFMN2 = DLAMCH( 'B' )**INT( LOG( SAFMIN / EPS ) /
-     $            LOG( DLAMCH( 'B' ) ) / TWO )
+         SAFMN2 = DLAMCH( 'B' )**INT( LOG( SAFMIN / EPS ) /                    &
+                  LOG( DLAMCH( 'B' ) ) / TWO )
          SAFMX2 = ONE / SAFMN2
       END IF
       IF( G.EQ.ZERO ) THEN
@@ -9149,8 +9149,8 @@ CIBM           PREFER SCALAR
             F1 = F1*SAFMN2
             G1 = G1*SAFMN2
             SCALE = MAX( ABS( F1 ), ABS( G1 ) )
-            IF( SCALE.GE.SAFMX2 )
-     $         GO TO 10
+            IF( SCALE.GE.SAFMX2 )                                              &
+               GO TO 10
             R = SQRT( F1**2+G1**2 )
             CS = F1 / R
             SN = G1 / R
@@ -9164,8 +9164,8 @@ CIBM           PREFER SCALAR
             F1 = F1*SAFMX2
             G1 = G1*SAFMX2
             SCALE = MAX( ABS( F1 ), ABS( G1 ) )
-            IF( SCALE.LE.SAFMN2 )
-     $         GO TO 30
+            IF( SCALE.LE.SAFMN2 )                                              &
+               GO TO 30
             R = SQRT( F1**2+G1**2 )
             CS = F1 / R
             SN = G1 / R
@@ -9341,262 +9341,262 @@ CIBM           PREFER SCALAR
       INTRINSIC          DBLE, MIN, MOD
 !     ..
 !     .. Data statements ..
-      DATA               ( MM( 1, J ), J = 1, 4 ) / 494, 322, 2508,
-     $                   2549 /
-      DATA               ( MM( 2, J ), J = 1, 4 ) / 2637, 789, 3754,
-     $                   1145 /
-      DATA               ( MM( 3, J ), J = 1, 4 ) / 255, 1440, 1766,
-     $                   2253 /
-      DATA               ( MM( 4, J ), J = 1, 4 ) / 2008, 752, 3572,
-     $                   305 /
-      DATA               ( MM( 5, J ), J = 1, 4 ) / 1253, 2859, 2893,
-     $                   3301 /
-      DATA               ( MM( 6, J ), J = 1, 4 ) / 3344, 123, 307,
-     $                   1065 /
-      DATA               ( MM( 7, J ), J = 1, 4 ) / 4084, 1848, 1297,
-     $                   3133 /
-      DATA               ( MM( 8, J ), J = 1, 4 ) / 1739, 643, 3966,
-     $                   2913 /
-      DATA               ( MM( 9, J ), J = 1, 4 ) / 3143, 2405, 758,
-     $                   3285 /
-      DATA               ( MM( 10, J ), J = 1, 4 ) / 3468, 2638, 2598,
-     $                   1241 /
-      DATA               ( MM( 11, J ), J = 1, 4 ) / 688, 2344, 3406,
-     $                   1197 /
-      DATA               ( MM( 12, J ), J = 1, 4 ) / 1657, 46, 2922,
-     $                   3729 /
-      DATA               ( MM( 13, J ), J = 1, 4 ) / 1238, 3814, 1038,
-     $                   2501 /
-      DATA               ( MM( 14, J ), J = 1, 4 ) / 3166, 913, 2934,
-     $                   1673 /
-      DATA               ( MM( 15, J ), J = 1, 4 ) / 1292, 3649, 2091,
-     $                   541 /
-      DATA               ( MM( 16, J ), J = 1, 4 ) / 3422, 339, 2451,
-     $                   2753 /
-      DATA               ( MM( 17, J ), J = 1, 4 ) / 1270, 3808, 1580,
-     $                   949 /
-      DATA               ( MM( 18, J ), J = 1, 4 ) / 2016, 822, 1958,
-     $                   2361 /
-      DATA               ( MM( 19, J ), J = 1, 4 ) / 154, 2832, 2055,
-     $                   1165 /
-      DATA               ( MM( 20, J ), J = 1, 4 ) / 2862, 3078, 1507,
-     $                   4081 /
-      DATA               ( MM( 21, J ), J = 1, 4 ) / 697, 3633, 1078,
-     $                   2725 /
-      DATA               ( MM( 22, J ), J = 1, 4 ) / 1706, 2970, 3273,
-     $                   3305 /
-      DATA               ( MM( 23, J ), J = 1, 4 ) / 491, 637, 17,
-     $                   3069 /
-      DATA               ( MM( 24, J ), J = 1, 4 ) / 931, 2249, 854,
-     $                   3617 /
-      DATA               ( MM( 25, J ), J = 1, 4 ) / 1444, 2081, 2916,
-     $                   3733 /
-      DATA               ( MM( 26, J ), J = 1, 4 ) / 444, 4019, 3971,
-     $                   409 /
-      DATA               ( MM( 27, J ), J = 1, 4 ) / 3577, 1478, 2889,
-     $                   2157 /
-      DATA               ( MM( 28, J ), J = 1, 4 ) / 3944, 242, 3831,
-     $                   1361 /
-      DATA               ( MM( 29, J ), J = 1, 4 ) / 2184, 481, 2621,
-     $                   3973 /
-      DATA               ( MM( 30, J ), J = 1, 4 ) / 1661, 2075, 1541,
-     $                   1865 /
-      DATA               ( MM( 31, J ), J = 1, 4 ) / 3482, 4058, 893,
-     $                   2525 /
-      DATA               ( MM( 32, J ), J = 1, 4 ) / 657, 622, 736,
-     $                   1409 /
-      DATA               ( MM( 33, J ), J = 1, 4 ) / 3023, 3376, 3992,
-     $                   3445 /
-      DATA               ( MM( 34, J ), J = 1, 4 ) / 3618, 812, 787,
-     $                   3577 /
-      DATA               ( MM( 35, J ), J = 1, 4 ) / 1267, 234, 2125,
-     $                   77 /
-      DATA               ( MM( 36, J ), J = 1, 4 ) / 1828, 641, 2364,
-     $                   3761 /
-      DATA               ( MM( 37, J ), J = 1, 4 ) / 164, 4005, 2460,
-     $                   2149 /
-      DATA               ( MM( 38, J ), J = 1, 4 ) / 3798, 1122, 257,
-     $                   1449 /
-      DATA               ( MM( 39, J ), J = 1, 4 ) / 3087, 3135, 1574,
-     $                   3005 /
-      DATA               ( MM( 40, J ), J = 1, 4 ) / 2400, 2640, 3912,
-     $                   225 /
-      DATA               ( MM( 41, J ), J = 1, 4 ) / 2870, 2302, 1216,
-     $                   85 /
-      DATA               ( MM( 42, J ), J = 1, 4 ) / 3876, 40, 3248,
-     $                   3673 /
-      DATA               ( MM( 43, J ), J = 1, 4 ) / 1905, 1832, 3401,
-     $                   3117 /
-      DATA               ( MM( 44, J ), J = 1, 4 ) / 1593, 2247, 2124,
-     $                   3089 /
-      DATA               ( MM( 45, J ), J = 1, 4 ) / 1797, 2034, 2762,
-     $                   1349 /
-      DATA               ( MM( 46, J ), J = 1, 4 ) / 1234, 2637, 149,
-     $                   2057 /
-      DATA               ( MM( 47, J ), J = 1, 4 ) / 3460, 1287, 2245,
-     $                   413 /
-      DATA               ( MM( 48, J ), J = 1, 4 ) / 328, 1691, 166,
-     $                   65 /
-      DATA               ( MM( 49, J ), J = 1, 4 ) / 2861, 496, 466,
-     $                   1845 /
-      DATA               ( MM( 50, J ), J = 1, 4 ) / 1950, 1597, 4018,
-     $                   697 /
-      DATA               ( MM( 51, J ), J = 1, 4 ) / 617, 2394, 1399,
-     $                   3085 /
-      DATA               ( MM( 52, J ), J = 1, 4 ) / 2070, 2584, 190,
-     $                   3441 /
-      DATA               ( MM( 53, J ), J = 1, 4 ) / 3331, 1843, 2879,
-     $                   1573 /
-      DATA               ( MM( 54, J ), J = 1, 4 ) / 769, 336, 153,
-     $                   3689 /
-      DATA               ( MM( 55, J ), J = 1, 4 ) / 1558, 1472, 2320,
-     $                   2941 /
-      DATA               ( MM( 56, J ), J = 1, 4 ) / 2412, 2407, 18,
-     $                   929 /
-      DATA               ( MM( 57, J ), J = 1, 4 ) / 2800, 433, 712,
-     $                   533 /
-      DATA               ( MM( 58, J ), J = 1, 4 ) / 189, 2096, 2159,
-     $                   2841 /
-      DATA               ( MM( 59, J ), J = 1, 4 ) / 287, 1761, 2318,
-     $                   4077 /
-      DATA               ( MM( 60, J ), J = 1, 4 ) / 2045, 2810, 2091,
-     $                   721 /
-      DATA               ( MM( 61, J ), J = 1, 4 ) / 1227, 566, 3443,
-     $                   2821 /
-      DATA               ( MM( 62, J ), J = 1, 4 ) / 2838, 442, 1510,
-     $                   2249 /
-      DATA               ( MM( 63, J ), J = 1, 4 ) / 209, 41, 449,
-     $                   2397 /
-      DATA               ( MM( 64, J ), J = 1, 4 ) / 2770, 1238, 1956,
-     $                   2817 /
-      DATA               ( MM( 65, J ), J = 1, 4 ) / 3654, 1086, 2201,
-     $                   245 /
-      DATA               ( MM( 66, J ), J = 1, 4 ) / 3993, 603, 3137,
-     $                   1913 /
-      DATA               ( MM( 67, J ), J = 1, 4 ) / 192, 840, 3399,
-     $                   1997 /
-      DATA               ( MM( 68, J ), J = 1, 4 ) / 2253, 3168, 1321,
-     $                   3121 /
-      DATA               ( MM( 69, J ), J = 1, 4 ) / 3491, 1499, 2271,
-     $                   997 /
-      DATA               ( MM( 70, J ), J = 1, 4 ) / 2889, 1084, 3667,
-     $                   1833 /
-      DATA               ( MM( 71, J ), J = 1, 4 ) / 2857, 3438, 2703,
-     $                   2877 /
-      DATA               ( MM( 72, J ), J = 1, 4 ) / 2094, 2408, 629,
-     $                   1633 /
-      DATA               ( MM( 73, J ), J = 1, 4 ) / 1818, 1589, 2365,
-     $                   981 /
-      DATA               ( MM( 74, J ), J = 1, 4 ) / 688, 2391, 2431,
-     $                   2009 /
-      DATA               ( MM( 75, J ), J = 1, 4 ) / 1407, 288, 1113,
-     $                   941 /
-      DATA               ( MM( 76, J ), J = 1, 4 ) / 634, 26, 3922,
-     $                   2449 /
-      DATA               ( MM( 77, J ), J = 1, 4 ) / 3231, 512, 2554,
-     $                   197 /
-      DATA               ( MM( 78, J ), J = 1, 4 ) / 815, 1456, 184,
-     $                   2441 /
-      DATA               ( MM( 79, J ), J = 1, 4 ) / 3524, 171, 2099,
-     $                   285 /
-      DATA               ( MM( 80, J ), J = 1, 4 ) / 1914, 1677, 3228,
-     $                   1473 /
-      DATA               ( MM( 81, J ), J = 1, 4 ) / 516, 2657, 4012,
-     $                   2741 /
-      DATA               ( MM( 82, J ), J = 1, 4 ) / 164, 2270, 1921,
-     $                   3129 /
-      DATA               ( MM( 83, J ), J = 1, 4 ) / 303, 2587, 3452,
-     $                   909 /
-      DATA               ( MM( 84, J ), J = 1, 4 ) / 2144, 2961, 3901,
-     $                   2801 /
-      DATA               ( MM( 85, J ), J = 1, 4 ) / 3480, 1970, 572,
-     $                   421 /
-      DATA               ( MM( 86, J ), J = 1, 4 ) / 119, 1817, 3309,
-     $                   4073 /
-      DATA               ( MM( 87, J ), J = 1, 4 ) / 3357, 676, 3171,
-     $                   2813 /
-      DATA               ( MM( 88, J ), J = 1, 4 ) / 837, 1410, 817,
-     $                   2337 /
-      DATA               ( MM( 89, J ), J = 1, 4 ) / 2826, 3723, 3039,
-     $                   1429 /
-      DATA               ( MM( 90, J ), J = 1, 4 ) / 2332, 2803, 1696,
-     $                   1177 /
-      DATA               ( MM( 91, J ), J = 1, 4 ) / 2089, 3185, 1256,
-     $                   1901 /
-      DATA               ( MM( 92, J ), J = 1, 4 ) / 3780, 184, 3715,
-     $                   81 /
-      DATA               ( MM( 93, J ), J = 1, 4 ) / 1700, 663, 2077,
-     $                   1669 /
-      DATA               ( MM( 94, J ), J = 1, 4 ) / 3712, 499, 3019,
-     $                   2633 /
-      DATA               ( MM( 95, J ), J = 1, 4 ) / 150, 3784, 1497,
-     $                   2269 /
-      DATA               ( MM( 96, J ), J = 1, 4 ) / 2000, 1631, 1101,
-     $                   129 /
-      DATA               ( MM( 97, J ), J = 1, 4 ) / 3375, 1925, 717,
-     $                   1141 /
-      DATA               ( MM( 98, J ), J = 1, 4 ) / 1621, 3912, 51,
-     $                   249 /
-      DATA               ( MM( 99, J ), J = 1, 4 ) / 3090, 1398, 981,
-     $                   3917 /
-      DATA               ( MM( 100, J ), J = 1, 4 ) / 3765, 1349, 1978,
-     $                   2481 /
-      DATA               ( MM( 101, J ), J = 1, 4 ) / 1149, 1441, 1813,
-     $                   3941 /
-      DATA               ( MM( 102, J ), J = 1, 4 ) / 3146, 2224, 3881,
-     $                   2217 /
-      DATA               ( MM( 103, J ), J = 1, 4 ) / 33, 2411, 76,
-     $                   2749 /
-      DATA               ( MM( 104, J ), J = 1, 4 ) / 3082, 1907, 3846,
-     $                   3041 /
-      DATA               ( MM( 105, J ), J = 1, 4 ) / 2741, 3192, 3694,
-     $                   1877 /
-      DATA               ( MM( 106, J ), J = 1, 4 ) / 359, 2786, 1682,
-     $                   345 /
-      DATA               ( MM( 107, J ), J = 1, 4 ) / 3316, 382, 124,
-     $                   2861 /
-      DATA               ( MM( 108, J ), J = 1, 4 ) / 1749, 37, 1660,
-     $                   1809 /
-      DATA               ( MM( 109, J ), J = 1, 4 ) / 185, 759, 3997,
-     $                   3141 /
-      DATA               ( MM( 110, J ), J = 1, 4 ) / 2784, 2948, 479,
-     $                   2825 /
-      DATA               ( MM( 111, J ), J = 1, 4 ) / 2202, 1862, 1141,
-     $                   157 /
-      DATA               ( MM( 112, J ), J = 1, 4 ) / 2199, 3802, 886,
-     $                   2881 /
-      DATA               ( MM( 113, J ), J = 1, 4 ) / 1364, 2423, 3514,
-     $                   3637 /
-      DATA               ( MM( 114, J ), J = 1, 4 ) / 1244, 2051, 1301,
-     $                   1465 /
-      DATA               ( MM( 115, J ), J = 1, 4 ) / 2020, 2295, 3604,
-     $                   2829 /
-      DATA               ( MM( 116, J ), J = 1, 4 ) / 3160, 1332, 1888,
-     $                   2161 /
-      DATA               ( MM( 117, J ), J = 1, 4 ) / 2785, 1832, 1836,
-     $                   3365 /
-      DATA               ( MM( 118, J ), J = 1, 4 ) / 2772, 2405, 1990,
-     $                   361 /
-      DATA               ( MM( 119, J ), J = 1, 4 ) / 1217, 3638, 2058,
-     $                   2685 /
-      DATA               ( MM( 120, J ), J = 1, 4 ) / 1822, 3661, 692,
-     $                   3745 /
-      DATA               ( MM( 121, J ), J = 1, 4 ) / 1245, 327, 1194,
-     $                   2325 /
-      DATA               ( MM( 122, J ), J = 1, 4 ) / 2252, 3660, 20,
-     $                   3609 /
-      DATA               ( MM( 123, J ), J = 1, 4 ) / 3904, 716, 3285,
-     $                   3821 /
-      DATA               ( MM( 124, J ), J = 1, 4 ) / 2774, 1842, 2046,
-     $                   3537 /
-      DATA               ( MM( 125, J ), J = 1, 4 ) / 997, 3987, 2107,
-     $                   517 /
-      DATA               ( MM( 126, J ), J = 1, 4 ) / 2573, 1368, 3508,
-     $                   3017 /
-      DATA               ( MM( 127, J ), J = 1, 4 ) / 1148, 1848, 3525,
-     $                   2141 /
-      DATA               ( MM( 128, J ), J = 1, 4 ) / 545, 2366, 3801,
-     $                   1537 /
+      DATA               ( MM( 1, J ), J = 1, 4 ) / 494, 322, 2508,            &
+                         2549 /
+      DATA               ( MM( 2, J ), J = 1, 4 ) / 2637, 789, 3754,           &
+                         1145 /
+      DATA               ( MM( 3, J ), J = 1, 4 ) / 255, 1440, 1766,           &
+                         2253 /
+      DATA               ( MM( 4, J ), J = 1, 4 ) / 2008, 752, 3572,           &
+                         305 /
+      DATA               ( MM( 5, J ), J = 1, 4 ) / 1253, 2859, 2893,          &
+                         3301 /
+      DATA               ( MM( 6, J ), J = 1, 4 ) / 3344, 123, 307,            &
+                         1065 /
+      DATA               ( MM( 7, J ), J = 1, 4 ) / 4084, 1848, 1297,          &
+                         3133 /
+      DATA               ( MM( 8, J ), J = 1, 4 ) / 1739, 643, 3966,           &
+                         2913 /
+      DATA               ( MM( 9, J ), J = 1, 4 ) / 3143, 2405, 758,           &
+                         3285 /
+      DATA               ( MM( 10, J ), J = 1, 4 ) / 3468, 2638, 2598,         &
+                         1241 /
+      DATA               ( MM( 11, J ), J = 1, 4 ) / 688, 2344, 3406,          &
+                         1197 /
+      DATA               ( MM( 12, J ), J = 1, 4 ) / 1657, 46, 2922,           &
+                         3729 /
+      DATA               ( MM( 13, J ), J = 1, 4 ) / 1238, 3814, 1038,         &
+                         2501 /
+      DATA               ( MM( 14, J ), J = 1, 4 ) / 3166, 913, 2934,          &
+                         1673 /
+      DATA               ( MM( 15, J ), J = 1, 4 ) / 1292, 3649, 2091,         &
+                         541 /
+      DATA               ( MM( 16, J ), J = 1, 4 ) / 3422, 339, 2451,          &
+                         2753 /
+      DATA               ( MM( 17, J ), J = 1, 4 ) / 1270, 3808, 1580,         &
+                         949 /
+      DATA               ( MM( 18, J ), J = 1, 4 ) / 2016, 822, 1958,          &
+                         2361 /
+      DATA               ( MM( 19, J ), J = 1, 4 ) / 154, 2832, 2055,          &
+                         1165 /
+      DATA               ( MM( 20, J ), J = 1, 4 ) / 2862, 3078, 1507,         &
+                         4081 /
+      DATA               ( MM( 21, J ), J = 1, 4 ) / 697, 3633, 1078,          &
+                         2725 /
+      DATA               ( MM( 22, J ), J = 1, 4 ) / 1706, 2970, 3273,         &
+                         3305 /
+      DATA               ( MM( 23, J ), J = 1, 4 ) / 491, 637, 17,             &
+                         3069 /
+      DATA               ( MM( 24, J ), J = 1, 4 ) / 931, 2249, 854,           &
+                         3617 /
+      DATA               ( MM( 25, J ), J = 1, 4 ) / 1444, 2081, 2916,         &
+                         3733 /
+      DATA               ( MM( 26, J ), J = 1, 4 ) / 444, 4019, 3971,          &
+                         409 /
+      DATA               ( MM( 27, J ), J = 1, 4 ) / 3577, 1478, 2889,         &
+                         2157 /
+      DATA               ( MM( 28, J ), J = 1, 4 ) / 3944, 242, 3831,          &
+                         1361 /
+      DATA               ( MM( 29, J ), J = 1, 4 ) / 2184, 481, 2621,          &
+                         3973 /
+      DATA               ( MM( 30, J ), J = 1, 4 ) / 1661, 2075, 1541,         &
+                         1865 /
+      DATA               ( MM( 31, J ), J = 1, 4 ) / 3482, 4058, 893,          &
+                         2525 /
+      DATA               ( MM( 32, J ), J = 1, 4 ) / 657, 622, 736,            &
+                         1409 /
+      DATA               ( MM( 33, J ), J = 1, 4 ) / 3023, 3376, 3992,         &
+                         3445 /
+      DATA               ( MM( 34, J ), J = 1, 4 ) / 3618, 812, 787,           &
+                         3577 /
+      DATA               ( MM( 35, J ), J = 1, 4 ) / 1267, 234, 2125,          &
+                         77 /
+      DATA               ( MM( 36, J ), J = 1, 4 ) / 1828, 641, 2364,          &
+                         3761 /
+      DATA               ( MM( 37, J ), J = 1, 4 ) / 164, 4005, 2460,          &
+                         2149 /
+      DATA               ( MM( 38, J ), J = 1, 4 ) / 3798, 1122, 257,          &
+                         1449 /
+      DATA               ( MM( 39, J ), J = 1, 4 ) / 3087, 3135, 1574,         &
+                         3005 /
+      DATA               ( MM( 40, J ), J = 1, 4 ) / 2400, 2640, 3912,         &
+                         225 /
+      DATA               ( MM( 41, J ), J = 1, 4 ) / 2870, 2302, 1216,         &
+                         85 /
+      DATA               ( MM( 42, J ), J = 1, 4 ) / 3876, 40, 3248,           &
+                         3673 /
+      DATA               ( MM( 43, J ), J = 1, 4 ) / 1905, 1832, 3401,         &
+                         3117 /
+      DATA               ( MM( 44, J ), J = 1, 4 ) / 1593, 2247, 2124,         &
+                         3089 /
+      DATA               ( MM( 45, J ), J = 1, 4 ) / 1797, 2034, 2762,         &
+                         1349 /
+      DATA               ( MM( 46, J ), J = 1, 4 ) / 1234, 2637, 149,          &
+                         2057 /
+      DATA               ( MM( 47, J ), J = 1, 4 ) / 3460, 1287, 2245,         &
+                         413 /
+      DATA               ( MM( 48, J ), J = 1, 4 ) / 328, 1691, 166,           &
+                         65 /
+      DATA               ( MM( 49, J ), J = 1, 4 ) / 2861, 496, 466,           &
+                         1845 /
+      DATA               ( MM( 50, J ), J = 1, 4 ) / 1950, 1597, 4018,         &
+                         697 /
+      DATA               ( MM( 51, J ), J = 1, 4 ) / 617, 2394, 1399,          &
+                         3085 /
+      DATA               ( MM( 52, J ), J = 1, 4 ) / 2070, 2584, 190,          &
+                         3441 /
+      DATA               ( MM( 53, J ), J = 1, 4 ) / 3331, 1843, 2879,         &
+                         1573 /
+      DATA               ( MM( 54, J ), J = 1, 4 ) / 769, 336, 153,            &
+                         3689 /
+      DATA               ( MM( 55, J ), J = 1, 4 ) / 1558, 1472, 2320,         &
+                         2941 /
+      DATA               ( MM( 56, J ), J = 1, 4 ) / 2412, 2407, 18,           &
+                         929 /
+      DATA               ( MM( 57, J ), J = 1, 4 ) / 2800, 433, 712,           &
+                         533 /
+      DATA               ( MM( 58, J ), J = 1, 4 ) / 189, 2096, 2159,          &
+                         2841 /
+      DATA               ( MM( 59, J ), J = 1, 4 ) / 287, 1761, 2318,          &
+                         4077 /
+      DATA               ( MM( 60, J ), J = 1, 4 ) / 2045, 2810, 2091,         &
+                         721 /
+      DATA               ( MM( 61, J ), J = 1, 4 ) / 1227, 566, 3443,          &
+                         2821 /
+      DATA               ( MM( 62, J ), J = 1, 4 ) / 2838, 442, 1510,          &
+                         2249 /
+      DATA               ( MM( 63, J ), J = 1, 4 ) / 209, 41, 449,             &
+                         2397 /
+      DATA               ( MM( 64, J ), J = 1, 4 ) / 2770, 1238, 1956,         &
+                         2817 /
+      DATA               ( MM( 65, J ), J = 1, 4 ) / 3654, 1086, 2201,         &
+                         245 /
+      DATA               ( MM( 66, J ), J = 1, 4 ) / 3993, 603, 3137,          &
+                         1913 /
+      DATA               ( MM( 67, J ), J = 1, 4 ) / 192, 840, 3399,           &
+                         1997 /
+      DATA               ( MM( 68, J ), J = 1, 4 ) / 2253, 3168, 1321,         &
+                         3121 /
+      DATA               ( MM( 69, J ), J = 1, 4 ) / 3491, 1499, 2271,         &
+                         997 /
+      DATA               ( MM( 70, J ), J = 1, 4 ) / 2889, 1084, 3667,         &
+                         1833 /
+      DATA               ( MM( 71, J ), J = 1, 4 ) / 2857, 3438, 2703,         &
+                         2877 /
+      DATA               ( MM( 72, J ), J = 1, 4 ) / 2094, 2408, 629,          &
+                         1633 /
+      DATA               ( MM( 73, J ), J = 1, 4 ) / 1818, 1589, 2365,         &
+                         981 /
+      DATA               ( MM( 74, J ), J = 1, 4 ) / 688, 2391, 2431,          &
+                         2009 /
+      DATA               ( MM( 75, J ), J = 1, 4 ) / 1407, 288, 1113,          &
+                         941 /
+      DATA               ( MM( 76, J ), J = 1, 4 ) / 634, 26, 3922,            &
+                         2449 /
+      DATA               ( MM( 77, J ), J = 1, 4 ) / 3231, 512, 2554,          &
+                         197 /
+      DATA               ( MM( 78, J ), J = 1, 4 ) / 815, 1456, 184,           &
+                         2441 /
+      DATA               ( MM( 79, J ), J = 1, 4 ) / 3524, 171, 2099,          &
+                         285 /
+      DATA               ( MM( 80, J ), J = 1, 4 ) / 1914, 1677, 3228,         &
+                         1473 /
+      DATA               ( MM( 81, J ), J = 1, 4 ) / 516, 2657, 4012,          &
+                         2741 /
+      DATA               ( MM( 82, J ), J = 1, 4 ) / 164, 2270, 1921,          &
+                         3129 /
+      DATA               ( MM( 83, J ), J = 1, 4 ) / 303, 2587, 3452,          &
+                         909 /
+      DATA               ( MM( 84, J ), J = 1, 4 ) / 2144, 2961, 3901,         &
+                         2801 /
+      DATA               ( MM( 85, J ), J = 1, 4 ) / 3480, 1970, 572,          &
+                         421 /
+      DATA               ( MM( 86, J ), J = 1, 4 ) / 119, 1817, 3309,          &
+                         4073 /
+      DATA               ( MM( 87, J ), J = 1, 4 ) / 3357, 676, 3171,          &
+                         2813 /
+      DATA               ( MM( 88, J ), J = 1, 4 ) / 837, 1410, 817,           &
+                         2337 /
+      DATA               ( MM( 89, J ), J = 1, 4 ) / 2826, 3723, 3039,         &
+                         1429 /
+      DATA               ( MM( 90, J ), J = 1, 4 ) / 2332, 2803, 1696,         &
+                         1177 /
+      DATA               ( MM( 91, J ), J = 1, 4 ) / 2089, 3185, 1256,         &
+                         1901 /
+      DATA               ( MM( 92, J ), J = 1, 4 ) / 3780, 184, 3715,          &
+                         81 /
+      DATA               ( MM( 93, J ), J = 1, 4 ) / 1700, 663, 2077,          &
+                         1669 /
+      DATA               ( MM( 94, J ), J = 1, 4 ) / 3712, 499, 3019,          &
+                         2633 /
+      DATA               ( MM( 95, J ), J = 1, 4 ) / 150, 3784, 1497,          &
+                         2269 /
+      DATA               ( MM( 96, J ), J = 1, 4 ) / 2000, 1631, 1101,         &
+                         129 /
+      DATA               ( MM( 97, J ), J = 1, 4 ) / 3375, 1925, 717,          &
+                         1141 /
+      DATA               ( MM( 98, J ), J = 1, 4 ) / 1621, 3912, 51,           &
+                         249 /
+      DATA               ( MM( 99, J ), J = 1, 4 ) / 3090, 1398, 981,          &
+                         3917 /
+      DATA               ( MM( 100, J ), J = 1, 4 ) / 3765, 1349, 1978,        &
+                         2481 /
+      DATA               ( MM( 101, J ), J = 1, 4 ) / 1149, 1441, 1813,        &
+                         3941 /
+      DATA               ( MM( 102, J ), J = 1, 4 ) / 3146, 2224, 3881,        &
+                         2217 /
+      DATA               ( MM( 103, J ), J = 1, 4 ) / 33, 2411, 76,            &
+                         2749 /
+      DATA               ( MM( 104, J ), J = 1, 4 ) / 3082, 1907, 3846,        &
+                         3041 /
+      DATA               ( MM( 105, J ), J = 1, 4 ) / 2741, 3192, 3694,        &
+                         1877 /
+      DATA               ( MM( 106, J ), J = 1, 4 ) / 359, 2786, 1682,         &
+                         345 /
+      DATA               ( MM( 107, J ), J = 1, 4 ) / 3316, 382, 124,          &
+                         2861 /
+      DATA               ( MM( 108, J ), J = 1, 4 ) / 1749, 37, 1660,          &
+                         1809 /
+      DATA               ( MM( 109, J ), J = 1, 4 ) / 185, 759, 3997,          &
+                         3141 /
+      DATA               ( MM( 110, J ), J = 1, 4 ) / 2784, 2948, 479,         &
+                         2825 /
+      DATA               ( MM( 111, J ), J = 1, 4 ) / 2202, 1862, 1141,        &
+                         157 /
+      DATA               ( MM( 112, J ), J = 1, 4 ) / 2199, 3802, 886,         &
+                         2881 /
+      DATA               ( MM( 113, J ), J = 1, 4 ) / 1364, 2423, 3514,        &
+                         3637 /
+      DATA               ( MM( 114, J ), J = 1, 4 ) / 1244, 2051, 1301,        &
+                         1465 /
+      DATA               ( MM( 115, J ), J = 1, 4 ) / 2020, 2295, 3604,        &
+                         2829 /
+      DATA               ( MM( 116, J ), J = 1, 4 ) / 3160, 1332, 1888,        &
+                         2161 /
+      DATA               ( MM( 117, J ), J = 1, 4 ) / 2785, 1832, 1836,        &
+                         3365 /
+      DATA               ( MM( 118, J ), J = 1, 4 ) / 2772, 2405, 1990,        &
+                         361 /
+      DATA               ( MM( 119, J ), J = 1, 4 ) / 1217, 3638, 2058,        &
+                         2685 /
+      DATA               ( MM( 120, J ), J = 1, 4 ) / 1822, 3661, 692,         &
+                         3745 /
+      DATA               ( MM( 121, J ), J = 1, 4 ) / 1245, 327, 1194,         &
+                         2325 /
+      DATA               ( MM( 122, J ), J = 1, 4 ) / 2252, 3660, 20,          &
+                         3609 /
+      DATA               ( MM( 123, J ), J = 1, 4 ) / 3904, 716, 3285,         &
+                         3821 /
+      DATA               ( MM( 124, J ), J = 1, 4 ) / 2774, 1842, 2046,        &
+                         3537 /
+      DATA               ( MM( 125, J ), J = 1, 4 ) / 997, 3987, 2107,         &
+                         517 /
+      DATA               ( MM( 126, J ), J = 1, 4 ) / 2573, 1368, 3508,        &
+                         3017 /
+      DATA               ( MM( 127, J ), J = 1, 4 ) / 1148, 1848, 3525,        &
+                         2141 /
+      DATA               ( MM( 128, J ), J = 1, 4 ) / 545, 2366, 3801,         &
+                         1537 /
 !     ..
 !     .. Executable Statements ..
 !
@@ -9618,14 +9618,14 @@ CIBM           PREFER SCALAR
          IT2 = IT2 + I2*MM( I, 4 ) + I3*MM( I, 3 ) + I4*MM( I, 2 )
          IT1 = IT2 / IPW2
          IT2 = IT2 - IPW2*IT1
-         IT1 = IT1 + I1*MM( I, 4 ) + I2*MM( I, 3 ) + I3*MM( I, 2 ) +
-     $         I4*MM( I, 1 )
+         IT1 = IT1 + I1*MM( I, 4 ) + I2*MM( I, 3 ) + I3*MM( I, 2 ) +           &
+               I4*MM( I, 1 )
          IT1 = MOD( IT1, IPW2 )
 !
 !        Convert 48-bit integer to a real number in the interval (0,1)
 !
-         X( I ) = R*( DBLE( IT1 )+R*( DBLE( IT2 )+R*( DBLE( IT3 )+R*
-     $            DBLE( IT4 ) ) ) )
+         X( I ) = R*( DBLE( IT1 )+R*( DBLE( IT2 )+R*( DBLE( IT3 )+R*           &
+                  DBLE( IT4 ) ) ) )
    10 CONTINUE
 !
 !     Return final value of seed
@@ -9765,21 +9765,21 @@ CIBM           PREFER SCALAR
          INFO = -4
       ELSE IF( M.LT.0 ) THEN
          INFO = -6
-      ELSE IF( N.LT.0 .OR. ( ITYPE.EQ.4 .AND. N.NE.M ) .OR.
-     $         ( ITYPE.EQ.5 .AND. N.NE.M ) ) THEN
+      ELSE IF( N.LT.0 .OR. ( ITYPE.EQ.4 .AND. N.NE.M ) .OR.                    &
+               ( ITYPE.EQ.5 .AND. N.NE.M ) ) THEN
          INFO = -7
       ELSE IF( ITYPE.LE.3 .AND. LDA.LT.MAX( 1, M ) ) THEN
          INFO = -9
       ELSE IF( ITYPE.GE.4 ) THEN
          IF( KL.LT.0 .OR. KL.GT.MAX( M-1, 0 ) ) THEN
             INFO = -2
-         ELSE IF( KU.LT.0 .OR. KU.GT.MAX( N-1, 0 ) .OR.
-     $            ( ( ITYPE.EQ.4 .OR. ITYPE.EQ.5 ) .AND. KL.NE.KU ) )
-     $             THEN
+         ELSE IF( KU.LT.0 .OR. KU.GT.MAX( N-1, 0 ) .OR.                        &
+                  ( ( ITYPE.EQ.4 .OR. ITYPE.EQ.5 ) .AND. KL.NE.KU ) )          &
+                   THEN
             INFO = -3
-         ELSE IF( ( ITYPE.EQ.4 .AND. LDA.LT.KL+1 ) .OR.
-     $            ( ITYPE.EQ.5 .AND. LDA.LT.KU+1 ) .OR.
-     $            ( ITYPE.EQ.6 .AND. LDA.LT.2*KL+KU+1 ) ) THEN
+         ELSE IF( ( ITYPE.EQ.4 .AND. LDA.LT.KL+1 ) .OR.                        &
+                  ( ITYPE.EQ.5 .AND. LDA.LT.KU+1 ) .OR.                        &
+                  ( ITYPE.EQ.6 .AND. LDA.LT.2*KL+KU+1 ) ) THEN
             INFO = -9
          END IF
       END IF
@@ -9791,8 +9791,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.EQ.0 .OR. M.EQ.0 )
-     $   RETURN
+      IF( N.EQ.0 .OR. M.EQ.0 )                                                 &
+         RETURN
 !
 !     Get machine parameters
 !
@@ -9898,8 +9898,8 @@ CIBM           PREFER SCALAR
 !
       END IF
 !
-      IF( .NOT.DONE )
-     $   GO TO 10
+      IF( .NOT.DONE )                                                          &
+         GO TO 10
 !
       RETURN
 !
@@ -10152,11 +10152,11 @@ CIBM           PREFER SCALAR
       INFO = 0
       IF( .NOT.( LSAME( SIDE, 'L' ) .OR. LSAME( SIDE, 'R' ) ) ) THEN
          INFO = 1
-      ELSE IF( .NOT.( LSAME( PIVOT, 'V' ) .OR. LSAME( PIVOT,
-     $         'T' ) .OR. LSAME( PIVOT, 'B' ) ) ) THEN
+      ELSE IF( .NOT.( LSAME( PIVOT, 'V' ) .OR. LSAME( PIVOT,                   &
+               'T' ) .OR. LSAME( PIVOT, 'B' ) ) ) THEN
          INFO = 2
-      ELSE IF( .NOT.( LSAME( DIRECT, 'F' ) .OR. LSAME( DIRECT, 'B' ) ) )
-     $          THEN
+      ELSE IF( .NOT.( LSAME( DIRECT, 'F' ) .OR. LSAME( DIRECT, 'B' ) ) )       &
+                THEN
          INFO = 3
       ELSE IF( M.LT.0 ) THEN
          INFO = 4
@@ -10172,8 +10172,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( ( M.EQ.0 ) .OR. ( N.EQ.0 ) )
-     $   RETURN
+      IF( ( M.EQ.0 ) .OR. ( N.EQ.0 ) )                                         &
+         RETURN
       IF( LSAME( SIDE, 'L' ) ) THEN
 !
 !        Form  P * A
@@ -10434,8 +10434,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.LE.1 )
-     $   RETURN
+      IF( N.LE.1 )                                                             &
+         RETURN
 !
       STKPNT = 1
       STACK( 1, 1 ) = 1
@@ -10519,12 +10519,12 @@ CIBM           PREFER SCALAR
    60       CONTINUE
    70       CONTINUE
             J = J - 1
-            IF( D( J ).LT.DMNMX )
-     $         GO TO 70
+            IF( D( J ).LT.DMNMX )                                              &
+               GO TO 70
    80       CONTINUE
             I = I + 1
-            IF( D( I ).GT.DMNMX )
-     $         GO TO 80
+            IF( D( I ).GT.DMNMX )                                              &
+               GO TO 80
             IF( I.LT.J ) THEN
                TMP = D( I )
                D( I ) = D( J )
@@ -10555,12 +10555,12 @@ CIBM           PREFER SCALAR
    90       CONTINUE
   100       CONTINUE
             J = J - 1
-            IF( D( J ).GT.DMNMX )
-     $         GO TO 100
+            IF( D( J ).GT.DMNMX )                                              &
+               GO TO 100
   110       CONTINUE
             I = I + 1
-            IF( D( I ).LT.DMNMX )
-     $         GO TO 110
+            IF( D( I ).LT.DMNMX )                                              &
+               GO TO 110
             IF( I.LT.J ) THEN
                TMP = D( I )
                D( I ) = D( J )
@@ -10584,8 +10584,8 @@ CIBM           PREFER SCALAR
             END IF
          END IF
       END IF
-      IF( STKPNT.GT.0 )
-     $   GO TO 10
+      IF( STKPNT.GT.0 )                                                        &
+         GO TO 10
       RETURN
 !
 !     End of DLASRT
@@ -10809,8 +10809,8 @@ CIBM           PREFER SCALAR
 
 ! ##################################################################################################################################
 
-      SUBROUTINE DLATBS( UPLO, TRANS, DIAG, NORMIN, N, KD, AB, LDAB, X,
-     $                   SCALE, CNORM, INFO, iter_num, dtbsv_msg )
+      SUBROUTINE DLATBS( UPLO, TRANS, DIAG, NORMIN, N, KD, AB, LDAB, X,        &
+                         SCALE, CNORM, INFO, iter_num, dtbsv_msg )
       USE PENTIUM_II_KIND, ONLY       :  BYTE, LONG, DOUBLE
 
       CHARACTER(LEN=LEN(BLNK_SUB_NAM)):: subr_name = 'DLATBS'
@@ -11000,8 +11000,8 @@ CIBM           PREFER SCALAR
 !     .. Local Scalars ..
       LOGICAL            NOTRAN, NOUNIT, UPPER
       INTEGER            I, IMAX, J, JFIRST, JINC, JLAST, JLEN, MAIND
-      REAL(DOUBLE)   BIGNUM, GROW, REC, SMLNUM, SUMJ, TJJ, TJJS,
-     $                   TMAX, TSCAL, USCAL, XBND, XJ, XMAX
+      REAL(DOUBLE)   BIGNUM, GROW, REC, SMLNUM, SUMJ, TJJ, TJJS,               &
+                         TMAX, TSCAL, USCAL, XBND, XJ, XMAX
 !     ..
 !     .. External Functions ..
 !     ..
@@ -11029,13 +11029,13 @@ CIBM           PREFER SCALAR
 !
       IF( .NOT.UPPER .AND. .NOT.LSAME( UPLO, 'L' ) ) THEN
          INFO = -1
-      ELSE IF( .NOT.NOTRAN .AND. .NOT.LSAME( TRANS, 'T' ) .AND. .NOT.
-     $         LSAME( TRANS, 'C' ) ) THEN
+      ELSE IF( .NOT.NOTRAN .AND. .NOT.LSAME( TRANS, 'T' ) .AND. .NOT.          &
+               LSAME( TRANS, 'C' ) ) THEN
          INFO = -2
       ELSE IF( .NOT.NOUNIT .AND. .NOT.LSAME( DIAG, 'U' ) ) THEN
          INFO = -3
-      ELSE IF( .NOT.LSAME( NORMIN, 'Y' ) .AND. .NOT.
-     $         LSAME( NORMIN, 'N' ) ) THEN
+      ELSE IF( .NOT.LSAME( NORMIN, 'Y' ) .AND. .NOT.                           &
+               LSAME( NORMIN, 'N' ) ) THEN
          INFO = -4
       ELSE IF( N.LT.0 ) THEN
          INFO = -5
@@ -11051,8 +11051,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.EQ.0 )
-     $   RETURN
+      IF( N.EQ.0 )                                                             &
+         RETURN
 !
 !     Determine machine dependent parameters to control overflow.
 !
@@ -11139,8 +11139,8 @@ CIBM           PREFER SCALAR
 !
 !              Exit the loop if the growth factor is too small.
 !
-               IF( GROW.LE.SMLNUM )
-     $            GO TO 50
+               IF( GROW.LE.SMLNUM )                                            &
+                  GO TO 50
 !
 !              M(j) = G(j-1) / abs(A(j,j))
 !
@@ -11170,8 +11170,8 @@ CIBM           PREFER SCALAR
 !
 !              Exit the loop if the growth factor is too small.
 !
-               IF( GROW.LE.SMLNUM )
-     $            GO TO 50
+               IF( GROW.LE.SMLNUM )                                            &
+                  GO TO 50
 !
 !              G(j) = G(j-1)*( 1 + CNORM(j) )
 !
@@ -11214,8 +11214,8 @@ CIBM           PREFER SCALAR
 !
 !              Exit the loop if the growth factor is too small.
 !
-               IF( GROW.LE.SMLNUM )
-     $            GO TO 80
+               IF( GROW.LE.SMLNUM )                                            &
+                  GO TO 80
 !
 !              G(j) = max( G(j-1), M(j-1)*( 1 + CNORM(j) ) )
 !
@@ -11225,8 +11225,8 @@ CIBM           PREFER SCALAR
 !              M(j) = M(j-1)*( 1 + CNORM(j) ) / abs(A(j,j))
 !
                TJJ = ABS( AB( MAIND, J ) )
-               IF( XJ.GT.TJJ )
-     $            XBND = XBND*( TJJ / XJ )
+               IF( XJ.GT.TJJ )                                                 &
+                  XBND = XBND*( TJJ / XJ )
    60       CONTINUE
             GROW = MIN( GROW, XBND )
          ELSE
@@ -11240,8 +11240,8 @@ CIBM           PREFER SCALAR
 !
 !              Exit the loop if the growth factor is too small.
 !
-               IF( GROW.LE.SMLNUM )
-     $            GO TO 80
+               IF( GROW.LE.SMLNUM )                                            &
+                  GO TO 80
 !
 !              G(j) = ( 1 + CNORM(j) )*G(j-1)
 !
@@ -11257,8 +11257,8 @@ CIBM           PREFER SCALAR
 !        Use the Level 2 BLAS solve if the reciprocal of the bound on
 !        elements of X is not too small.
 !
-         CALL DTBSV( UPLO, TRANS, DIAG, N, KD, AB, LDAB, X, 1
-     &             , dtbsv_msg )
+         CALL DTBSV( UPLO, TRANS, DIAG, N, KD, AB, LDAB, X, 1                  &
+                   , dtbsv_msg )
       ELSE
 !
 !        Use a Level 1 BLAS solve, scaling intermediate results.
@@ -11288,8 +11288,8 @@ CIBM           PREFER SCALAR
                   TJJS = AB( MAIND, J )*TSCAL
                ELSE
                   TJJS = TSCAL
-                  IF( TSCAL.EQ.ONE )
-     $               GO TO 100
+                  IF( TSCAL.EQ.ONE )                                           &
+                     GO TO 100
                END IF
                TJJ = ABS( TJJS )
                IF( TJJ.GT.SMLNUM ) THEN
@@ -11376,8 +11376,8 @@ CIBM           PREFER SCALAR
 !                                             x(j)* A(max(1,j-kd):j-1,j)
 !
                      JLEN = MIN( KD, J-1 )
-                     CALL DAXPY( JLEN, -X( J )*TSCAL,
-     $                           AB( KD+1-JLEN, J ), 1, X( J-JLEN ), 1 )
+                     CALL DAXPY( JLEN, -X( J )*TSCAL,                          &
+                                 AB( KD+1-JLEN, J ), 1, X( J-JLEN ), 1 )
                      I = IDAMAX( J-1, X, 1 )
                      XMAX = ABS( X( I ) )
                   END IF
@@ -11388,9 +11388,9 @@ CIBM           PREFER SCALAR
 !                                          x(j) * A(j+1:min(j+kd,n),j)
 !
                   JLEN = MIN( KD, N-J )
-                  IF( JLEN.GT.0 )
-     $               CALL DAXPY( JLEN, -X( J )*TSCAL, AB( 2, J ), 1,
-     $                           X( J+1 ), 1 )
+                  IF( JLEN.GT.0 )                                              &
+                     CALL DAXPY( JLEN, -X( J )*TSCAL, AB( 2, J ), 1,           &
+                                 X( J+1 ), 1 )
                   I = J + IDAMAX( N-J, X( J+1 ), 1 )
                   XMAX = ABS( X( I ) )
                END IF
@@ -11443,12 +11443,12 @@ CIBM           PREFER SCALAR
 !
                   IF( UPPER ) THEN
                      JLEN = MIN( KD, J-1 )
-                     SUMJ = DDOT( JLEN, AB( KD+1-JLEN, J ), 1,
-     $                      X( J-JLEN ), 1 )
+                     SUMJ = DDOT( JLEN, AB( KD+1-JLEN, J ), 1,                 &
+                            X( J-JLEN ), 1 )
                   ELSE
                      JLEN = MIN( KD, N-J )
-                     IF( JLEN.GT.0 )
-     $                  SUMJ = DDOT( JLEN, AB( 2, J ), 1, X( J+1 ), 1 )
+                     IF( JLEN.GT.0 )                                           &
+                        SUMJ = DDOT( JLEN, AB( 2, J ), 1, X( J+1 ), 1 )
                   END IF
                ELSE
 !
@@ -11457,8 +11457,8 @@ CIBM           PREFER SCALAR
                   IF( UPPER ) THEN
                      JLEN = MIN( KD, J-1 )
                      DO 120 I = 1, JLEN
-                        SUMJ = SUMJ + ( AB( KD+I-JLEN, J )*USCAL )*
-     $                         X( J-JLEN-1+I )
+                        SUMJ = SUMJ + ( AB( KD+I-JLEN, J )*USCAL )*            &
+                               X( J-JLEN-1+I )
   120                CONTINUE
                   ELSE
                      JLEN = MIN( KD, N-J )
@@ -11482,8 +11482,8 @@ CIBM           PREFER SCALAR
                      TJJS = AB( MAIND, J )*TSCAL
                   ELSE
                      TJJS = TSCAL
-                     IF( TSCAL.EQ.ONE )
-     $                  GO TO 150
+                     IF( TSCAL.EQ.ONE )                                        &
+                        GO TO 150
                   END IF
                   TJJ = ABS( TJJS )
                   IF( TJJ.GT.SMLNUM ) THEN
@@ -11550,8 +11550,8 @@ CIBM           PREFER SCALAR
 !
 !     End of DLATBS
 !
-12345 format("+",5X,'Iteration number ',i4,' : J = ',I8,' to ',I8,
-     &'                          ')
+12345 format("+",5X,'Iteration number ',i4,' : J = ',I8,' to ',I8,             &
+      '                          ')
 
 ! **********************************************************************************************************************************
  9000 continue            ! My lines
@@ -11726,8 +11726,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.LE.0 )
-     $   RETURN
+      IF( N.LE.0 )                                                             &
+         RETURN
 !
       IF( LSAME( UPLO, 'U' ) ) THEN
 !
@@ -11739,10 +11739,10 @@ CIBM           PREFER SCALAR
 !
 !              Update A(1:i,i)
 !
-               CALL DGEMV( 'No transpose', I, N-I, -ONE, A( 1, I+1 ),
-     $                     LDA, W( I, IW+1 ), LDW, ONE, A( 1, I ), 1 )
-               CALL DGEMV( 'No transpose', I, N-I, -ONE, W( 1, IW+1 ),
-     $                     LDW, A( I, I+1 ), LDA, ONE, A( 1, I ), 1 )
+               CALL DGEMV( 'No transpose', I, N-I, -ONE, A( 1, I+1 ),          &
+                           LDA, W( I, IW+1 ), LDW, ONE, A( 1, I ), 1 )
+               CALL DGEMV( 'No transpose', I, N-I, -ONE, W( 1, IW+1 ),         &
+                           LDW, A( I, I+1 ), LDA, ONE, A( 1, I ), 1 )
             END IF
             IF( I.GT.1 ) THEN
 !
@@ -11755,23 +11755,23 @@ CIBM           PREFER SCALAR
 !
 !              Compute W(1:i-1,i)
 !
-               CALL DSYMV( 'Upper', I-1, ONE, A, LDA, A( 1, I ), 1,
-     $                     ZERO, W( 1, IW ), 1 )
+               CALL DSYMV( 'Upper', I-1, ONE, A, LDA, A( 1, I ), 1,            &
+                           ZERO, W( 1, IW ), 1 )
                IF( I.LT.N ) THEN
-                  CALL DGEMV( 'Transpose', I-1, N-I, ONE, W( 1, IW+1 ),
-     $                        LDW, A( 1, I ), 1, ZERO, W( I+1, IW ), 1 )
-                  CALL DGEMV( 'No transpose', I-1, N-I, -ONE,
-     $                        A( 1, I+1 ), LDA, W( I+1, IW ), 1, ONE,
-     $                        W( 1, IW ), 1 )
-                  CALL DGEMV( 'Transpose', I-1, N-I, ONE, A( 1, I+1 ),
-     $                        LDA, A( 1, I ), 1, ZERO, W( I+1, IW ), 1 )
-                  CALL DGEMV( 'No transpose', I-1, N-I, -ONE,
-     $                        W( 1, IW+1 ), LDW, W( I+1, IW ), 1, ONE,
-     $                        W( 1, IW ), 1 )
+                  CALL DGEMV( 'Transpose', I-1, N-I, ONE, W( 1, IW+1 ),        &
+                              LDW, A( 1, I ), 1, ZERO, W( I+1, IW ), 1 )
+                  CALL DGEMV( 'No transpose', I-1, N-I, -ONE,                  &
+                              A( 1, I+1 ), LDA, W( I+1, IW ), 1, ONE,          &
+                              W( 1, IW ), 1 )
+                  CALL DGEMV( 'Transpose', I-1, N-I, ONE, A( 1, I+1 ),         &
+                              LDA, A( 1, I ), 1, ZERO, W( I+1, IW ), 1 )
+                  CALL DGEMV( 'No transpose', I-1, N-I, -ONE,                  &
+                              W( 1, IW+1 ), LDW, W( I+1, IW ), 1, ONE,         &
+                              W( 1, IW ), 1 )
                END IF
                CALL DSCAL( I-1, TAU( I-1 ), W( 1, IW ), 1 )
-               ALPHA = -HALF*TAU( I-1 )*DDOT( I-1, W( 1, IW ), 1,
-     $                 A( 1, I ), 1 )
+               ALPHA = -HALF*TAU( I-1 )*DDOT( I-1, W( 1, IW ), 1,              &
+                       A( 1, I ), 1 )
                CALL DAXPY( I-1, ALPHA, A( 1, I ), 1, W( 1, IW ), 1 )
             END IF
 !
@@ -11784,35 +11784,35 @@ CIBM           PREFER SCALAR
 !
 !           Update A(i:n,i)
 !
-            CALL DGEMV( 'No transpose', N-I+1, I-1, -ONE, A( I, 1 ),
-     $                  LDA, W( I, 1 ), LDW, ONE, A( I, I ), 1 )
-            CALL DGEMV( 'No transpose', N-I+1, I-1, -ONE, W( I, 1 ),
-     $                  LDW, A( I, 1 ), LDA, ONE, A( I, I ), 1 )
+            CALL DGEMV( 'No transpose', N-I+1, I-1, -ONE, A( I, 1 ),           &
+                        LDA, W( I, 1 ), LDW, ONE, A( I, I ), 1 )
+            CALL DGEMV( 'No transpose', N-I+1, I-1, -ONE, W( I, 1 ),           &
+                        LDW, A( I, 1 ), LDA, ONE, A( I, I ), 1 )
             IF( I.LT.N ) THEN
 !
 !              Generate elementary reflector H(i) to annihilate
 !              A(i+2:n,i)
 !
-               CALL DLARFG( N-I, A( I+1, I ), A( MIN( I+2, N ), I ), 1,
-     $                      TAU( I ) )
+               CALL DLARFG( N-I, A( I+1, I ), A( MIN( I+2, N ), I ), 1,        &
+                            TAU( I ) )
                E( I ) = A( I+1, I )
                A( I+1, I ) = ONE
 !
 !              Compute W(i+1:n,i)
 !
-               CALL DSYMV( 'Lower', N-I, ONE, A( I+1, I+1 ), LDA,
-     $                     A( I+1, I ), 1, ZERO, W( I+1, I ), 1 )
-               CALL DGEMV( 'Transpose', N-I, I-1, ONE, W( I+1, 1 ), LDW,
-     $                     A( I+1, I ), 1, ZERO, W( 1, I ), 1 )
-               CALL DGEMV( 'No transpose', N-I, I-1, -ONE, A( I+1, 1 ),
-     $                     LDA, W( 1, I ), 1, ONE, W( I+1, I ), 1 )
-               CALL DGEMV( 'Transpose', N-I, I-1, ONE, A( I+1, 1 ), LDA,
-     $                     A( I+1, I ), 1, ZERO, W( 1, I ), 1 )
-               CALL DGEMV( 'No transpose', N-I, I-1, -ONE, W( I+1, 1 ),
-     $                     LDW, W( 1, I ), 1, ONE, W( I+1, I ), 1 )
+               CALL DSYMV( 'Lower', N-I, ONE, A( I+1, I+1 ), LDA,              &
+                           A( I+1, I ), 1, ZERO, W( I+1, I ), 1 )
+               CALL DGEMV( 'Transpose', N-I, I-1, ONE, W( I+1, 1 ), LDW,       &
+                           A( I+1, I ), 1, ZERO, W( 1, I ), 1 )
+               CALL DGEMV( 'No transpose', N-I, I-1, -ONE, A( I+1, 1 ),        &
+                           LDA, W( 1, I ), 1, ONE, W( I+1, I ), 1 )
+               CALL DGEMV( 'Transpose', N-I, I-1, ONE, A( I+1, 1 ), LDA,       &
+                           A( I+1, I ), 1, ZERO, W( 1, I ), 1 )
+               CALL DGEMV( 'No transpose', N-I, I-1, -ONE, W( I+1, 1 ),        &
+                           LDW, W( 1, I ), 1, ONE, W( I+1, I ), 1 )
                CALL DSCAL( N-I, TAU( I ), W( I+1, I ), 1 )
-               ALPHA = -HALF*TAU( I )*DDOT( N-I, W( I+1, I ), 1,
-     $                 A( I+1, I ), 1 )
+               ALPHA = -HALF*TAU( I )*DDOT( N-I, W( I+1, I ), 1,               &
+                       A( I+1, I ), 1 )
                CALL DAXPY( N-I, ALPHA, A( I+1, I ), 1, W( I+1, I ), 1 )
             END IF
 !
@@ -11920,8 +11920,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.LE.0 )
-     $   RETURN
+      IF( N.LE.0 )                                                             &
+         RETURN
 !
 !     Initialise columns 1:n-k to columns of the unit matrix
 !
@@ -11938,8 +11938,8 @@ CIBM           PREFER SCALAR
 !        Apply H(i) to A(1:m-k+i,1:n-k+i) from the left
 !
          A( M-N+II, II ) = ONE
-         CALL DLARF( 'Left', M-N+II, II-1, A( 1, II ), 1, TAU( I ), A,
-     $               LDA, WORK )
+         CALL DLARF( 'Left', M-N+II, II-1, A( 1, II ), 1, TAU( I ), A,         &
+                     LDA, WORK )
          CALL DSCAL( M-N+II-1, -TAU( I ), A( 1, II ), 1 )
          A( M-N+II, II ) = ONE - TAU( I )
 !
@@ -12050,8 +12050,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.LE.0 )
-     $   RETURN
+      IF( N.LE.0 )                                                             &
+         RETURN
 !
 !     Initialise columns k+1:n to columns of the unit matrix
 !
@@ -12068,11 +12068,11 @@ CIBM           PREFER SCALAR
 !
          IF( I.LT.N ) THEN
             A( I, I ) = ONE
-            CALL DLARF( 'Left', M-I+1, N-I, A( I, I ), 1, TAU( I ),
-     $                  A( I, I+1 ), LDA, WORK )
+            CALL DLARF( 'Left', M-I+1, N-I, A( I, I ), 1, TAU( I ),            &
+                        A( I, I+1 ), LDA, WORK )
          END IF
-         IF( I.LT.M )
-     $      CALL DSCAL( M-I, -TAU( I ), A( I+1, I ), 1 )
+         IF( I.LT.M )                                                          &
+            CALL DSCAL( M-I, -TAU( I ), A( I+1, I ), 1 )
          A( I, I ) = ONE - TAU( I )
 !
 !        Set A(1:i-1,i) to zero
@@ -12166,8 +12166,8 @@ CIBM           PREFER SCALAR
 !     ..
 !     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            I, IB, IINFO, IWS, J, KK, L, LDWORK, LWKOPT,
-     $                   NB, NBMIN, NX
+      INTEGER            I, IB, IINFO, IWS, J, KK, L, LDWORK, LWKOPT,          &
+                         NB, NBMIN, NX
 !     ..
 !     .. External Subroutines ..
 !     ..
@@ -12268,21 +12268,21 @@ CIBM           PREFER SCALAR
 !              Form the triangular factor of the block reflector
 !              H = H(i+ib-1) . . . H(i+1) H(i)
 !
-               CALL DLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
-     $                      A( 1, N-K+I ), LDA, TAU( I ), WORK, LDWORK )
+               CALL DLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,          &
+                            A( 1, N-K+I ), LDA, TAU( I ), WORK, LDWORK )
 !
 !              Apply H to A(1:m-k+i+ib-1,1:n-k+i-1) from the left
 !
-               CALL DLARFB( 'Left', 'No transpose', 'Backward',
-     $                      'Columnwise', M-K+I+IB-1, N-K+I-1, IB,
-     $                      A( 1, N-K+I ), LDA, WORK, LDWORK, A, LDA,
-     $                      WORK( IB+1 ), LDWORK )
+               CALL DLARFB( 'Left', 'No transpose', 'Backward',                &
+                            'Columnwise', M-K+I+IB-1, N-K+I-1, IB,             &
+                            A( 1, N-K+I ), LDA, WORK, LDWORK, A, LDA,          &
+                            WORK( IB+1 ), LDWORK )
             END IF
 !
 !           Apply H to rows 1:m-k+i+ib-1 of current block
 !
-            CALL DORG2L( M-K+I+IB-1, IB, IB, A( 1, N-K+I ), LDA,
-     $                   TAU( I ), WORK, IINFO )
+            CALL DORG2L( M-K+I+IB-1, IB, IB, A( 1, N-K+I ), LDA,               &
+                         TAU( I ), WORK, IINFO )
 !
 !           Set rows m-k+i+ib:m of current block to zero
 !
@@ -12380,8 +12380,8 @@ CIBM           PREFER SCALAR
 !     ..
 !     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            I, IB, IINFO, IWS, J, KI, KK, L, LDWORK,
-     $                   LWKOPT, NB, NBMIN, NX
+      INTEGER            I, IB, IINFO, IWS, J, KI, KK, L, LDWORK,              &
+                         LWKOPT, NB, NBMIN, NX
 !     ..
 !     .. External Subroutines ..
 !     ..
@@ -12470,9 +12470,9 @@ CIBM           PREFER SCALAR
 !
 !     Use unblocked code for the last or only block.
 !
-      IF( KK.LT.N )
-     $   CALL DORG2R( M-KK, N-KK, K-KK, A( KK+1, KK+1 ), LDA,
-     $                TAU( KK+1 ), WORK, IINFO )
+      IF( KK.LT.N )                                                            &
+         CALL DORG2R( M-KK, N-KK, K-KK, A( KK+1, KK+1 ), LDA,                  &
+                      TAU( KK+1 ), WORK, IINFO )
 !
       IF( KK.GT.0 ) THEN
 !
@@ -12485,21 +12485,21 @@ CIBM           PREFER SCALAR
 !              Form the triangular factor of the block reflector
 !              H = H(i) H(i+1) . . . H(i+ib-1)
 !
-               CALL DLARFT( 'Forward', 'Columnwise', M-I+1, IB,
-     $                      A( I, I ), LDA, TAU( I ), WORK, LDWORK )
+               CALL DLARFT( 'Forward', 'Columnwise', M-I+1, IB,                &
+                            A( I, I ), LDA, TAU( I ), WORK, LDWORK )
 !
 !              Apply H to A(i:m,i+ib:n) from the left
 !
-               CALL DLARFB( 'Left', 'No transpose', 'Forward',
-     $                      'Columnwise', M-I+1, N-I-IB+1, IB,
-     $                      A( I, I ), LDA, WORK, LDWORK, A( I, I+IB ),
-     $                      LDA, WORK( IB+1 ), LDWORK )
+               CALL DLARFB( 'Left', 'No transpose', 'Forward',                 &
+                            'Columnwise', M-I+1, N-I-IB+1, IB,                 &
+                            A( I, I ), LDA, WORK, LDWORK, A( I, I+IB ),        &
+                            LDA, WORK( IB+1 ), LDWORK )
             END IF
 !
 !           Apply H to rows i:m of current block
 !
-            CALL DORG2R( M-I+1, IB, IB, A( I, I ), LDA, TAU( I ), WORK,
-     $                   IINFO )
+            CALL DORG2R( M-I+1, IB, IB, A( I, I ), LDA, TAU( I ), WORK,        &
+                         IINFO )
 !
 !           Set rows 1:i-1 of current block to zero
 !
@@ -12581,8 +12581,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.LE.0 )
-     $   RETURN
+      IF( N.LE.0 )                                                             &
+         RETURN
 !
 !     Get machine parameters
 !
@@ -12624,8 +12624,8 @@ CIBM           PREFER SCALAR
 !
       CALL DSCAL( N, MUL, SX, INCX )
 !
-      IF( .NOT.DONE )
-     $   GO TO 10
+      IF( .NOT.DONE )                                                          &
+         GO TO 10
 !
       RETURN
 !
@@ -12753,8 +12753,8 @@ CIBM           PREFER SCALAR
 !
 !     .. Parameters ..
       REAL(DOUBLE)   ONE, ZERO, HALF
-      PARAMETER          ( ONE = 1.0D0, ZERO = 0.0D0,
-     $                   HALF = 1.0D0 / 2.0D0 )
+      PARAMETER          ( ONE = 1.0D0, ZERO = 0.0D0,                          &
+                         HALF = 1.0D0 / 2.0D0 )
 !     ..
 !     .. Local Scalars ..
       LOGICAL            UPPER
@@ -12788,8 +12788,8 @@ CIBM           PREFER SCALAR
 !
 !     Quick return if possible
 !
-      IF( N.LE.0 )
-     $   RETURN
+      IF( N.LE.0 )                                                             &
+         RETURN
 !
       IF( UPPER ) THEN
 !
@@ -12811,8 +12811,8 @@ CIBM           PREFER SCALAR
 !
 !              Compute  x := tau * A * v  storing x in TAU(1:i)
 !
-               CALL DSYMV( UPLO, I, TAUI, A, LDA, A( 1, I+1 ), 1, ZERO,
-     $                     TAU, 1 )
+               CALL DSYMV( UPLO, I, TAUI, A, LDA, A( 1, I+1 ), 1, ZERO,        &
+                           TAU, 1 )
 !
 !              Compute  w := x - 1/2 * tau * (x'*v) * v
 !
@@ -12822,8 +12822,8 @@ CIBM           PREFER SCALAR
 !              Apply the transformation as a rank-2 update:
 !                 A := A - v * w' - w * v'
 !
-               CALL DSYR2( UPLO, I, -ONE, A( 1, I+1 ), 1, TAU, 1, A,
-     $                     LDA )
+               CALL DSYR2( UPLO, I, -ONE, A( 1, I+1 ), 1, TAU, 1, A,           &
+                           LDA )
 !
                A( I, I+1 ) = E( I )
             END IF
@@ -12840,8 +12840,8 @@ CIBM           PREFER SCALAR
 !           Generate elementary reflector H(i) = I - tau * v * v'
 !           to annihilate A(i+2:n,i)
 !
-            CALL DLARFG( N-I, A( I+1, I ), A( MIN( I+2, N ), I ), 1,
-     $                   TAUI )
+            CALL DLARFG( N-I, A( I+1, I ), A( MIN( I+2, N ), I ), 1,           &
+                         TAUI )
             E( I ) = A( I+1, I )
 !
             IF( TAUI.NE.ZERO ) THEN
@@ -12852,20 +12852,20 @@ CIBM           PREFER SCALAR
 !
 !              Compute  x := tau * A * v  storing y in TAU(i:n-1)
 !
-               CALL DSYMV( UPLO, N-I, TAUI, A( I+1, I+1 ), LDA,
-     $                     A( I+1, I ), 1, ZERO, TAU( I ), 1 )
+               CALL DSYMV( UPLO, N-I, TAUI, A( I+1, I+1 ), LDA,                &
+                           A( I+1, I ), 1, ZERO, TAU( I ), 1 )
 !
 !              Compute  w := x - 1/2 * tau * (x'*v) * v
 !
-               ALPHA = -HALF*TAUI*DDOT( N-I, TAU( I ), 1, A( I+1, I ),
-     $                 1 )
+               ALPHA = -HALF*TAUI*DDOT( N-I, TAU( I ), 1, A( I+1, I ),         &
+                       1 )
                CALL DAXPY( N-I, ALPHA, A( I+1, I ), 1, TAU( I ), 1 )
 !
 !              Apply the transformation as a rank-2 update:
 !                 A := A - v * w' - w * v'
 !
-               CALL DSYR2( UPLO, N-I, -ONE, A( I+1, I ), 1, TAU( I ), 1,
-     $                     A( I+1, I+1 ), LDA )
+               CALL DSYR2( UPLO, N-I, -ONE, A( I+1, I ), 1, TAU( I ), 1,       &
+                           A( I+1, I+1 ), LDA )
 !
                A( I+1, I ) = E( I )
             END IF
@@ -12883,8 +12883,8 @@ CIBM           PREFER SCALAR
 
 ! ##################################################################################################################################
 
-      INTEGER          FUNCTION ILAENV( ISPEC, NAME, OPTS, N1, N2, N3,
-     $                 N4 )
+      INTEGER          FUNCTION ILAENV( ISPEC, NAME, OPTS, N1, N2, N3,         &
+                       N4 )
 
 !
 !  -- LAPACK auxiliary routine (version 3.0) --
@@ -13002,8 +13002,8 @@ CIBM           PREFER SCALAR
 !     ..
 !     .. Executable Statements ..
 !
-      GO TO ( 100, 100, 100, 400, 500, 600, 700, 800, 900, 1000,
-     $        1100 ) ISPEC
+      GO TO ( 100, 100, 100, 400, 500, 600, 700, 800, 900, 1000,               &
+              1100 ) ISPEC
 !
 !     Invalid value for ISPEC
 !
@@ -13026,8 +13026,8 @@ CIBM           PREFER SCALAR
             SUBNAM( 1:1 ) = CHAR( IC-32 )
             DO 10 I = 2, 6
                IC = ICHAR( SUBNAM( I:I ) )
-               IF( IC.GE.97 .AND. IC.LE.122 )
-     $            SUBNAM( I:I ) = CHAR( IC-32 )
+               IF( IC.GE.97 .AND. IC.LE.122 )                                  &
+                  SUBNAM( I:I ) = CHAR( IC-32 )
    10       CONTINUE
          END IF
 !
@@ -13035,16 +13035,16 @@ CIBM           PREFER SCALAR
 !
 !        EBCDIC character set
 !
-         IF( ( IC.GE.129 .AND. IC.LE.137 ) .OR.
-     $       ( IC.GE.145 .AND. IC.LE.153 ) .OR.
-     $       ( IC.GE.162 .AND. IC.LE.169 ) ) THEN
+         IF( ( IC.GE.129 .AND. IC.LE.137 ) .OR.                                &
+             ( IC.GE.145 .AND. IC.LE.153 ) .OR.                                &
+             ( IC.GE.162 .AND. IC.LE.169 ) ) THEN
             SUBNAM( 1:1 ) = CHAR( IC+64 )
             DO 20 I = 2, 6
                IC = ICHAR( SUBNAM( I:I ) )
-               IF( ( IC.GE.129 .AND. IC.LE.137 ) .OR.
-     $             ( IC.GE.145 .AND. IC.LE.153 ) .OR.
-     $             ( IC.GE.162 .AND. IC.LE.169 ) )
-     $            SUBNAM( I:I ) = CHAR( IC+64 )
+               IF( ( IC.GE.129 .AND. IC.LE.137 ) .OR.                          &
+                   ( IC.GE.145 .AND. IC.LE.153 ) .OR.                          &
+                   ( IC.GE.162 .AND. IC.LE.169 ) )                             &
+                  SUBNAM( I:I ) = CHAR( IC+64 )
    20       CONTINUE
          END IF
 !
@@ -13056,8 +13056,8 @@ CIBM           PREFER SCALAR
             SUBNAM( 1:1 ) = CHAR( IC-32 )
             DO 30 I = 2, 6
                IC = ICHAR( SUBNAM( I:I ) )
-               IF( IC.GE.225 .AND. IC.LE.250 )
-     $            SUBNAM( I:I ) = CHAR( IC-32 )
+               IF( IC.GE.225 .AND. IC.LE.250 )                                 &
+                  SUBNAM( I:I ) = CHAR( IC-32 )
    30       CONTINUE
          END IF
       END IF
@@ -13065,8 +13065,8 @@ CIBM           PREFER SCALAR
       C1 = SUBNAM( 1:1 )
       SNAME = C1.EQ.'S' .OR. C1.EQ.'D'
       CNAME = C1.EQ.'C' .OR. C1.EQ.'Z'
-      IF( .NOT.( CNAME .OR. SNAME ) )
-     $   RETURN
+      IF( .NOT.( CNAME .OR. SNAME ) )                                          &
+         RETURN
       C2 = SUBNAM( 2:3 )
       C3 = SUBNAM( 4:6 )
       C4 = C3( 2:3 )
@@ -13090,8 +13090,8 @@ CIBM           PREFER SCALAR
             ELSE
                NB = 64
             END IF
-         ELSE IF( C3.EQ.'QRF' .OR. C3.EQ.'RQF' .OR. C3.EQ.'LQF' .OR.
-     $            C3.EQ.'QLF' ) THEN
+         ELSE IF( C3.EQ.'QRF' .OR. C3.EQ.'RQF' .OR. C3.EQ.'LQF' .OR.           &
+                  C3.EQ.'QLF' ) THEN
             IF( SNAME ) THEN
                NB = 32
             ELSE
@@ -13146,29 +13146,29 @@ CIBM           PREFER SCALAR
          END IF
       ELSE IF( SNAME .AND. C2.EQ.'OR' ) THEN
          IF( C3( 1:1 ).EQ.'G' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NB = 32
             END IF
          ELSE IF( C3( 1:1 ).EQ.'M' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NB = 32
             END IF
          END IF
       ELSE IF( CNAME .AND. C2.EQ.'UN' ) THEN
          IF( C3( 1:1 ).EQ.'G' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NB = 32
             END IF
          ELSE IF( C3( 1:1 ).EQ.'M' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NB = 32
             END IF
          END IF
@@ -13234,8 +13234,8 @@ CIBM           PREFER SCALAR
 !
       NBMIN = 2
       IF( C2.EQ.'GE' ) THEN
-         IF( C3.EQ.'QRF' .OR. C3.EQ.'RQF' .OR. C3.EQ.'LQF' .OR.
-     $       C3.EQ.'QLF' ) THEN
+         IF( C3.EQ.'QRF' .OR. C3.EQ.'RQF' .OR. C3.EQ.'LQF' .OR.                &
+             C3.EQ.'QLF' ) THEN
             IF( SNAME ) THEN
                NBMIN = 2
             ELSE
@@ -13276,29 +13276,29 @@ CIBM           PREFER SCALAR
          END IF
       ELSE IF( SNAME .AND. C2.EQ.'OR' ) THEN
          IF( C3( 1:1 ).EQ.'G' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NBMIN = 2
             END IF
          ELSE IF( C3( 1:1 ).EQ.'M' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NBMIN = 2
             END IF
          END IF
       ELSE IF( CNAME .AND. C2.EQ.'UN' ) THEN
          IF( C3( 1:1 ).EQ.'G' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NBMIN = 2
             END IF
          ELSE IF( C3( 1:1 ).EQ.'M' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NBMIN = 2
             END IF
          END IF
@@ -13312,8 +13312,8 @@ CIBM           PREFER SCALAR
 !
       NX = 0
       IF( C2.EQ.'GE' ) THEN
-         IF( C3.EQ.'QRF' .OR. C3.EQ.'RQF' .OR. C3.EQ.'LQF' .OR.
-     $       C3.EQ.'QLF' ) THEN
+         IF( C3.EQ.'QRF' .OR. C3.EQ.'RQF' .OR. C3.EQ.'LQF' .OR.                &
+             C3.EQ.'QLF' ) THEN
             IF( SNAME ) THEN
                NX = 128
             ELSE
@@ -13342,17 +13342,17 @@ CIBM           PREFER SCALAR
          END IF
       ELSE IF( SNAME .AND. C2.EQ.'OR' ) THEN
          IF( C3( 1:1 ).EQ.'G' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NX = 128
             END IF
          END IF
       ELSE IF( CNAME .AND. C2.EQ.'UN' ) THEN
          IF( C3( 1:1 ).EQ.'G' ) THEN
-            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.
-     $          C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.
-     $          C4.EQ.'BR' ) THEN
+            IF( C4.EQ.'QR' .OR. C4.EQ.'RQ' .OR. C4.EQ.'LQ' .OR.                &
+                C4.EQ.'QL' .OR. C4.EQ.'HR' .OR. C4.EQ.'TR' .OR.                &
+                C4.EQ.'BR' ) THEN
                NX = 128
             END IF
          END IF
@@ -13461,8 +13461,8 @@ CIBM           PREFER SCALAR
 !     Test if the characters are equal
 !
       LSAME = CA.EQ.CB
-      IF( LSAME )
-     $   RETURN
+      IF( LSAME )                                                              &
+         RETURN
 !
 !     Now test for equivalence if both characters are alphabetic.
 !
@@ -13489,12 +13489,12 @@ CIBM           PREFER SCALAR
 !        EBCDIC is assumed - ZCODE is the EBCDIC code of either lower or
 !        upper case 'Z'.
 !
-         IF( INTA.GE.129 .AND. INTA.LE.137 .OR.
-     $       INTA.GE.145 .AND. INTA.LE.153 .OR.
-     $       INTA.GE.162 .AND. INTA.LE.169 ) INTA = INTA + 64
-         IF( INTB.GE.129 .AND. INTB.LE.137 .OR.
-     $       INTB.GE.145 .AND. INTB.LE.153 .OR.
-     $       INTB.GE.162 .AND. INTB.LE.169 ) INTB = INTB + 64
+         IF( INTA.GE.129 .AND. INTA.LE.137 .OR.                                &
+             INTA.GE.145 .AND. INTA.LE.153 .OR.                                &
+             INTA.GE.162 .AND. INTA.LE.169 ) INTA = INTA + 64
+         IF( INTB.GE.129 .AND. INTB.LE.137 .OR.                                &
+             INTB.GE.145 .AND. INTB.LE.153 .OR.                                &
+             INTB.GE.162 .AND. INTB.LE.169 ) INTB = INTB + 64
 !
       ELSE IF( ZCODE.EQ.218 .OR. ZCODE.EQ.250 ) THEN
 !
@@ -13555,8 +13555,8 @@ CIBM           PREFER SCALAR
       FATAL_ERR = FATAL_ERR + 1
       CALL OUTA_HERE ( 'Y' )
 !
-  800 FORMAT(' *ERROR   800: PROGRAMMING ERROR IN SUBROUTINE ',A 
-     $ ,/,14X,' PARAMETER NUMBER ',I2,' HAD AN ILLEGAL VALUE')  
+  800 FORMAT(' *ERROR   800: PROGRAMMING ERROR IN SUBROUTINE ',A               &
+       ,/,14X,' PARAMETER NUMBER ',I2,' HAD AN ILLEGAL VALUE')  
 !
 !     End of XERBLA
 !
