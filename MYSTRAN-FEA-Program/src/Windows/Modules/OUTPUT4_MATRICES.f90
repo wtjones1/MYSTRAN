@@ -109,7 +109,8 @@
                                                                                          'TR6_0           ', &! ( 32) for TR6_0
                                                                                          'RBRCG           ' /)! ( 33) for TR6_CG
 
-      CHARACTER(LEN(BLNK_SUB_NAM)), PARAMETER    :: SUBR_WHEN_TO_WRITE_OU4_MATS(NUM_OU4_VALID_NAMES) =       &
+!     CHARACTER(LEN(BLNK_SUB_NAM)), PARAMETER    :: SUBR_WHEN_TO_WRITE_OU4_MATS(NUM_OU4_VALID_NAMES) =       &
+      CHARACTER( 31*BYTE), PARAMETER    :: SUBR_WHEN_TO_WRITE_OU4_MATS(NUM_OU4_VALID_NAMES) =       &
                                                                                        (/'LINK6           ', &! (  1) for CG_LTM
                                                                                          'LINK6           ', &! (  2) for DLR
                                                                                          'LINK4           ', &! (  3) for EIGEN_VAL
@@ -144,7 +145,8 @@
                                                                                          'LINK6           ', &! ( 32) for TR6_0
                                                                                          'LINK6           ' /)! ( 33) for TR6_CG
 
-      CHARACTER(LEN(TSET_CHR_LEN)), PARAMETER                                                                                      &
+!     CHARACTER(LEN(TSET_CHR_LEN)), PARAMETER                                                                                      &
+      CHARACTER( 2*BYTE), PARAMETER                                                                                      &
                                        :: OU4_MAT_COL_SETS(NUM_OU4_VALID_NAMES) =     (/'--'              , &! (  1) for CG_LTM
                                                                                         'R '              , &! (  2) for DLR
                                                                                         '--'              , &! (  3) for EIGEN_VAL
@@ -179,7 +181,8 @@
                                                                                         '--'              , &! ( 32) for TR6_0
                                                                                         '--'               /)! ( 33) for TR6_CG
 
-      CHARACTER(LEN(TSET_CHR_LEN)), PARAMETER                                                                                      &
+!     CHARACTER(LEN(TSET_CHR_LEN)), PARAMETER                                                                                      &
+      CHARACTER( 2*BYTE), PARAMETER                                                                                      &
                                        :: OU4_MAT_ROW_SETS(NUM_OU4_VALID_NAMES) =     (/'--'              , &! (  1) for CG_LTM
                                                                                         'L '              , &! (  2) for DLR
                                                                                         '--'              , &! (  3) for EIGEN_VAL
