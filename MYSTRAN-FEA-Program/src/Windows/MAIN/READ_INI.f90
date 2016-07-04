@@ -68,8 +68,6 @@
       INTEGER(LONG)                   :: OUNT(2)           ! File units to write messages to 
       INTEGER(LONG)                   :: WRT_LOG_NEW       ! Value of WRT_LOG read from MYSTRAN.INI file
 
-      INTRINSIC                       :: GETENV
-
 ! **********************************************************************************************************************************
 ! Default units for writing errors the screen (until LINK1A is read)
 
