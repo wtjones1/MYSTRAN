@@ -5,8 +5,8 @@
       USE PENTIUM_II_KIND, ONLY          :  BYTE, LONG, DOUBLE
       USE IOUNT1, ONLY                   :  F04
       USE SCONTR, ONLY                   :  BLNK_SUB_NAM
-      USE TIMDAT, ONLY                   :  HOUR, MINUTE, SEC,
-     &                                      SFRAC, TSEC
+      USE TIMDAT, ONLY                   :  HOUR, MINUTE, SEC,                 &
+                                            SFRAC, TSEC
       USE SUBR_BEGEND_LEVELS, ONLY       :  BANDIT_BEGEND
 
       INTEGER(LONG), PARAMETER, PRIVATE :: SUBR_BEGEND = BANDIT_BEGEND
@@ -246,114 +246,114 @@
       SUBROUTINE BANDIT ( MYSTRAN_NGRID, NEW_BW, DEN, IER )
       USE IOUNT1, ONLY :  WRT_LOG, IN1
 ! E////////////////////////////////////////////////////////////////////E
-c
-c     Gordon C. Everstine, Gaithersburg, MD, geversti@comcast.net
-c     1/8/04
-c
-c     This is the PC version.  The only machine or compiler dependencies
-c     are in Subroutine Timer related to getting the CPU time.  This
-c     subroutine must be checked before compiling.
-c
-c     Initial Bandit version: December 1969
-c
-c  Recent revisions:
-c     4/16/93  Read MPCAX cards.
-c     11/8/93  Minor changes needed to suit MS-FORTRAN.
-c     4/22/94  Write to file the components and grids (unit 15) if
-c              CM is executed.
-c     12/5/94  Move connection table output from unit 11 to 16.
-c              Make unit 11 a scratch file.
-c              Delete selected files at end of job.
-c              Add elapsed time report for HP workstations.
-c     1/13/95  Add log file, unit 17; increase default KDIM to 250.
-c     5/22/96  Speed up element sort in Subroutine FRONT.
-c              Change file names from TAPE* to bandit.f*.
-c    11/18/96  Change author's mailing address.
-c     2/25/98  Add timing call for PC (subroutine timer).
-c     6/20/03  Change author's email address.
-c    10/27/03  Enable component table with $print max (unit 15).
-c    11/20/03  Add additional elastic elements.
-c      1/8/04  Add additional rigid elements and some cosmetic changes.
-c              Remove extra plus signs, a holdover from BCD/EBCDIC days.
-c
-C  This is a NASTRAN preprocessor which reads a NASTRAN deck and
-C  resequences the grid points to reduce the matrix bandwidth, profile,
-C  or wavefront.  Two algorithms are provided,
-C  Gibbs-Poole-Stockmeyer (GPS) and Reverse Cuthill-McKee (CM).
-C  In addition, the elements can be resequenced for frontal solvers
-C  using the Razzaque approach to determine an element sequence,
-C  given a grid point sequence determined by GPS or CM.
-C
-C  The input data deck to BANDIT consists of a standard NASTRAN deck
-C  plus one or more $ cards to tell BANDIT what to do.  Output includes
-C  a set of SEQGP card images on bandit.f07 and the complete NASTRAN deck
-C  (including SEQGP cards) on bandit.f08.  The new element sequence is on
-C  bandit.f14.  See "BANDIT User's Guide" by G.C. Everstine.
-C
-C                    Program Installation
-C                    --------------------
-C  Set variable MEM (the amount of working storage in real, single-
-C  precision words) to the desired value.
-c
+!
+!     Gordon C. Everstine, Gaithersburg, MD, geversti@comcast.net
+!     1/8/04
+!
+!     This is the PC version.  The only machine or compiler dependencies
+!     are in Subroutine Timer related to getting the CPU time.  This
+!     subroutine must be checked before compiling.
+!
+!     Initial Bandit version: December 1969
+!
+!  Recent revisions:
+!     4/16/93  Read MPCAX cards.
+!     11/8/93  Minor changes needed to suit MS-FORTRAN.
+!     4/22/94  Write to file the components and grids (unit 15) if
+!              CM is executed.
+!     12/5/94  Move connection table output from unit 11 to 16.
+!              Make unit 11 a scratch file.
+!              Delete selected files at end of job.
+!              Add elapsed time report for HP workstations.
+!     1/13/95  Add log file, unit 17; increase default KDIM to 250.
+!     5/22/96  Speed up element sort in Subroutine FRONT.
+!              Change file names from TAPE* to bandit.f*.
+!    11/18/96  Change author's mailing address.
+!     2/25/98  Add timing call for PC (subroutine timer).
+!     6/20/03  Change author's email address.
+!    10/27/03  Enable component table with $print max (unit 15).
+!    11/20/03  Add additional elastic elements.
+!      1/8/04  Add additional rigid elements and some cosmetic changes.
+!              Remove extra plus signs, a holdover from BCD/EBCDIC days.
+!
+!  This is a NASTRAN preprocessor which reads a NASTRAN deck and
+!  resequences the grid points to reduce the matrix bandwidth, profile,
+!  or wavefront.  Two algorithms are provided,
+!  Gibbs-Poole-Stockmeyer (GPS) and Reverse Cuthill-McKee (CM).
+!  In addition, the elements can be resequenced for frontal solvers
+!  using the Razzaque approach to determine an element sequence,
+!  given a grid point sequence determined by GPS or CM.
+!
+!  The input data deck to BANDIT consists of a standard NASTRAN deck
+!  plus one or more $ cards to tell BANDIT what to do.  Output includes
+!  a set of SEQGP card images on bandit.f07 and the complete NASTRAN deck
+!  (including SEQGP cards) on bandit.f08.  The new element sequence is on
+!  bandit.f14.  See "BANDIT User's Guide" by G.C. Everstine.
+!
+!                    Program Installation
+!                    --------------------
+!  Set variable MEM (the amount of working storage in real, single-
+!  precision words) to the desired value.
+!
 ! B////////////////////////////////////////////////////////////////////B
-      INTEGER, PARAMETER :: MEM = 10 000 000
+      INTEGER, PARAMETER :: MEM = 10000000
 ! E////////////////////////////////////////////////////////////////////E
-c
-C  To get timing information, add in Subroutine TIMER a call to the
-C  appropriate CPU clock routine.
-c
-C  Integer-packing is not available in this version, but may be
-C  enabled by acquiring from the author the packing routines and
-C  replacing some code wherever the string "CPACK" appears.
-c  With large memories, integer-packing is rarely needed today and
-c  inhibits vectorization.
-C
-C---------------------------------------------------------------------
-C
-C  I/O FILES - - -
-C
-C  (SEE BLOCK DATA FOR DEFINITION OF FILES IN COMMON BLOCK /IOUNIT/)
-C
-C  Unit  File name       Format       I/O     Opn STAT                                  Use
-C  ----  -----------   -----------   ------   --------  ---------------------------------------------------------------------------
-C    5   INFILE          FORMATTED   input    OLD        MYSTRAN input file
-C    6   bandit.out'     FORMATTED   output   REPLACE    Bandit printed output file
-C    7   bandit.f07'     FORMATTED   output   REPLACE    SEQGP card images
-C    8   bandit.f08'     FORMATTED   output   REPLACE    MYSTRAN input file with SEQGP card images
-C    9   bandit.f09'     FORMATTED   output   REPLACE    References in NASNUM, SPRING, and FINISH
-C   10   bandit.ins'     FORMATTED   input    UNKNOWN    Insert file (card images)
-C   11   bandit.f11'     FORMATTED   output   REPLACE    Scratch file - references in DOLLAR, NASNUM, and NEWIN
-C   12   bandit.f12'   UNFORMATTED   output   REPLACE    Scratch file - references in MPC, RESET, RIGID, and TIGER
-C   13   bandit.f13    UNFORMATTED   output   SCRATCH    Scratch file - store elems for generating elem ordering for frontal solver
-C   14   bandit.f14'     FORMATTED   output   REPLACE    Output new element list for frontal solution
-C   15   bandit.f15'     FORMATTED   output   REPLACE    Component and grid list (CM must be run to get this list)
-C   16   bandit.f16'     FORMATTED   output   REPLACE    Connection table output ($TABLE YES)
-C   17   bandit.log'     FORMATTED   output   REPLACE    Some run-time messages to benefit interactive running
-C
+!
+!  To get timing information, add in Subroutine TIMER a call to the
+!  appropriate CPU clock routine.
+!
+!  Integer-packing is not available in this version, but may be
+!  enabled by acquiring from the author the packing routines and
+!  replacing some code wherever the string "CPACK" appears.
+!  With large memories, integer-packing is rarely needed today and
+!  inhibits vectorization.
+!
+!---------------------------------------------------------------------
+!
+!  I/O FILES - - -
+!
+!  (SEE BLOCK DATA FOR DEFINITION OF FILES IN COMMON BLOCK /IOUNIT/)
+!
+!  Unit  File name       Format       I/O     Opn STAT                                  Use
+!  ----  -----------   -----------   ------   --------  ---------------------------------------------------------------------------
+!    5   INFILE          FORMATTED   input    OLD        MYSTRAN input file
+!    6   bandit.out'     FORMATTED   output   REPLACE    Bandit printed output file
+!    7   bandit.f07'     FORMATTED   output   REPLACE    SEQGP card images
+!    8   bandit.f08'     FORMATTED   output   REPLACE    MYSTRAN input file with SEQGP card images
+!    9   bandit.f09'     FORMATTED   output   REPLACE    References in NASNUM, SPRING, and FINISH
+!   10   bandit.ins'     FORMATTED   input    UNKNOWN    Insert file (card images)
+!   11   bandit.f11'     FORMATTED   output   REPLACE    Scratch file - references in DOLLAR, NASNUM, and NEWIN
+!   12   bandit.f12'   UNFORMATTED   output   REPLACE    Scratch file - references in MPC, RESET, RIGID, and TIGER
+!   13   bandit.f13    UNFORMATTED   output   SCRATCH    Scratch file - store elems for generating elem ordering for frontal solver
+!   14   bandit.f14'     FORMATTED   output   REPLACE    Output new element list for frontal solution
+!   15   bandit.f15'     FORMATTED   output   REPLACE    Component and grid list (CM must be run to get this list)
+!   16   bandit.f16'     FORMATTED   output   REPLACE    Connection table output ($TABLE YES)
+!   17   bandit.log'     FORMATTED   output   REPLACE    Some run-time messages to benefit interactive running
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IADD   ,IB     ,IBYTE  ,IDIM   ,IER    ,IFIR   ,
-     &         IFL    ,IIG    ,IGNORE ,IGDEG  ,IH     ,INP    ,IOP    ,
-     &         IPARAM ,IPASS  ,ISTA   ,ISTART ,II1    ,II3    ,IWALL1 ,
-     &         IWALL2
+      INTEGER  I      ,IADD   ,IB     ,IBYTE  ,IDIM   ,IER    ,IFIR   ,        &
+               IFL    ,IIG    ,IGNORE ,IGDEG  ,IH     ,INP    ,IOP    ,        &
+               IPARAM ,IPASS  ,ISTA   ,ISTART ,II1    ,II3    ,IWALL1 ,        &
+               IWALL2
        
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
       
-      INTEGER  K1     ,K2     ,K3     ,K4     ,K5     ,K6     ,K7     ,
-     &         K8     ,K9     ,KDIM4  ,KDIM   ,KMOD   ,KNEW   ,KORE   ,
-     &         KORIG
+      INTEGER  K1     ,K2     ,K3     ,K4     ,K5     ,K6     ,K7     ,        &
+               K8     ,K9     ,KDIM4  ,KDIM   ,KMOD   ,KNEW   ,KORE   ,        &
+               KORIG
       
       INTEGER  LINES
       
-      INTEGER  MA     ,MB     ,MAXDEG ,MAXGRD ,MINDEG ,MDIM   ,ME     ,
-     &         MM
+      INTEGER  MA     ,MB     ,MAXDEG ,MAXGRD ,MINDEG ,MDIM   ,ME     ,        &
+               MM
       
-      INTEGER  NAXIC  ,NBITIN ,NBYTE  ,NCM    ,NEDGE  ,NEL    ,NELEM  ,
-     &         NEQ    ,NEQR   ,NGRID  ,NLINK  ,NN     ,NW     ,NTYPE  ,
-     &         NUM    ,NZERO
+      INTEGER  NAXIC  ,NBITIN ,NBYTE  ,NCM    ,NEDGE  ,NEL    ,NELEM  ,        &
+               NEQ    ,NEQR   ,NGRID  ,NLINK  ,NN     ,NW     ,NTYPE  ,        &
+               NUM    ,NZERO
 
       REAL     DUMG   ,DUMW   ,TA     ,TB
 
@@ -378,12 +378,12 @@ C
       COMMON /DOL/ ISTART(100),IGNORE(100)
       COMMON /DOLL/ IDIM,ISTA,IIG,IFIR,IGDEG
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
-      COMMON /ELEM/ NTYPE,VYPE(160),TYPE(160),WYPE(160),ME(160),
-     -              NELEM(160),MDIM
+      COMMON /ELEM/ NTYPE,VYPE(160),TYPE(160),WYPE(160),ME(160),               &
+                    NELEM(160),MDIM
       INTEGER vype,TYPE,WYPE
       COMMON /GRA/ DUMG(3)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       integer KOM(MEM)
 
 ! B////////////////////////////////////////////////////////////////////B
@@ -394,17 +394,17 @@ C
       ENDIF
 
 ! E////////////////////////////////////////////////////////////////////E
-C
+!
       IPARAM(1)=0
-C
-C     OPEN FILES (EXCEPT MAYBE 5 AND 6)
-C
+!
+!     OPEN FILES (EXCEPT MAYBE 5 AND 6)
+!
 ! B////////////////////////////////////////////////////////////////////B
       IOU5 = IN1              ! IOU5 IS MYSTRAN INPUT FILE. ALREADY OPEN
 ! E////////////////////////////////////////////////////////////////////E
-      CALL BANDIT_FILES ( IOU6 , IOU7 , IOU8 , IOU9 , IOU11, IOU12, 
-     &                    IOU13, IOU14, IOU15, IOU16, IOU17 )
-c
+      CALL BANDIT_FILES ( IOU6 , IOU7 , IOU8 , IOU9 , IOU11, IOU12,            &
+                          IOU13, IOU14, IOU15, IOU16, IOU17 )
+!
       OPEN(IOU6,FILE='bandit.out',FORM='FORMATTED',STATUS='replace')
 
       OPEN(IOU7,FILE='bandit.f07',FORM='FORMATTED',STATUS='replace')
@@ -413,44 +413,44 @@ c
 
       OPEN(IOU9,FILE='bandit.f09',FORM='FORMATTED',STATUS='replace')
 
-c     OPEN(IOU11,FORM='FORMATTED',STATUS='SCRATCH')
-c     OPEN(IOU12,FORM='UNFORMATTED',STATUS='SCRATCH')
+!     OPEN(IOU11,FORM='FORMATTED',STATUS='SCRATCH')
+!     OPEN(IOU12,FORM='UNFORMATTED',STATUS='SCRATCH')
       OPEN(IOU16,FILE='bandit.f16',FORM='FORMATTED',STATUS='replace')
-c     OPEN(IOU17,FILE='bandit.log',FORM='FORMATTED',STATUS='replace')
-c     See below for opening of scratch files
-c     (placed there to avoid unexplained problem when looping on
-c     multiple data sets)
-C
-C     TOP OF LOOP ON MULTIPLE DATA DECKS (used for code testing).
-C     USE '$LOOP YES' IN FIRST DATA DECK TO ENABLE LOOPING AND
-C     '$LOOP NO' IN LAST DATA DECK TO DISABLE LOOPING.
-C
+!     OPEN(IOU17,FILE='bandit.log',FORM='FORMATTED',STATUS='replace')
+!     See below for opening of scratch files
+!     (placed there to avoid unexplained problem when looping on
+!     multiple data sets)
+!
+!     TOP OF LOOP ON MULTIPLE DATA DECKS (used for code testing).
+!     USE '$LOOP YES' IN FIRST DATA DECK TO ENABLE LOOPING AND
+!     '$LOOP NO' IN LAST DATA DECK TO DISABLE LOOPING.
+!
 25    CALL TIMER(TA,IWALL1,0,IOU6)
       IF(IPARAM(1).EQ.4) write(iou6,'(80(1H#))')
       WRITE(IOU6,30)
-30    FORMAT('Bandit 1/8/04, G.C. Everstine, Gaithersburg, Maryland,',
-     -       ' geversti@comcast.net')
-c
-c     Open scratch files as named files.
-c
+30    FORMAT('Bandit 1/8/04, G.C. Everstine, Gaithersburg, Maryland,',         &
+             ' geversti@comcast.net')
+!
+!     Open scratch files as named files.
+!
       OPEN(IOU11,file='bandit.f11',FORM='FORMATTED',STATUS='replace')
       OPEN(IOU12,file='bandit.f12',FORM='UNFORMATTED',STATUS='replace')
-C
-C     INITIALIZE SOME VARIABLES.
-C
+!
+!     INITIALIZE SOME VARIABLES.
+!
       KORE=MEM
       IFL=KORE
       IER=0
-C     NAXIC=NUMBER OF HARMONICS ON AXIC CARD (DEFAULT SET HERE)
+!     NAXIC=NUMBER OF HARMONICS ON AXIC CARD (DEFAULT SET HERE)
       NAXIC=99999
-C
-C     SET DEFAULT NUMBER OF PRINTED LINES PER PAGE.
-C
+!
+!     SET DEFAULT NUMBER OF PRINTED LINES PER PAGE.
+!
       LINES=55
-C     USE 55 FOR STANDARD 11 IN. PAPER, 40 FOR 8.5 IN. PAPER.
-C
-C     SET DEFAULT FOR KDIM AND MAX NUMBER OF GRID POINTS.
-C
+!     USE 55 FOR STANDARD 11 IN. PAPER, 40 FOR 8.5 IN. PAPER.
+!
+!     SET DEFAULT FOR KDIM AND MAX NUMBER OF GRID POINTS.
+!
 ! B////////////////////////////////////////////////////////////////////B
 !     KDIM=250
       KDIM=MAX(250,MYSTRAN_NGRID)
@@ -462,48 +462,48 @@ C
       NGRID = MAX(MYSTRAN_NGRID,10)
 ! E////////////////////////////////////////////////////////////////////E
       KORE=KORE+KDIM4
-C
-C     READ EXECUTIVE AND CASE CONTROL DECKS.
-C
+!
+!     READ EXECUTIVE AND CASE CONTROL DECKS.
+!
       CALL CASE(IER)
       IF(IER.GT.0) GO TO 135
-C
-C     PRINT ELEMENT LIBRARY IF REQUESTED.
-C
-c     ICHAR=MA(3)
+!
+!     PRINT ELEMENT LIBRARY IF REQUESTED.
+!
+!     ICHAR=MA(3)
       IF(IPARAM(9).EQ.4) then
          WRITE(IOU6,40) (I,vype(i),TYPE(I),WYPE(I),ME(I),I=4,NTYPE)
 40       FORMAT(/,'Element Library:'/(I6,3X,A1,2A4,I7))
       end if
-C
-C     INITIALIZE ELEMENT COUNTERS.
-C
+!
+!     INITIALIZE ELEMENT COUNTERS.
+!
       DO I=1,NTYPE
          NELEM(I)=0
       end do
-C
+!
       IF(IPARAM(5).EQ.4) GO TO 80
-C
-C     COPY BULK DATA TO UNIT 8 IF RESEQUENCING IS NOT REQUESTED.
-C
+!
+!     COPY BULK DATA TO UNIT 8 IF RESEQUENCING IS NOT REQUESTED.
+!
       CALL NOSEQ(KOM)
-C
+!
       GO TO 120
-C
-C     COMPUTE MAXGRD AND MAXDEG.
-C
+!
+!     COMPUTE MAXGRD AND MAXDEG.
+!
 80    CONTINUE
       KDIM4=4*KDIM
       KORE=KORE-KDIM4
       CALL GRID(IER,IOU6)
       IF(IER.GT.0) GO TO 135
-C
-C     PRINT CORE ALLOCATION INFORMATION.
-C
+!
+!     PRINT CORE ALLOCATION INFORMATION.
+!
       CALL COREKO
-C
-C     PARTITION BLANK COMMON.
-C
+!
+!     PARTITION BLANK COMMON.
+!
       II1=MAXGRD/NW
       II3=2*MAXGRD
       K1=1
@@ -515,67 +515,67 @@ C
       K7=K6+MAXGRD
       K8=K7+MAXDEG+1
       K9=K8+II1*MAXDEG
-C     (K9 DEFINES BEGINNING OF NEXT ARRAY IF THERE WERE ONE.)
-C     IG, THE BIG ARRAY IN NASNUM, IS LOCATED LAST IN OPEN CORE TO KEEP
-C     CALLING ADDRESSES SMALLER, A BENEFIT ON UNIVAC WHEN USING OVER 65K.
-C
-C     READ BULK DATA, SET UP CONNECTION TABLE, RESEQUENCE NODES, AND
-C            GENERATE SEQGP CARDS.
-C
-      CALL NASNUM(KOM(K8),II1,KOM(K3),II3,KOM(K4),KOM(K5),KOM(K2),
-     -            KOM(K6),KOM(K7),KOM(K1),KDIM4,IER)
+!     (K9 DEFINES BEGINNING OF NEXT ARRAY IF THERE WERE ONE.)
+!     IG, THE BIG ARRAY IN NASNUM, IS LOCATED LAST IN OPEN CORE TO KEEP
+!     CALLING ADDRESSES SMALLER, A BENEFIT ON UNIVAC WHEN USING OVER 65K.
+!
+!     READ BULK DATA, SET UP CONNECTION TABLE, RESEQUENCE NODES, AND
+!            GENERATE SEQGP CARDS.
+!
+      CALL NASNUM(KOM(K8),II1,KOM(K3),II3,KOM(K4),KOM(K5),KOM(K2),             &
+                  KOM(K6),KOM(K7),KOM(K1),KDIM4,IER)
       IF(IER.GT.0) GO TO 135
-C
-C     PRINT OUT ELEMENT COUNTERS.
-C
+!
+!     PRINT OUT ELEMENT COUNTERS.
+!
       WRITE(IOU6,90)
 90    FORMAT(/,'Element Counts for Data Deck:')
       DO I=4,NTYPE
-         IF(NELEM(I).gt.0)
-     -        WRITE(IOU6,100) vype(i),TYPE(I),WYPE(I),NELEM(I)
+         IF(NELEM(I).gt.0)                                                     &
+              WRITE(IOU6,100) vype(i),TYPE(I),WYPE(I),NELEM(I)
 100      FORMAT(5X,A1,2A4,I8)
       end do
-C
-C     PRINT BANDIT SUMMARY.
-C
+!
+!     PRINT BANDIT SUMMARY.
+!
 ! B////////////////////////////////////////////////////////////////////B
       CALL SUMUP ( NEW_BW, DEN)
 ! E////////////////////////////////////////////////////////////////////E
-C
+!
 120   CONTINUE
       ENDFILE IOU8
       REWIND IOU8
       IF(IPASS.GT.0) WRITE(IOU6,130) IPASS
 130   FORMAT(/,'Number of calls to the pack/unpack routines',I15)
-C
-C     WRAP UP JOB
-C
-c     Reset iou5 in case there is looping on multiple data sets.
+!
+!     WRAP UP JOB
+!
+!     Reset iou5 in case there is looping on multiple data sets.
 ! B////////////////////////////////////////////////////////////////////B
 !!135 IOU5=5
   135 IOU5 = IN1
 ! E////////////////////////////////////////////////////////////////////E
-c     delete scratch files
+!     delete scratch files
       close(iou11,status='delete')
       close(iou12,status='delete')
       CALL TIMER(TB,IWALL2,0,IOU6)
       TB=TB-TA
       IWALL2=IWALL2-IWALL1
-c     IF(IWALL2.GT.0) WRITE(IOU6,138) IWALL2
+!     IF(IWALL2.GT.0) WRITE(IOU6,138) IWALL2
 138   FORMAT(/,'Elapsed time =',I6,' seconds.')
       WRITE(IOU6,140) TB
 140   FORMAT(/,'End of BANDIT Job.  Total CP time =',F12.3,' seconds.')
       write(iou6,*)
-C     IF LOOPING ON MULTIPLE DECKS IS REQUESTED, GO BACK TO BEGINNING.
+!     IF LOOPING ON MULTIPLE DECKS IS REQUESTED, GO BACK TO BEGINNING.
       IF(IPARAM(1).EQ.4) GO TO 25
       if(iparam(7).eq.3) close(iou9,status='delete')
       if(iparam(2).eq.3) close(iou16,status='delete')
-c     close(iou17,status='delete')
-c     if(ier.gt.0) stop 13
-C     $NASTRAN YES CARD RETURNS CONDITION CODE 5 FOR USE BY IBM.
-c     (IBM JCL was written to check Bandit's exit code; now obsolete.
-c     Stop 13 above served same purpose.)
-c     IF(IPARAM(8).EQ.4) STOP 5
+!     close(iou17,status='delete')
+!     if(ier.gt.0) stop 13
+!     $NASTRAN YES CARD RETURNS CONDITION CODE 5 FOR USE BY IBM.
+!     (IBM JCL was written to check Bandit's exit code; now obsolete.
+!     Stop 13 above served same purpose.)
+!     IF(IPARAM(8).EQ.4) STOP 5
 ! B////////////////////////////////////////////////////////////////////B
       close(iou6,status="keep")
       close(iou7,status="keep")
@@ -596,29 +596,29 @@ c     IF(IPARAM(8).EQ.4) STOP 5
 
 ! ##################################################################################################################################
       SUBROUTINE BRIGIT(INV,II3,INT,ILD,IER)
-C
-C     THIS ROUTINE SORTS THE ORIGINAL GRID NUMBERS AND OUTPUTS THE LIST
-C         IN INT, WHERE INT(I)=THE ITH ORIGINAL GRID NUMBER.
-C     ALSO OUTPUT IS ILD, WHERE ILD(I)=SORTED INTERNAL NUMBER
-C         CORRESPONDING TO THE UNSORTED BANDIT INTERNAL LABEL I.
-C
-C     INPUT - INV
-C     OUTPUT - ILD,INT
-C
+!
+!     THIS ROUTINE SORTS THE ORIGINAL GRID NUMBERS AND OUTPUTS THE LIST
+!         IN INT, WHERE INT(I)=THE ITH ORIGINAL GRID NUMBER.
+!     ALSO OUTPUT IS ILD, WHERE ILD(I)=SORTED INTERNAL NUMBER
+!         CORRESPONDING TO THE UNSORTED BANDIT INTERNAL LABEL I.
+!
+!     INPUT - INV
+!     OUTPUT - ILD,INT
+!
       INTEGER II3, INV(2,II3),INT(*),ILD(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER I      ,IER    ,IS     ,J      ,KFAC   ,KFM   ,
-     &        KMOD   ,L      ,MAXDEG ,MAXGRD ,MINI   ,NN
+      INTEGER I      ,IER    ,IS     ,J      ,KFAC   ,KFM   ,                  &
+              KMOD   ,L      ,MAXDEG ,MAXGRD ,MINI   ,NN
               
       REAL     DUMS
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /S/ NN,DUMS(8)
       COMMON /A/ MAXGRD,MAXDEG,KMOD
-C
-C     PERFORM A ROUGH SORT OF THE ORIGINAL GRID NUMBERS.
-C
+!
+!     PERFORM A ROUGH SORT OF THE ORIGINAL GRID NUMBERS.
+!
       L=0
       KFAC=-1
    20 KFAC=KFAC+1
@@ -635,55 +635,55 @@ C
       INT(L)=INV(1,I)
    80 CONTINUE
       IF(L.LT.NN)GO TO 20
-C
-C     COMPLETE THE SORTING OF THE ORIGINAL GRID NUMBERS.
-C
+!
+!     COMPLETE THE SORTING OF THE ORIGINAL GRID NUMBERS.
+!
       CALL SORT(INT,NN)
-C
-C     DETERMINE CORRESPONDENCE (ILD) BETWEEN NORIG AND INT ARRAYS.
-C
+!
+!     DETERMINE CORRESPONDENCE (ILD) BETWEEN NORIG AND INT ARRAYS.
+!
       DO 40 I=1,NN
       J=INT(I)
       L=INTERN(J,INV,II3,IER)
       IF(IER.GT.0) RETURN
-C     J IS DEFINED ABOVE TO ALLOW EXECUTION ON UNIVAC IN OVER 65K.
+!     J IS DEFINED ABOVE TO ALLOW EXECUTION ON UNIVAC IN OVER 65K.
    40 ILD(L)=I
       RETURN
       END SUBROUTINE BRIGIT
 
 ! ##################################################################################################################################
       SUBROUTINE CASE(IER)
-C
-C     READ EXECUTIVE AND CASE CONTROL DECKS.
-C
+!
+!     READ EXECUTIVE AND CASE CONTROL DECKS.
+!
       INTEGER KA(80)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IER    ,IPARAM ,KT     ,L      ,MA     ,MB     ,
-     &         NUM 
+      INTEGER  I      ,IER    ,IPARAM ,KT     ,L      ,MA     ,MB     ,        &
+               NUM 
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
       COMMON /B/ IPARAM(20)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       KT=0
       REWIND IOU8
       WRITE(IOU6,10)
    10 FORMAT(/,'Echo of Data Through BEGIN BULK Card:')
-C
-C     INITIALIZE PARAMETERS.
-C
+!
+!     INITIALIZE PARAMETERS.
+!
       CALL DOLLAR(KA,1,KT,IER)
       IF(IER.GT.0) RETURN
-C
-C     READ CARD.
-C
+!
+!     READ CARD.
+!
    20 READ(IOU5,30,END=100) KA
    30 FORMAT(80A1)
       KT=KT+1
@@ -691,121 +691,121 @@ C
       WRITE(IOU6,60) KT,(KA(I),I=1,L)
 60    FORMAT(I8,'- ',80A1)
       WRITE(IOU8,30) (KA(I),I=1,L)
-C
-C     IF COLUMN 1 IS $, PROCESS $-CARD.
-C
+!
+!     IF COLUMN 1 IS $, PROCESS $-CARD.
+!
       IF(KA(1).EQ.MB(1)) then
          CALL DOLLAR(KA,2,KT,IER)
          IF(IER.GT.0) RETURN
          GO TO 20
       end if
-C
-C     IF THE CARD IS NOT BEGIN BULK, GO BACK AND READ ANOTHER CARD.
-C
+!
+!     IF THE CARD IS NOT BEGIN BULK, GO BACK AND READ ANOTHER CARD.
+!
       IF(NBULK(KA).EQ.0) GO TO 20
-C
-C     CHECK FOR ILLEGAL PARAMETERS.
-C
+!
+!     CHECK FOR ILLEGAL PARAMETERS.
+!
    80 CALL DOLLAR(KA,3,KT,IER)
       IF(IER.GT.0) RETURN
       RETURN
-C
-C     END-OF-FILE ENCOUNTERED
-C
+!
+!     END-OF-FILE ENCOUNTERED
+!
 100   CALL FINISH(4,IER)
       RETURN
       END SUBROUTINE CASE
 
 ! ##################################################################################################################################
       SUBROUTINE COREKO
-C
-C     PRINT SUMMARY OF CORE ALLOCATION.
-C
+!
+!     PRINT SUMMARY OF CORE ALLOCATION.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  IBYTE  ,IFL    ,KDIM   ,KMOD   ,KORE   ,LL     ,MAXDEG ,
-     &         MAXGRD ,NBITIN ,NBYTE  ,NW
+      INTEGER  IBYTE  ,IFL    ,KDIM   ,KMOD   ,KORE   ,LL     ,MAXDEG ,        &
+               MAXGRD ,NBITIN ,NBYTE  ,NW
      
       REAL     DUM 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /BITS/ NBITIN,KORE,IFL,DUM(2),NW,NBYTE,IBYTE,KDIM
       COMMON /A/ MAXGRD,MAXDEG,KMOD
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       LL=IFL-KORE
       WRITE(IOU6,10) KORE,MAXGRD,MAXDEG,KDIM
-10    FORMAT(/,'Working Storage:'/
-     - 5X,'Length of Working Storage',I10,' words'/
-     - 5X,'Grid Point Limit         ',I10/
-     - 5X,'Nodal Degree Limit       ',I10/
-     - 5X,'$DIMENSION Value         ',I10)
+10    FORMAT(/,'Working Storage:'/                                             &
+       5X,'Length of Working Storage',I10,' words'/                            &
+       5X,'Grid Point Limit         ',I10/                                     &
+       5X,'Nodal Degree Limit       ',I10/                                     &
+       5X,'$DIMENSION Value         ',I10)
       IF(NW.GT.1) WRITE(IOU6,20) NW
 20    FORMAT(5X,'Packing Density',I20,' integers/word')
       RETURN
       END SUBROUTINE COREKO
 
 ! ##################################################################################################################################
-      SUBROUTINE CUTHIL(NT,NUM,NOM,IO,IP,IG,II1,IC,IDEG,IDIS,IW,
-     -  NEW,ICC,ILD,IPP,JUMP,NODESL,KORDIM,IER)
-C
-C THIS IS THE EXECUTIVE FOR THE CUTHILL-MCKEE GRID POINT RENUMBERING
-C      STRATEGY.   THE PRINCIPAL INPUTS ARE THE CONNECTIVITY MATRIX IG
-C      AND THE NUMBER OF GRID POINTS (NODES) NN.
-C
-C INPUT -- NT,NUM,NOM,IO,IP,IG,II1,NN,MAXGRD,ILD,NBITIN,ISTART,ISTA
-C OUTPUT -- NEW,ILD,MM,IH0,IHE,KORIG,KNEW,NCM
-C SCRATCH -- IC,IDEG,IDIS,IW,ICC,IPP
-C SET FOLLOWING DIMENSIONS IN CALLING PROGRAM --
-C   IG(II1,M),IC(L),IDEG(L),IDIS(L),IW(L),NEW(L),ICC(L),ILD(L),IP(M)
-C        L=MAXGRD EXCEEDS NUMBER OF GRID POINTS
-C        II1=MAXGRD/(PACKING DENSITY IN INTEGERS/WORD)
-C        M EXCEEDS MAX NODAL DEGREE
-C
-C NT=MAX NUMBER OF STARTING NODES TO BE CONSIDERED
-C NUM AND NOM GIVE THE FRACTION OF THE RANGE FROM MIN DEGREE TO MAX
-C        DEGREE TO CONSIDER FOR STARTING NODES
-C IO=STRATEGY OPTION - - -
-C          1=RMS WAVEFRONT
-C          2=BANDWIDTH
-C          3=PROFILE
-C          4=WAVEFRONT (MAX)
-C IP=PRINTING OPTION (0 FOR NO PRINTED OUTPUT FROM CUTHILL)
-C IG(I,J) CONTAINS THE GRID POINT LABEL FOR THE JTH NODE ADJACENT TO
-C      NODE I  (THE CONNECTIVITY MATRIX).   THE CONNECTION OF A NODE
-C      TO ITSELF IS NOT LISTED.
-C II1=ROW DIMENSION OF IG
-C NN=NUMBER OF GRID POINTS (NODES)
-C MM=COLUMN DIMENSION OF IG ON INPUT, MAX NODAL DEGREE ON OUTPUT
-C MAXGRD=EFFECTIVE ROW DIMENSION OF IG (NEGLECTING INTEGER PACKING)
-C LINE=NUMBER OF PRINTED LINES PER PAGE
-C NBITIN=NUMBER OF BITS PER INTEGER (FOR PACKING)
-C ISTART(I)=ITH STARTING NODE SELECTED BY USER
-C ISTA=NUMBER OF STARTING NODES IN ISTART
-C NEW(I)=OLD LABEL FOR GRID POINT NOW LABELLED I
-C ILD(I)=NEW LABEL FOR GRID POINT ORIGINALLY LABELLED I
-C        ILD AND NEW ARE INVERSES
-C ILD MUST BE INPUT TO CUTHILL TO INDICATE AN INITIAL SEQUENCE.
-C           NORMALLY, ON INPUT, SET ILD(I)=I FOR ALL I.
-C JUMP=1 IF RESEQUENCING ATTEMPTS RESULT IN NO IMPROVEMENT
-C     =0 OTHERWISE.
-C IH0=ORIG PROFILE
-C IHE=NEW PROFILE
-C KORIG=ORIG BANDWIDTH
-C KNEW=NEW BW
-C NCM=NUMBER OF COMPONENTS
-C     NODESL IS SCRATCH SPACE.
-C IN CALLING PROGRAM, TRY  CALL CUTHIL(80,1,2,2,1, . . . )
-C
-C    THE FOLLOWING SUBROUTINES WERE WRITTEN BY E. CUTHILL AND
-C    J. MCKEE OF NSRDC - - -
-C        DEGREE,DIAM,IDIST,KOMPNT,MAXBND,MAXDGR,MINDEG,RELABL,CUTHILL
-C     CUTHILL WAS MODIFIED BY G. C. EVERSTINE, DTRC.
-C
+      SUBROUTINE CUTHIL(NT,NUM,NOM,IO,IP,IG,II1,IC,IDEG,IDIS,IW,               &
+        NEW,ICC,ILD,IPP,JUMP,NODESL,KORDIM,IER)
+!
+! THIS IS THE EXECUTIVE FOR THE CUTHILL-MCKEE GRID POINT RENUMBERING
+!      STRATEGY.   THE PRINCIPAL INPUTS ARE THE CONNECTIVITY MATRIX IG
+!      AND THE NUMBER OF GRID POINTS (NODES) NN.
+!
+! INPUT -- NT,NUM,NOM,IO,IP,IG,II1,NN,MAXGRD,ILD,NBITIN,ISTART,ISTA
+! OUTPUT -- NEW,ILD,MM,IH0,IHE,KORIG,KNEW,NCM
+! SCRATCH -- IC,IDEG,IDIS,IW,ICC,IPP
+! SET FOLLOWING DIMENSIONS IN CALLING PROGRAM --
+!   IG(II1,M),IC(L),IDEG(L),IDIS(L),IW(L),NEW(L),ICC(L),ILD(L),IP(M)
+!        L=MAXGRD EXCEEDS NUMBER OF GRID POINTS
+!        II1=MAXGRD/(PACKING DENSITY IN INTEGERS/WORD)
+!        M EXCEEDS MAX NODAL DEGREE
+!
+! NT=MAX NUMBER OF STARTING NODES TO BE CONSIDERED
+! NUM AND NOM GIVE THE FRACTION OF THE RANGE FROM MIN DEGREE TO MAX
+!        DEGREE TO CONSIDER FOR STARTING NODES
+! IO=STRATEGY OPTION - - -
+!          1=RMS WAVEFRONT
+!          2=BANDWIDTH
+!          3=PROFILE
+!          4=WAVEFRONT (MAX)
+! IP=PRINTING OPTION (0 FOR NO PRINTED OUTPUT FROM CUTHILL)
+! IG(I,J) CONTAINS THE GRID POINT LABEL FOR THE JTH NODE ADJACENT TO
+!      NODE I  (THE CONNECTIVITY MATRIX).   THE CONNECTION OF A NODE
+!      TO ITSELF IS NOT LISTED.
+! II1=ROW DIMENSION OF IG
+! NN=NUMBER OF GRID POINTS (NODES)
+! MM=COLUMN DIMENSION OF IG ON INPUT, MAX NODAL DEGREE ON OUTPUT
+! MAXGRD=EFFECTIVE ROW DIMENSION OF IG (NEGLECTING INTEGER PACKING)
+! LINE=NUMBER OF PRINTED LINES PER PAGE
+! NBITIN=NUMBER OF BITS PER INTEGER (FOR PACKING)
+! ISTART(I)=ITH STARTING NODE SELECTED BY USER
+! ISTA=NUMBER OF STARTING NODES IN ISTART
+! NEW(I)=OLD LABEL FOR GRID POINT NOW LABELLED I
+! ILD(I)=NEW LABEL FOR GRID POINT ORIGINALLY LABELLED I
+!        ILD AND NEW ARE INVERSES
+! ILD MUST BE INPUT TO CUTHILL TO INDICATE AN INITIAL SEQUENCE.
+!           NORMALLY, ON INPUT, SET ILD(I)=I FOR ALL I.
+! JUMP=1 IF RESEQUENCING ATTEMPTS RESULT IN NO IMPROVEMENT
+!     =0 OTHERWISE.
+! IH0=ORIG PROFILE
+! IHE=NEW PROFILE
+! KORIG=ORIG BANDWIDTH
+! KNEW=NEW BW
+! NCM=NUMBER OF COMPONENTS
+!     NODESL IS SCRATCH SPACE.
+! IN CALLING PROGRAM, TRY  CALL CUTHIL(80,1,2,2,1, . . . )
+!
+!    THE FOLLOWING SUBROUTINES WERE WRITTEN BY E. CUTHILL AND
+!    J. MCKEE OF NSRDC - - -
+!        DEGREE,DIAM,IDIST,KOMPNT,MAXBND,MAXDGR,MINDEG,RELABL,CUTHILL
+!     CUTHILL WAS MODIFIED BY G. C. EVERSTINE, DTRC.
+!
       INTEGER II1, KORDIM
       DIMENSION IG(II1,1),IC(*),IDEG(*),IDIS(*),IW(*)
       INTEGER NEW(*),ICC(*),ILD(*),IPP(*),NODESL(KORDIM),SUMW
@@ -813,14 +813,14 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &        IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &        IOU19  ,IOU20
+      INTEGER IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,         &
+              IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,         &
+              IOU19  ,IOU20
 
-      INTEGER  I      ,IAJDIM ,IB     ,IC     ,IDEG   ,IDEM   ,IDEM1  ,
-     &         IDIM   ,IDIS   ,IER    ,IG     ,IH     ,IH0    ,IHE    ,
-     &         ij     ,IO     ,IP     ,IPARAM ,IS     ,ISTA   ,
-     &         ISTART ,IW     ,IWALL
+      INTEGER  I      ,IAJDIM ,IB     ,IC     ,IDEG   ,IDEM   ,IDEM1  ,        &
+               IDIM   ,IDIS   ,IER    ,IG     ,IH     ,IH0    ,IHE    ,        &
+               ij     ,IO     ,IP     ,IPARAM ,IS     ,ISTA   ,                &
+               ISTART ,IW     ,IWALL
 
       INTEGER  J      ,JMAX   ,JUMP
 
@@ -828,15 +828,15 @@ C
 
       INTEGER  L
 
-      INTEGER  M      ,MA     ,MAD    ,MAXD   ,MAXDEG ,MAXGRD ,MAXLEV ,
-     &         MAXW   ,MAXW0  ,MAXW1  ,MEDIAN ,MI     ,MM     ,MODD
+      INTEGER  M      ,MA     ,MAD    ,MAXD   ,MAXDEG ,MAXGRD ,MAXLEV ,        &
+               MAXW   ,MAXW0  ,MAXW1  ,MEDIAN ,MI     ,MM     ,MODD
 
-      INTEGER  NBITIN ,NC     ,NCM    ,NL     ,NN     ,NNODE  ,NOM    ,
-     &                 NT     ,NUM
+      INTEGER  NBITIN ,NC     ,NCM    ,NL     ,NN     ,NNODE  ,NOM    ,        &
+                       NT     ,NUM
 
-      REAL     AVERW  ,BRMS   ,BRMS0  ,BRMS1  ,CRIT1  ,CRIT2  ,
-     &         DUMBB  ,DUMD   ,DUML   ,DUMO   ,DUMS   ,RMS    ,
-     &         RMS0   ,RMS1   ,TA     ,TB
+      REAL     AVERW  ,BRMS   ,BRMS0  ,BRMS1  ,CRIT1  ,CRIT2  ,                &
+               DUMBB  ,DUMD   ,DUML   ,DUMO   ,DUMS   ,RMS    ,                &
+               RMS0   ,RMS1   ,TA     ,TB
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /S/ NN,MM,IH,IB,DUMS(5)
@@ -847,78 +847,78 @@ C
       COMMON /B/ IPARAM(20)
       COMMON /DOL/ ISTART(100),DUMO(100)
       COMMON /DOLL/ IDIM,ISTA,DUML(3)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       CALL TIMER(TA,IWALL,0,IOU6)
-C     SET UP SCRATCH SPACE NODESL.
+!     SET UP SCRATCH SPACE NODESL.
       IDEM=KORDIM/4
       K2=IDEM+1
       IAJDIM=3 *IDEM
       JUMP=0
-C     DETERMINE THE DEGREE OF EACH NODE.
+!     DETERMINE THE DEGREE OF EACH NODE.
       CALL DEGREE(IG,II1,IDEG)
-C     DETERMINE THE NUMBER OF COMPONENTS, NCM.
+!     DETERMINE THE NUMBER OF COMPONENTS, NCM.
       NCM=KOMPNT(IG,II1,IC,IDEG,IW,ICC)
-C     DETERMINE THE MAXIMUM DEGREE OF ANY NODE.
+!     DETERMINE THE MAXIMUM DEGREE OF ANY NODE.
       MAXD=MAXDGR(0,IC,IDEG)
       MM=MAXD
-C INITIALIZE NEW ARRAY FROM THE ILD ARRAY.
-C   ILD MUST BE INPUT TO CUTHILL.
+! INITIALIZE NEW ARRAY FROM THE ILD ARRAY.
+!   ILD MUST BE INPUT TO CUTHILL.
       DO 30 I=1,NN
       K=ILD(I)
    30 NEW(K)=I
-C   COMPUTE ORIGINAL BANDWIDTH AND PROFILE.
-C   COMPUTE ORIGINAL WAVEFRONT AND ACTIVE COLUMN DATA.
+!   COMPUTE ORIGINAL BANDWIDTH AND PROFILE.
+!   COMPUTE ORIGINAL WAVEFRONT AND ACTIVE COLUMN DATA.
       CALL WAVEY(IG,II1,ILD,NEW,0,IC,IW,IS,MAXW,AVERW,SUMW,RMS,BRMS)
       IH=SUMW
       MAXW0=MAXW
       RMS0=RMS
       BRMS0=BRMS
       KORIG=IS
-C    IH0=ORIGINAL PROFILE, IS=ORIGINAL BW.
+!    IH0=ORIGINAL PROFILE, IS=ORIGINAL BW.
       IH0=IH
-C COMPUTE NODAL DEGREE STATISTICS.
+! COMPUTE NODAL DEGREE STATISTICS.
       CALL DIST(IDEG,IPP,IP,MEDIAN,MODD)
-C     IF REQUESTED, PRINT INTERNAL NUMBER CONNECTION TABLE.
+!     IF REQUESTED, PRINT INTERNAL NUMBER CONNECTION TABLE.
       IF(IP.ne.0) CALL STABLE(IG,II1,IC,IDEG,ILD,IPP)
       WRITE(IOU6,29)
    29 FORMAT(/,'Before Resequencing:')
       WRITE(IOU6,51) IS,IH,MAXW,AVERW,RMS,BRMS
-   51 FORMAT(5X,'Bandwidth',I18/5X,'Profile',I20/
-     -       5X,'Max Wavefront',I14/5X,'Avg Wavefront',F14.3/
-     -       5X,'RMS Wavefront',F14.3/5X,'RMS Bandwidth',F14.3)
+   51 FORMAT(5X,'Bandwidth',I18/5X,'Profile',I20/                              &
+             5X,'Max Wavefront',I14/5X,'Avg Wavefront',F14.3/                  &
+             5X,'RMS Wavefront',F14.3/5X,'RMS Bandwidth',F14.3)
       IF(ip.ne.0.and.ISTA.gt.0) then
          WRITE(IOU6,701)
 701      FORMAT('Starting nodes supplied by user:')
          WRITE(IOU6,100) (ISTART(I),I=1,ISTA)
       end if
-C INITIALIZE ILD AND NEW ARRAYS.
+! INITIALIZE ILD AND NEW ARRAYS.
       DO I=1,NN
          NEW(I)=0
          ILD(I)=0
       end do
-C
-C     GENERATE NUMBERING SCHEME FOR EACH COMPONENT, NC.
-C
+!
+!     GENERATE NUMBERING SCHEME FOR EACH COMPONENT, NC.
+!
       DO 500 NC=1,NCM
-C     DETERMINE THE RANGE OF DEGREES (MI  TO  MAD) OF NODES OF INTEREST.
+!     DETERMINE THE RANGE OF DEGREES (MI  TO  MAD) OF NODES OF INTEREST.
       MI=MINDEG(NC,IC,IDEG)
       MAD=MI
       IF(NOM.EQ.0) GO TO 87
    90 MA=MAXDGR(NC,IC,IDEG)
       MAD=MI+((MA-MI)*NUM)/NOM
-C     MAKE SURE MAD DOES NOT EXCEED MEDIAN.
+!     MAKE SURE MAD DOES NOT EXCEED MEDIAN.
       MAD=MIN(MAD,MEDIAN-1)
       MAD=MAX(MAD,MI)
-C     DETERMINE BANDWIDTH OR SUM CRITERION FOR EACH NODE MEETING
-C        SPECIFIED CONDITION.
+!     DETERMINE BANDWIDTH OR SUM CRITERION FOR EACH NODE MEETING
+!        SPECIFIED CONDITION.
    87 CONTINUE
-      CALL DIAM(NC,MAD,NL,NODESL,IDEM,MAXLEV,IG,II1,IC,IDEG,IDIS,
-     -  IW,ICC)
+      CALL DIAM(NC,MAD,NL,NODESL,IDEM,MAXLEV,IG,II1,IC,IDEG,IDIS,              &
+        IW,ICC)
       IF(IP.EQ.0) GO TO 67
       WRITE(IOU6,39) NC,MAD
    39 FORMAT(/,'Component',I5,', Max Degree Used',I6)
-C     COMPUTE THE NUMBER OF NODES IN THIS COMPONENT AND WRITE OUT.
+!     COMPUTE THE NUMBER OF NODES IN THIS COMPONENT AND WRITE OUT.
       NNODE=ICC(NC+1)-ICC(NC)
       WRITE(IOU6,41) NNODE
    41 FORMAT('Number of nodes in this component',I8)
@@ -946,30 +946,30 @@ C     COMPUTE THE NUMBER OF NODES IN THIS COMPONENT AND WRITE OUT.
       IF(IP.EQ.0) GO TO 63
       IF(ISTA.LE.0) GO TO 63
       WRITE(IOU6,730)
-  730 FORMAT('Merged list of starting nodes supplied by user',
-     -       ' and by BANDIT -')
+  730 FORMAT('Merged list of starting nodes supplied by user',                 &
+             ' and by BANDIT -')
       WRITE(IOU6,100) (NODESL(I),I=1,NL)
    63 CONTINUE
       JMAX=MIN(NT,NL)
       JMAX=MAX(JMAX,1)
       IM1=1.E8
       IM2=IM1
-C
-C  CHECK SEQUENCE FOR EACH STARTING NODE SELECTED.
-C
+!
+!  CHECK SEQUENCE FOR EACH STARTING NODE SELECTED.
+!
       ij=1
       DO 400 J=1,JMAX
-      CALL RELABL(1,NODESL(J),IG,II1,IC,IDEG,IDIS,IW,NEW,ICC,
-     -            ILD,NODESL(K2),IAJDIM,IER)
+      CALL RELABL(1,NODESL(J),IG,II1,IC,IDEG,IDIS,IW,NEW,ICC,                  &
+                  ILD,NODESL(K2),IAJDIM,IER)
       IF(IER.GT.0) RETURN
-C  COMPUTE NEW BANDWIDTH,PROFILE,WAVEFRONT DATA.
+!  COMPUTE NEW BANDWIDTH,PROFILE,WAVEFRONT DATA.
       CALL WAVEY(IG,II1,ILD,NEW,NC,IC,IW,IB,MAXW,AVERW,SUMW,RMS,BRMS)
       IH=SUMW
-C     IB=BANDWIDTH, IH=PROFILE.
+!     IB=BANDWIDTH, IH=PROFILE.
       IF(IP.EQ.0) GO TO 70
       WRITE(IOU6,69) NODESL(J),IB,IH,MAXW,RMS
-   69 FORMAT('Starting Node',I6,', Band',I6,', Profile',I8,
-     - ', Max W',I6,', RMS W',F9.3 )
+   69 FORMAT('Starting Node',I6,', Band',I6,', Profile',I8,                    &
+       ', Max W',I6,', RMS W',F9.3 )
    70 CONTINUE
       GO TO (205,210,215,220), IO
   205 CRIT1=RMS
@@ -994,29 +994,29 @@ C     IB=BANDWIDTH, IH=PROFILE.
       IM2=CRIT2
       IJ=J
 400   CONTINUE
-C
-C   RECOMPUTE SEQUENCE FOR STARTING NODE WHICH IS BEST FOR CRITERION
-C       SELECTED.
-C
-      CALL RELABL(1,NODESL(IJ),IG,II1,IC,IDEG,IDIS,IW,NEW,ICC,
-     -            ILD,NODESL(K2),IAJDIM,IER)
+!
+!   RECOMPUTE SEQUENCE FOR STARTING NODE WHICH IS BEST FOR CRITERION
+!       SELECTED.
+!
+      CALL RELABL(1,NODESL(IJ),IG,II1,IC,IDEG,IDIS,IW,NEW,ICC,                 &
+                  ILD,NODESL(K2),IAJDIM,IER)
       IF(IER.GT.0) RETURN
-C
+!
   500 CONTINUE
-C
-C
-C  DETERMINE NODES OF ZERO DEGREE AND STACK LAST.
+!
+!
+!  DETERMINE NODES OF ZERO DEGREE AND STACK LAST.
       CALL STACK(IDEG,NEW,ILD,IW)
-C   COMPUTE BANDWIDTH, PROFILE AND WAVEFRONT DATA.
+!   COMPUTE BANDWIDTH, PROFILE AND WAVEFRONT DATA.
       CALL WAVEY(IG,II1,ILD,NEW,0,IC,IW,IB,MAXW,AVERW,SUMW,RMS,BRMS)
       IH=SUMW
-C
+!
       WRITE(IOU6,705)
   705 FORMAT(/,'After resequencing by Reverse Cuthill-McKee (CM):')
       WRITE(IOU6,51) IB,IH,MAXW,AVERW,RMS,BRMS
-C
-C   CHECK CM LABELING AGAINST ORIGINAL LABELING TO SEE IF BETTER.
-C
+!
+!   CHECK CM LABELING AGAINST ORIGINAL LABELING TO SEE IF BETTER.
+!
       GO TO (255,260,265,270), IO
   255 IM1=RMS0
       IM2=IH0
@@ -1028,7 +1028,7 @@ C
       CRIT1=IB
       CRIT2=IH
       GO TO 711
-C IB = BANDWIDTH,  IH= PROFILE.
+! IB = BANDWIDTH,  IH= PROFILE.
   265 IM1=IH0
       IM2=IS
       CRIT1=IH
@@ -1042,7 +1042,7 @@ C IB = BANDWIDTH,  IH= PROFILE.
   711 CONTINUE
       IF(CRIT1-IM1) 715,742,744
   742 IF(CRIT2.LT.IM2) GO TO 715
-C   IF NO IMPROVEMENT RETURN TO ORIGINAL SEQUENCE.
+!   IF NO IMPROVEMENT RETURN TO ORIGINAL SEQUENCE.
   744 IB=IS
       IH=IH0
       MAXW=MAXW0
@@ -1052,9 +1052,9 @@ C   IF NO IMPROVEMENT RETURN TO ORIGINAL SEQUENCE.
       DO 713 I=1,NN
       ILD(I)=I
   713 NEW(I)=I
-C
+!
   715 CONTINUE
-C   SET FINAL VALUES OF B , P , RMS , W .
+!   SET FINAL VALUES OF B , P , RMS , W .
       KNEW = IB
       IHE=IH
       MAXW1=MAXW
@@ -1062,7 +1062,7 @@ C   SET FINAL VALUES OF B , P , RMS , W .
       BRMS1=BRMS
       CALL TIMER(TB,IWALL,0,IOU6)
       TB=TB-TA
-c     IF(TB.GT.1.E-5) WRITE(IOU6,610) TB
+!     IF(TB.GT.1.E-5) WRITE(IOU6,610) TB
       WRITE(IOU6,610) TB
   610 FORMAT(5X,'CP time',F20.3)
       RETURN
@@ -1070,16 +1070,16 @@ c     IF(TB.GT.1.E-5) WRITE(IOU6,610) TB
 
 ! ##################################################################################################################################
       SUBROUTINE DEGREE(IG,II1,IDEG)
-C
-C     SET UP THE IDEG ARRAY CONTAINING THE DEGREE OF EACH NODE STORED
-C     IN THE IG ARRAY.
-C     IDEG(I) = DEGREE OF NODE I
-C
+!
+!     SET UP THE IDEG ARRAY CONTAINING THE DEGREE OF EACH NODE STORED
+!     IN THE IG ARRAY.
+!     IDEG(I) = DEGREE OF NODE I
+!
       INTEGER II1
       DIMENSION IG(II1,1),IDEG(*)
 ! B////////////////////////////////////////////////////////////////////B
-      INTEGER  I      ,IDEG   ,IG    ,J      ,KMOD   ,MAXDEG ,
-     &         MAXGRD ,MM     ,NN     ,NBITIN
+      INTEGER  I      ,IDEG   ,IG    ,J      ,KMOD   ,MAXDEG ,                 &
+               MAXGRD ,MM     ,NN     ,NBITIN
 
       REAL     DUMBB  ,DUMS
  
@@ -1091,7 +1091,7 @@ C
       IDEG(I)=0
       DO 80 J=1,MM
       IF(IG(I,J)) 100,100,50
-CPACK IF(IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)) 100,100,50
+!PACK IF(IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)) 100,100,50
    50 IDEG(I)=IDEG(I)+1
    80 CONTINUE
   100 CONTINUE
@@ -1100,19 +1100,19 @@ CPACK IF(IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)) 100,100,50
 
 ! ##################################################################################################################################
       SUBROUTINE DGREE(NDSTK,NR,NDEG,IOLD,IBW1,IPF1)
-C
-C     DGREE COMPUTES THE DEGREE OF EACH NODE IN NDSTK AND STORES
-C     IT IN THE ARRAY NDEG.  THE BANDWIDTH AND PROFILE FOR THE ORIGINAL
-C     OR INPUT RENUMBERING OF THE GRAPH IS COMPUTED ALSO.
-C
-C     COMPUTE MAXIMUM DEGREE MM AND STORE IN IDEG.
-C
+!
+!     DGREE COMPUTES THE DEGREE OF EACH NODE IN NDSTK AND STORES
+!     IT IN THE ARRAY NDEG.  THE BANDWIDTH AND PROFILE FOR THE ORIGINAL
+!     OR INPUT RENUMBERING OF THE GRAPH IS COMPUTED ALSO.
+!
+!     COMPUTE MAXIMUM DEGREE MM AND STORE IN IDEG.
+!
 ! B////////////////////////////////////////////////////////////////////B
-      INTEGER  I      ,IBW1   ,IDEG   ,IDIF   ,IDPTH  ,IOLD   ,IPF1   ,
-     &         IRW    ,ITST   ,J      ,KMOD
+      INTEGER  I      ,IBW1   ,IDEG   ,IDIF   ,IDPTH  ,IOLD   ,IPF1   ,        &
+               IRW    ,ITST   ,J      ,KMOD
      
-      INTEGER  MAXDEG ,MAXGRD ,MM     ,N      ,NBITIN ,NDEG   ,NDSTK  ,
-     &         NN     ,NR
+      INTEGER  MAXDEG ,MAXGRD ,MM     ,N      ,NBITIN ,NDEG   ,NDSTK  ,        &
+               NN     ,NR
 
       REAL     DUMBB  ,DUMS
 
@@ -1131,7 +1131,7 @@ C
         IRW=0
         DO 80 J=1,IDEG
           ITST=NDSTK(I,J)
-CPACK     ITST=IUNPK(NDSTK,MAXGRD*(J-1)+I,NBITIN)
+!PACK     ITST=IUNPK(NDSTK,MAXGRD*(J-1)+I,NBITIN)
           IF(ITST.EQ.0) GO TO 90
    50     NDEG(I)=NDEG(I)+1
           IDIF=IOLD(I)-IOLD(ITST)
@@ -1142,24 +1142,24 @@ CPACK     ITST=IUNPK(NDSTK,MAXGRD*(J-1)+I,NBITIN)
         IF(IRW.GT.IBW1) IBW1=IRW
   100 CONTINUE
       IDEG=MM
-C     INCLUDE DIAGONAL TERMS IN BANDWIDTH AND PROFILE
+!     INCLUDE DIAGONAL TERMS IN BANDWIDTH AND PROFILE
       IBW1=IBW1+1
       IPF1=IPF1+N
       RETURN
       END SUBROUTINE DGREE
 
 ! ##################################################################################################################################
-      SUBROUTINE DIAM(NC,MAXDG,NL,NODESL,IDEM,MAXLEV,
-     -                IG,II1,IC,IDEG,IDIS,IW,ICC)
-C
-C     DETERMINE NL STARTING POINTS AND STORE IN NODESL.
-C
+      SUBROUTINE DIAM(NC,MAXDG,NL,NODESL,IDEM,MAXLEV,                          &
+                      IG,II1,IC,IDEG,IDIS,IW,ICC)
+!
+!     DETERMINE NL STARTING POINTS AND STORE IN NODESL.
+!
       INTEGER II1
       DIMENSION IG(II1,*),IDIS(*),IW(*),ICC(*),IC(*),IDEG(*)
 ! B////////////////////////////////////////////////////////////////////B
-      INTEGER  I      ,IC     ,ICC    ,IDEG   ,IDEM   ,IDIS   ,IG     ,
-     &         IW     ,KMOD   ,MAXDEG ,MAXDG  ,MAXGRD ,MAXLEV ,
-     &         MD     ,ML     ,NBITIN ,NC     ,NL     ,NN
+      INTEGER  I      ,IC     ,ICC    ,IDEG   ,IDEM   ,IDIS   ,IG     ,        &
+               IW     ,KMOD   ,MAXDEG ,MAXDG  ,MAXGRD ,MAXLEV ,                &
+               MD     ,ML     ,NBITIN ,NC     ,NL     ,NN
 
       REAL     DUMBB  ,DUMS
 
@@ -1193,43 +1193,43 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE DIST(IDEG,HIST,IP,MEDIAN,MODD)
-C
-C     COMPUTE AND PRINT THE DISTRIBUTION OF NODAL DEGREES WITH MEDIAN
-C        AND MODE.
-C
-C     IDEG(I) = DEGREE OF NODE I
-C     HIST(I) = NUMBER OF NODES OF DEGREE I
-C     IP      = PRINT OPTION PARAMETER (IF 0, NO PRINTED OUTPUT)
-C
+!
+!     COMPUTE AND PRINT THE DISTRIBUTION OF NODAL DEGREES WITH MEDIAN
+!        AND MODE.
+!
+!     IDEG(I) = DEGREE OF NODE I
+!     HIST(I) = NUMBER OF NODES OF DEGREE I
+!     IP      = PRINT OPTION PARAMETER (IF 0, NO PRINTED OUTPUT)
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IP     ,ISUM   ,K      ,MAXI   ,MEDIAN ,MM     ,
-     &         MM1    ,MODD   ,NN     ,NN2
+      INTEGER  I      ,IP     ,ISUM   ,K      ,MAXI   ,MEDIAN ,MM     ,        &
+               MM1    ,MODD   ,NN     ,NN2
 
       REAL     DUMS
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /S/ NN,MM,DUMS(7)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER IDEG(*),HIST(*)
-C
-C     COMPUTE HISTOGRAM.
-C
+!
+!     COMPUTE HISTOGRAM.
+!
       MM1=MM+1
       DO 10 I=1,MM1
    10 HIST(I)=0
       DO 20 I=1,NN
       K=IDEG(I)+1
    20 HIST(K)=HIST(K)+1
-C
-C     COMPUTE MODE (MODD).
-C
+!
+!     COMPUTE MODE (MODD).
+!
       MODD=0
       MAXI=0
       DO 25 I=1,MM1
@@ -1239,24 +1239,24 @@ C
       MODD=I-1
    25 CONTINUE
       IF(IP.EQ.0) GO TO 60
-C
-C     PRINT HISTOGRAM.
-C
+!
+!     PRINT HISTOGRAM.
+!
       WRITE(IOU6,30)
-   30 FORMAT(/,'Distribution of Nodal Degrees:'//5X,
-     -       'Degree  Number  Cum. Total')
+   30 FORMAT(/,'Distribution of Nodal Degrees:'//5X,                           &
+             'Degree  Number  Cum. Total')
       ISUM=0
       DO 40 I=1,MM1
       ISUM=ISUM+HIST(I)
       K=I-1
    40 WRITE(IOU6,50) K,HIST(I),ISUM
    50 FORMAT(3X,2I8,I12)
-C
-C     COMPUTE CUMULATIVE DISTRIBUTION.
-C
+!
+!     COMPUTE CUMULATIVE DISTRIBUTION.
+!
    60 DO 70 I=2,MM1
    70 HIST(I)=HIST(I)+HIST(I-1)
-C     COMPUTE MEDIAN.
+!     COMPUTE MEDIAN.
       NN2=NN/2
       DO 80 I=1,MM1
       IF(HIST(I).GT.NN2) GO TO 90
@@ -1269,23 +1269,23 @@ C     COMPUTE MEDIAN.
 
 ! ##################################################################################################################################
       SUBROUTINE DOLLAR(KA,JUMP,KT,IER)
-C
-C     INTERPRET DOLLAR SIGN CARD.
-C
+!
+!     INTERPRET DOLLAR SIGN CARD.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &        IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &        IOU19  ,IOU20
+      INTEGER IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,         &
+              IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,         &
+              IOU19  ,IOU20
 
-      INTEGER  I      ,IADD   ,IDIM   ,IER    ,IFIR   ,IFL    ,IFLD   ,
-     &         IGDEG  ,IGNORE ,IIG    ,IPARAM ,ISTA   ,ISTART ,ITYPE  ,
-     &         J      ,JUMP   ,K      ,KDIM   ,KMOD   ,KORE   ,KT     ,
-     &         LINES                                                  ,
-     &         MA     ,MAXDEG ,MAXGRD ,MAXI   ,MB     ,MDIM   ,ME     ,
-     &         NBITIN ,NCON   ,NEDGE  ,NELEM  ,NGRID  ,NIP    ,NTYPE  ,
-     &         NUM
+      INTEGER  I      ,IADD   ,IDIM   ,IER    ,IFIR   ,IFL    ,IFLD   ,        &
+               IGDEG  ,IGNORE ,IIG    ,IPARAM ,ISTA   ,ISTART ,ITYPE  ,        &
+               J      ,JUMP   ,K      ,KDIM   ,KMOD   ,KORE   ,KT     ,        &
+               LINES                                                  ,        &
+               MA     ,MAXDEG ,MAXGRD ,MAXI   ,MB     ,MDIM   ,ME     ,        &
+               NBITIN ,NCON   ,NEDGE  ,NELEM  ,NGRID  ,NIP    ,NTYPE  ,        &
+               NUM
 
       REAL     DMY    ,DUM    ,DUMS   ,DUMY
 
@@ -1297,21 +1297,21 @@ C
       COMMON /BITS/ NBITIN,KORE,IFL,NGRID,DUM(4),KDIM
       COMMON /DOL/ ISTART(100),IGNORE(100)
       COMMON /DOLL/ IDIM,ISTA,IIG,IFIR,IGDEG
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-      COMMON /ELEM/ NTYPE,VYPE(160),TYPE(160),WYPE(160),ME(160),
-     -              NELEM(160),MDIM
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /ELEM/ NTYPE,VYPE(160),TYPE(160),WYPE(160),ME(160),               &
+                    NELEM(160),MDIM
       INTEGER vype,TYPE,WYPE,KA(80),IP(35)
       DATA MAXI/35/
-C
+!
       GO TO (10,30,80), JUMP
-C
-C     INITIALIZE PARAMETERS.
-C
-C     IF LOOP PARAMETER IS ALREADY SET ($LOOP YES), INDICATING THAT
-C     MULTIPLE DATA SETS ARE TO BE PROCESSED IN ONE EXECUTION, DO NOT
-C     RESET IPARAM(1).
-C
+!
+!     INITIALIZE PARAMETERS.
+!
+!     IF LOOP PARAMETER IS ALREADY SET ($LOOP YES), INDICATING THAT
+!     MULTIPLE DATA SETS ARE TO BE PROCESSED IN ONE EXECUTION, DO NOT
+!     RESET IPARAM(1).
+!
 10    J=1
       IF(IPARAM(1).EQ.4) J=2
       DO 20 I=J,20
@@ -1322,36 +1322,36 @@ C
       IGDEG=0
       IADD=0
       RETURN
-C
-C* PARAMETERS - - - -
-C
-C        KEYWORD 1           KEYWORD 2
-C        1 - LOOP            1 - SEQGP
-C        2 - TABLE           2 - ALL
-C        3 - METHOD          3 - NO
-C        4 - MPC             4 - YES
-C        5 - SEQUENCE        5 - MIN
-C        6 - CRITERION       6 - MAX
-C        7 - SPRING          7 - CM
-C        8 - NASTRAN         8 - GPS
-C        9 - ELEMENTS        9 - BOTH CM AND GPS
-C       10 - PRINT          10 - BANDWIDTH
-C       11 - FRONTAL        11 - PROFILE
-C                           12 - RMS WAVEFRONT
-C                           13 - WAVEFRONT (MAX)
-C
-C     REMAINING PARAMETERS UP TO 20 IN LEFT COLUMN ARE CURRENTLY UNUSED
-C
-C*   OTHER KEYWORDS - -   IGNORE,GRID,START,DEGREE,INSERT,LINES,
-C             DIMENSION,ADD,APPEND
-C
-C
-C     LOOK FOR FIRST KEYWORD.
-C
+!
+!* PARAMETERS - - - -
+!
+!        KEYWORD 1           KEYWORD 2
+!        1 - LOOP            1 - SEQGP
+!        2 - TABLE           2 - ALL
+!        3 - METHOD          3 - NO
+!        4 - MPC             4 - YES
+!        5 - SEQUENCE        5 - MIN
+!        6 - CRITERION       6 - MAX
+!        7 - SPRING          7 - CM
+!        8 - NASTRAN         8 - GPS
+!        9 - ELEMENTS        9 - BOTH CM AND GPS
+!       10 - PRINT          10 - BANDWIDTH
+!       11 - FRONTAL        11 - PROFILE
+!                           12 - RMS WAVEFRONT
+!                           13 - WAVEFRONT (MAX)
+!
+!     REMAINING PARAMETERS UP TO 20 IN LEFT COLUMN ARE CURRENTLY UNUSED
+!
+!*   OTHER KEYWORDS - -   IGNORE,GRID,START,DEGREE,INSERT,LINES,
+!             DIMENSION,ADD,APPEND
+!
+!
+!     LOOK FOR FIRST KEYWORD.
+!
    30 ITYPE=0
-C     CHECK COLUMN 2 FOR BLANK.
+!     CHECK COLUMN 2 FOR BLANK.
       IF(KA(2).EQ.MB(2)) RETURN
-C     SEE BLOCK DATA FOR ALPHABET KEY.
+!     SEE BLOCK DATA FOR ALPHABET KEY.
 !    1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
 !    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
       IF(KA(2).EQ.MA(12).AND.KA(3).EQ.MA(15)) ITYPE=1      ! LO $LOOP
@@ -1376,9 +1376,9 @@ C     SEE BLOCK DATA FOR ALPHABET KEY.
       IF(KA(2).EQ.MA( 1).AND.KA(3).EQ.MA( 4)) GO TO 230    ! AD $ADD
       IF(KA(2).EQ.MA( 1).AND.KA(3).EQ.MA(16)) GO TO 240    ! AP $APPEND
       RETURN
-C
-C     LOOK FOR SECOND KEYWORD.
-C
+!
+!     LOOK FOR SECOND KEYWORD.
+!
    35 DO I=4,70
          IF(KA(I).EQ.MB(2)) GO TO 50
       end do
@@ -1388,7 +1388,7 @@ C
          IF(KA(I).NE.MB(2)) GO TO 70
       end do
       RETURN
-C
+!
 70    J=0
       IF(KA(I).EQ.MA(19).AND.KA(I+1).EQ.MA( 5)) J=1        ! SE
       IF(KA(I).EQ.MA( 1).AND.KA(I+1).EQ.MA(12)) J=2        ! AL
@@ -1405,9 +1405,9 @@ C
       IF(KA(I).EQ.MA(23).AND.KA(I+1).EQ.MA( 1)) J=13       ! WA
       IF(J.GT.0) IPARAM(ITYPE)=J
       RETURN
-C
-C     CHECK FOR ILLEGAL PARAMETERS AND SET TO DEFAULTS.
-C
+!
+!     CHECK FOR ILLEGAL PARAMETERS AND SET TO DEFAULTS.
+!
 80    IF(IPARAM(1).NE.4)                    IPARAM(1)=3
       IF(IPARAM(2).NE.4)                    IPARAM(2)=3
       IF(IPARAM(3).NE.7.AND.IPARAM(3).NE.9) IPARAM(3)=8
@@ -1417,28 +1417,28 @@ C
 ! Change default for $CRITERION from RMS to BAND
 
 
-      IF(IPARAM( 6).NE.11.AND.IPARAM( 6).NE.12.AND.IPARAM(6).NE.13)
-     -                                        IPARAM( 6)=10
+      IF(IPARAM( 6).NE.11.AND.IPARAM( 6).NE.12.AND.IPARAM(6).NE.13)            &
+                                              IPARAM( 6)=10
 ! E////////////////////////////////////////////////////////////////////E
       IF(IPARAM(7).NE.4)                    IPARAM(7)=3
       IF(IPARAM(8).NE.4)                    IPARAM(8)=3
       IF(IPARAM(9).NE.4)                    IPARAM(9)=3
       IF(IPARAM(10).NE.6)                   IPARAM(10)=5
       IF(IPARAM(11).NE.4)                   IPARAM(11)=3
-C     INVOKE CONNECTION TABLE OPTION IF SPRINGS ARE REQUESTED.
+!     INVOKE CONNECTION TABLE OPTION IF SPRINGS ARE REQUESTED.
       IF(IPARAM(7).EQ.4) IPARAM(2)=4
       KDIM=MIN(KDIM,NGRID)
-C     INVOKE RMS CRITERION FOR FRONTAL JOB.
+!     INVOKE RMS CRITERION FOR FRONTAL JOB.
       IF(IPARAM(11).EQ.4) IPARAM(6)=12
-c     Force CM to be run if $print max is enabled (to get component list)
+!     Force CM to be run if $print max is enabled (to get component list)
       if(iparam(10).eq.6.and.iparam(3).eq.8) iparam(3)=9
-C     TO PREVENT USE OF A PARTICULAR $ CARD (SUCH AS $SPRING), ENFORCE
-C          THE NO OPTION HERE.
-C
+!     TO PREVENT USE OF A PARTICULAR $ CARD (SUCH AS $SPRING), ENFORCE
+!          THE NO OPTION HERE.
+!
       RETURN
-C
-C     $IGNORE G1,G2, ...     (NODES TO IGNORE)
-C
+!
+!     $IGNORE G1,G2, ...     (NODES TO IGNORE)
+!
   100 CALL READIT(KA(4),MAXI,69,IP,NIP)
       IF(NIP.LE.0) RETURN
       I=IIG
@@ -1452,18 +1452,18 @@ C
       K=I+J
   110 IGNORE(K)=IP(J)
       RETURN
-C
-C     $GRID N    (UPPER BOUND ON NUMBER OF GRID POINTS)
-C
+!
+!     $GRID N    (UPPER BOUND ON NUMBER OF GRID POINTS)
+!
   120 CALL READIT(KA(4),1,69,IP,NIP)
       IF(NIP.EQ.0) RETURN
       NGRID=MAX(IP(1),10)
       KDIM=MAX(KDIM,NGRID/10)
       KDIM=MIN(KDIM,NGRID)
       GO TO 195
-C
-C     $START G1,G2, ...     (USER-SELECTED STARTING NODES FOR CM METHOD)
-C
+!
+!     $START G1,G2, ...     (USER-SELECTED STARTING NODES FOR CM METHOD)
+!
   130 CALL READIT(KA(4),MAXI,69,IP,NIP)
       IF(NIP.LE.0) RETURN
       I=ISTA
@@ -1476,65 +1476,65 @@ C
       K=I+J
   140 ISTART(K)=IP(J)
       RETURN
-C
-C     $DEGREE N     (TO IGNORE NODES OF DEGREE EXCEEDING N)
-C
+!
+!     $DEGREE N     (TO IGNORE NODES OF DEGREE EXCEEDING N)
+!
   150 CALL READIT(KA(4),1,69,IP,NIP)
       IF(NIP.GT.0) IGDEG=IP(1)
       RETURN
-C
-C     $INSERT       OR      $INSERT N
-C
+!
+!     $INSERT       OR      $INSERT N
+!
   160 CALL INSERT(KA,KT)
       RETURN
-C
-C     $LINES N     (NO. OF LINES PER PAGE)
-C
+!
+!     $LINES N     (NO. OF LINES PER PAGE)
+!
   180 CALL READIT(KA(4),1,69,IP,NIP)
       IF(NIP.LE.0) RETURN
       LINES=MAX(IP(1),10)
       RETURN
-C
-C     $DIMENSION N    (DIMENSION OF SOME SCRATCH ARRAYS)
-C
+!
+!     $DIMENSION N    (DIMENSION OF SOME SCRATCH ARRAYS)
+!
   190 CALL READIT(KA(4),1,69,IP,NIP)
       IF(NIP.LE.0) RETURN
       KDIM=MAX(IP(1),10)
 195   KDIM=MIN(KDIM,KORE/4)
       RETURN
-C
-C     $ADD N     (TO ADD N TO NEW SEQUENCE NUMBERS)
-C
+!
+!     $ADD N     (TO ADD N TO NEW SEQUENCE NUMBERS)
+!
   230 CALL READIT(KA(4),1,69,IP,NIP)
       IF(NIP.GT.0) IADD=IP(1)
       RETURN
-C
-C     $APPEND     CNAME     NCON     IFLD
-C
-C     USER-DEFINED CONNECTION CARD, WHERE
-C
-C     CNAME=NAME OF CONNECTION CARD (E.G., CBAR) LEFT-ADJUSTED STARTING
-C          IN COLUMN 9
-C     NCON=NUMBER OF CONNECTIONS ON CARD (I.E., NODES IN ELEMENT)
-C     IFLD=NASTRAN FIELD NUMBER ON PARENT CARD IN WHICH FIRST
-C          CONNECTION APPEARS
-C     NCON AND IFLD MAY APPEAR ANYWHERE IN COLUMNS 17 - 32 SEPARATED BY
-C          ONE OR MORE BLANKS.
-C
-C     REMARKS  -
-C          1. NO LONG-FIELD CONNECTION CARDS MAY BE DEFINED.
-C          2. CONNECTIONS MUST BE LISTED CONSECUTIVELY ON PARENT AND
-C             CONTINUATION CARDS, IF ANY.
-C          3. EACH TIME A $APPEND CARD APPEARS, A NEW ELEMENT IS
-C             DEFINED.
-C          4. IF CNAME MATCHES AN EXISTING ELEMENT NAME, THE OLD
-C             ELEMENT IS REPLACED BY THE NEW ONE.
-C          5. THE NUMBER OF ELEMENT CONNECTIONS IS FIXED RATHER
-C             THAN VARIABLE.
-C          6. IF "$FRONTAL YES" IS SPECIFIED, FIELD 2 MUST CONTAIN THE
-C             ELEMENT NUMBER (SINCE ELEMENT NUMBERS ARE NEEDED FOR
-C             RESEQUENCING).
-C
+!
+!     $APPEND     CNAME     NCON     IFLD
+!
+!     USER-DEFINED CONNECTION CARD, WHERE
+!
+!     CNAME=NAME OF CONNECTION CARD (E.G., CBAR) LEFT-ADJUSTED STARTING
+!          IN COLUMN 9
+!     NCON=NUMBER OF CONNECTIONS ON CARD (I.E., NODES IN ELEMENT)
+!     IFLD=NASTRAN FIELD NUMBER ON PARENT CARD IN WHICH FIRST
+!          CONNECTION APPEARS
+!     NCON AND IFLD MAY APPEAR ANYWHERE IN COLUMNS 17 - 32 SEPARATED BY
+!          ONE OR MORE BLANKS.
+!
+!     REMARKS  -
+!          1. NO LONG-FIELD CONNECTION CARDS MAY BE DEFINED.
+!          2. CONNECTIONS MUST BE LISTED CONSECUTIVELY ON PARENT AND
+!             CONTINUATION CARDS, IF ANY.
+!          3. EACH TIME A $APPEND CARD APPEARS, A NEW ELEMENT IS
+!             DEFINED.
+!          4. IF CNAME MATCHES AN EXISTING ELEMENT NAME, THE OLD
+!             ELEMENT IS REPLACED BY THE NEW ONE.
+!          5. THE NUMBER OF ELEMENT CONNECTIONS IS FIXED RATHER
+!             THAN VARIABLE.
+!          6. IF "$FRONTAL YES" IS SPECIFIED, FIELD 2 MUST CONTAIN THE
+!             ELEMENT NUMBER (SINCE ELEMENT NUMBERS ARE NEEDED FOR
+!             RESEQUENCING).
+!
   240 CALL READIT(KA(17),2,16,IP,NIP)
       IF(NIP.LT.2) GO TO 260
       NCON=IP(1)
@@ -1551,7 +1551,7 @@ C
       REWIND IOU11
       IF(KA(1).NE.MA(3)) GO TO 260
       IF(KA(2).EQ.MB(2)) GO TO 260
-C     CHECK IF CNAME MATCHES NAME ALREADY IN LIST.
+!     CHECK IF CNAME MATCHES NAME ALREADY IN LIST.
       DO 251 I=19,NTYPE
          IF(I.GE.70.AND.I.LE.78) GO TO 251
          IF(I.EQ.93) GO TO 251
@@ -1569,71 +1569,71 @@ C     CHECK IF CNAME MATCHES NAME ALREADY IN LIST.
       TYPE(I)=KA(2)
       WYPE(I)=KA(3)
       ME(I)=10*NCON+IFLD
-C     TURN ON SWITCH TO PRINT OUT ELEMENT LIBRARY.
+!     TURN ON SWITCH TO PRINT OUT ELEMENT LIBRARY.
       IPARAM(9)=4
-C     SET KDIM SO ENOUGH SPACE IS AVAILABLE.
+!     SET KDIM SO ENOUGH SPACE IS AVAILABLE.
       KDIM=MAX(KDIM, NCON/4+1)
       IF(KDIM.GT.(KORE/4)) GO TO 260
       I=MDIM-NTYPE
       WRITE(IOU6,255) I
   255 FORMAT(10X,'Space exists to define',I4,' more elements.')
       RETURN
-C     ERROR FOUND ON $APPEND CARD.
+!     ERROR FOUND ON $APPEND CARD.
   260 CONTINUE
       WRITE(IOU6,265)
   265 FORMAT(/,'Fatal Error.  Illegal data on $APPEND card.')
       call finish(6,IER)
       RETURN
-C
+!
       END SUBROUTINE DOLLAR
 
 ! ##################################################################################################################################
       SUBROUTINE ELTYPE(KA,ITYPE,NCON,IFLD,LOOP,MAXI,LEN,LESSOK,IER)
-C
-C     DETERMINE BULK DATA CARD ELEMENT TYPE.
-C
-C     KA     = CONTENTS OF BULK DATA CARD (A1,A4,A3,64A1,A1,A4,A3)
-C              (INPUT)
-C     ITYPE  = ELEMENT TYPE NUMBER (OUTPUT)
-C     NCON   = NUMBER OF CONNECTIONS FOR ELEMENT (OUTPUT)
-C              (FOR SOME ELEMENTS  (E.G., CELAS1), THE CONNECTIONS ARE
-C              NOT LISTED CONSECUTIVELY, IN WHICH CASE NCON BECOMES THE
-C              NUMBER OF FIELDS.  LATER, THE MIDDLE FIELD IS BLANKED
-C              OUT.)
-C     IFLD   = FIELD NUMBER OF FIRST CONNECTION (OUTPUT)
-C     LOOP   = 2 IF TWO ELEMENTS CAN BE DEFINED ON ONE CARD,
-C              OTHERWISE 1. (OUTPUT)
-C              THE ONLY CARD TYPES FOR WHICH TWO ELEMENTS CAN BE DEFINED
-c              ON ONE CARD ARE CDAMP3, CDAMP4, CELAS3, CELAS4, CMASS3,
-c              CMASS4, CDAMP4*,CELAS4*, CMASS4*, CRIGDR.
-c              CROD(10), CTUBE(11), CVISC(12) were previously included
-c              in this list and removed.
-C     MAXI   = MAXIMUM NUMBER OF GRID POINTS ON A CONNECTION CARD
-C              (=kdim4 from main) (INPUT)
-C     LEN    = 1 FOR SHORT FIELD DATA CARDS,
-C              2 FOR LONG  FIELD DATA CARDS (OUTPUT)
-C     LESSOK = .TRUE. IF IT IS OK FOR THE ELEMENT TO HAVE FEWER THAN
-C              THE MAXIMUM NUMBER OF NODES PRESENT ON CONNECTION CARD
-C              (E.G., CELAS1 OR CPENTA), OTHERWISE, .FALSE. (OUTPUT)
-C
+!
+!     DETERMINE BULK DATA CARD ELEMENT TYPE.
+!
+!     KA     = CONTENTS OF BULK DATA CARD (A1,A4,A3,64A1,A1,A4,A3)
+!              (INPUT)
+!     ITYPE  = ELEMENT TYPE NUMBER (OUTPUT)
+!     NCON   = NUMBER OF CONNECTIONS FOR ELEMENT (OUTPUT)
+!              (FOR SOME ELEMENTS  (E.G., CELAS1), THE CONNECTIONS ARE
+!              NOT LISTED CONSECUTIVELY, IN WHICH CASE NCON BECOMES THE
+!              NUMBER OF FIELDS.  LATER, THE MIDDLE FIELD IS BLANKED
+!              OUT.)
+!     IFLD   = FIELD NUMBER OF FIRST CONNECTION (OUTPUT)
+!     LOOP   = 2 IF TWO ELEMENTS CAN BE DEFINED ON ONE CARD,
+!              OTHERWISE 1. (OUTPUT)
+!              THE ONLY CARD TYPES FOR WHICH TWO ELEMENTS CAN BE DEFINED
+!              ON ONE CARD ARE CDAMP3, CDAMP4, CELAS3, CELAS4, CMASS3,
+!              CMASS4, CDAMP4*,CELAS4*, CMASS4*, CRIGDR.
+!              CROD(10), CTUBE(11), CVISC(12) were previously included
+!              in this list and removed.
+!     MAXI   = MAXIMUM NUMBER OF GRID POINTS ON A CONNECTION CARD
+!              (=kdim4 from main) (INPUT)
+!     LEN    = 1 FOR SHORT FIELD DATA CARDS,
+!              2 FOR LONG  FIELD DATA CARDS (OUTPUT)
+!     LESSOK = .TRUE. IF IT IS OK FOR THE ELEMENT TO HAVE FEWER THAN
+!              THE MAXIMUM NUMBER OF NODES PRESENT ON CONNECTION CARD
+!              (E.G., CELAS1 OR CPENTA), OTHERWISE, .FALSE. (OUTPUT)
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IER    ,IFLD   ,IPARAM ,ITYPE  ,J      ,L      ,
-     &         LEN    ,LOOP   ,MA     ,MAXI   ,MB     ,MDIM   ,ME     ,
-     &         NCON   ,NELEM  ,NTYPE  ,NUM
+      INTEGER  I      ,IER    ,IFLD   ,IPARAM ,ITYPE  ,J      ,L      ,        &
+               LEN    ,LOOP   ,MA     ,MAXI   ,MB     ,MDIM   ,ME     ,        &
+               NCON   ,NELEM  ,NTYPE  ,NUM
 
 ! E////////////////////////////////////////////////////////////////////E
-      COMMON /ELEM/ NTYPE,VYPE(160),TYPE(160),WYPE(160),ME(160),
-     -              NELEM(160),MDIM
+      COMMON /ELEM/ NTYPE,VYPE(160),TYPE(160),WYPE(160),ME(160),               &
+                    NELEM(160),MDIM
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
       COMMON /B/ IPARAM(20)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER vype,TYPE,WYPE,KA(70),EQGP
       LOGICAL LESSOK
 ! B////////////////////////////////////////////////////////////////////B
@@ -1642,10 +1642,10 @@ C
 ! different than IP (array) in subr READIT
       INTEGER NCON_array(1)
 ! E////////////////////////////////////////////////////////////////////E
-C
-C     SEE BLOCK DATA FOR A LISTING OF THE BANDIT ELEMENT LIBRARY.
-C     IT CAN BE LISTED AT EXECUTION TIME WITH  $ELEMENT YES  CARD.
-C
+!
+!     SEE BLOCK DATA FOR A LISTING OF THE BANDIT ELEMENT LIBRARY.
+!     IT CAN BE LISTED AT EXECUTION TIME WITH  $ELEMENT YES  CARD.
+!
 ! B////////////////////////////////////////////////////////////////////B
       DATA EQGP/4HEQGP/
 ! E////////////////////////////////////////////////////////////////////E
@@ -1654,28 +1654,28 @@ C
       ITYPE=0
       LESSOK=.FALSE.
       IF(KA(1).NE.MA(3)) GO TO 30
-C
-C     LOOK FOR CONNECTION CARD.
-C
+!
+!     LOOK FOR CONNECTION CARD.
+!
       DO I=4,NTYPE
          IF(KA(2).EQ.TYPE(I).AND.KA(3).EQ.WYPE(I)) GO TO 20
       end do
       RETURN
-C
+!
    20 ITYPE=I
       NCON=ME(I)/10
       IFLD=ME(I)-10*NCON
       IF(NCON.eq.0) then
          WRITE(IOU6,24) TYPE(I),TYPE(I)
-24       FORMAT(/,'Fatal Error.  A',A4,' card does not precede first C',
-     -          A4,' card.')
+24       FORMAT(/,'Fatal Error.  A',A4,' card does not precede first!',        &
+                A4,' card.')
          call finish(6,IER)
          RETURN
       end if
-C
-C     SET SPECIAL PARAMETERS LOOP, LEN, AND LESSOK.
-C
-c     IF(I.GE.10.AND.I.LE.12) LOOP=2
+!
+!     SET SPECIAL PARAMETERS LOOP, LEN, AND LESSOK.
+!
+!     IF(I.GE.10.AND.I.LE.12) LOOP=2
       IF(I.GE.13.AND.I.LE.18) LOOP=2
       IF(I.GE.70.AND.I.LE.72) LOOP=2
       IF(I.EQ.93) LOOP=2
@@ -1686,9 +1686,9 @@ c     IF(I.GE.10.AND.I.LE.12) LOOP=2
       IF(I.EQ.96.OR.I.EQ.97) LESSOK=.TRUE.
       IF(I.GE.121.AND.I.LE.127) LESSOK=.TRUE.
       RETURN
-C
-C     LOOK FOR ENDDATA, MPC, MPC*, MPCAX, OR SEQGP.
-C
+!
+!     LOOK FOR ENDDATA, MPC, MPC*, MPCAX, OR SEQGP.
+!
    30 IF(KA(1).EQ.MA( 5).AND.KA(2).EQ.TYPE(1))   ITYPE=1              ! enddata
       IF(KA(1).EQ.MA(13).AND.KA(2).EQ.TYPE(2))   ITYPE=2              ! mpc
       IF(KA(1).EQ.MA(13).AND.KA(2).EQ.TYPE(3))   ITYPE=3              ! mpc*
@@ -1701,18 +1701,18 @@ C
       IF(KA(1).EQ.MA(19).AND.KA(2).EQ.EQGP) GO TO 35                  ! seqgp
       IF(KA(1).EQ.MA( 1)) GO TO 50                                    ! a
       RETURN
-C
-C     SEQGP CARD FOUND.   IF RESEQUENCING REQUESTED, ABORT JOB.
-C
+!
+!     SEQGP CARD FOUND.   IF RESEQUENCING REQUESTED, ABORT JOB.
+!
    35 IF(IPARAM(5).EQ.3) RETURN
 ! B////////////////////////////////////////////////////////////////////B
 ! Comment out this fatal error, MYSTRAN disallows SEQGP card images when
 ! it reads the input deck prior to Bandit being called
 ! E////////////////////////////////////////////////////////////////////E
       RETURN
-C
-C     LOOK FOR ADUMI CARD AND EXTRACT NCON, THE NUMBER OF GRID POINTS.
-C
+!
+!     LOOK FOR ADUMI CARD AND EXTRACT NCON, THE NUMBER OF GRID POINTS.
+!
    50 DO 60 I=58,67
       IF(KA(2).EQ.TYPE(I)) GO TO 70
    60 CONTINUE
@@ -1723,47 +1723,47 @@ C
 ! E////////////////////////////////////////////////////////////////////E
       L = ME(I) - (ME(I)/10) * 10
       ME(I) = 10 * NCON + L
-C     THE DEFAULT NUMBER OF NODES FOR CDUMMY IS GIVEN IN BLOCK DATA.
-C          IT CAN BE CHANGED WITH AN ADUMMY CARD.
-C     THE DEFAULT NUMBER OF NODES FOR CDUMI IS 0.
+!     THE DEFAULT NUMBER OF NODES FOR CDUMMY IS GIVEN IN BLOCK DATA.
+!          IT CAN BE CHANGED WITH AN ADUMMY CARD.
+!     THE DEFAULT NUMBER OF NODES FOR CDUMI IS 0.
       IF(NCON.LE.MAXI) RETURN
       WRITE(IOU6,80) (KA(I),I=1,3),MAXI
-80    FORMAT(/,'Fatal Error.  Number of grid connections on ',A1,A4,A3,
-     - 'exceeds limit of',I7)
+80    FORMAT(/,'Fatal Error.  Number of grid connections on ',A1,A4,A3,        &
+       'exceeds limit of',I7)
       WRITE(IOU6,85)
-85    FORMAT('Use $DIM N card, where 4*N exceeds the maximum number'/
-     -       'of grid points for any one element.')
+85    FORMAT('Use $DIM N card, where 4*N exceeds the maximum number'/          &
+             'of grid points for any one element.')
       call finish(6,IER)
       RETURN
       END SUBROUTINE ELTYPE
 
 ! ##################################################################################################################################
       SUBROUTINE FINISH(KUMP,IER)
-C
+!
 ! B////////////////////////////////////////////////////////////////////B
       USE IOUNT1, ONLY   :  WRT_LOG, SEQ
 ! E////////////////////////////////////////////////////////////////////B
-C     TERMINATE JOB AFTER FATAL ERROR.
-C     THE SUBSEQUENT EXECUTION OF NASTRAN IS PREVENTED BY ERASING UNIT 8.
-C
-c
-c     Kump   Reason
-c      1     maxgrd or maxdeg exceeded
-c      2     $DIM too small for rigid element
-c      3     $DIM exceeded in GPS
-c      4     EOF encountered
-c      5     $DIM exceeded in CM
-c      6     all other reasons
-c
+!     TERMINATE JOB AFTER FATAL ERROR.
+!     THE SUBSEQUENT EXECUTION OF NASTRAN IS PREVENTED BY ERASING UNIT 8.
+!
+!
+!     Kump   Reason
+!      1     maxgrd or maxdeg exceeded
+!      2     $DIM too small for rigid element
+!      3     $DIM exceeded in GPS
+!      4     EOF encountered
+!      5     $DIM exceeded in CM
+!      6     all other reasons
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IER    ,IPARAM ,ITIME  ,KUMP   ,NN     ,KDIM   ,
-     &         KA     ,NCARD
+      INTEGER  I      ,IER    ,IPARAM ,ITIME  ,KUMP   ,NN     ,KDIM   ,        &
+               KA     ,NCARD
 
       REAL     DUM    ,DUMO   ,DUMS
 
@@ -1771,35 +1771,35 @@ c
       COMMON /S/ NN,DUMS(8)
       COMMON /BITS/ DUM(8),KDIM
       COMMON /B/ IPARAM(20)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       COMMON /DOL/ KA(20),DUMO(180)
       GO TO (10,60,30,40,30,20), KUMP
-C
+!
 ! *********************************************************************
-C KUMP = 4: EOF encountered
+! KUMP = 4: EOF encountered
 ! --------
-C
+!
 40    WRITE(IOU6,42)
 42    FORMAT(/,'Fatal Error.  End-of-file encountered.')
       GO TO 20
-C
+!
 ! *********************************************************************
-C KUMP = 3 or 5: Abort job when scratch dimension exceeded in GPS or CM
+! KUMP = 3 or 5: Abort job when scratch dimension exceeded in GPS or CM
 ! -------------
-C
+!
    30 CONTINUE
       KDIM=2*KDIM
       KDIM=MIN(KDIM,NN)
       WRITE(IOU6,32) NN,KDIM
-   32 FORMAT(/,'Fatal Error.  Scratch array dimension exceeded.',
-     -       '  Resubmit job with'/
-     -       15X,'$GRID',I8,'  and'/15X,'$DIM ',I8)
+   32 FORMAT(/,'Fatal Error.  Scratch array dimension exceeded.',              &
+             '  Resubmit job with'/                                            &
+             15X,'$GRID',I8,'  and'/15X,'$DIM ',I8)
       IF(KUMP.EQ.5) GO TO 20
-C
-C     RECOVER SEQGP CARDS FROM IOU9 IF STOP OCCURRED IN GPS AFTER
-C     FINISHING CM.
-C
+!
+!     RECOVER SEQGP CARDS FROM IOU9 IF STOP OCCURRED IN GPS AFTER
+!     FINISHING CM.
+!
       IF(IPARAM(3).NE.9) GO TO 20
       REWIND IOU7
 ! B////////////////////////////////////////////////////////////////////B
@@ -1807,13 +1807,13 @@ C
       READ (SEQ,'(1X,I11)') ITIME
 ! E////////////////////////////////////////////////////////////////////E
       REWIND IOU9
-C     NCARD=NUMBER OF SEQGP CARDS.
+!     NCARD=NUMBER OF SEQGP CARDS.
       NCARD=(NN-1)/4 + 1
-C     COPY SEQGP CARDS TO UNIT 7.
+!     COPY SEQGP CARDS TO UNIT 7.
       DO 37 I=1,NCARD
       READ(IOU9,36) KA
    36 FORMAT(20A4)
-C     KA IS SCRATCH SPACE HERE.
+!     KA IS SCRATCH SPACE HERE.
 37    WRITE(IOU7,36) KA
 ! B////////////////////////////////////////////////////////////////////B
       WRITE(SEQ,36) KA
@@ -1824,46 +1824,46 @@ C     KA IS SCRATCH SPACE HERE.
       READ (SEQ,'(1X,I11)') ITIME
 ! E////////////////////////////////////////////////////////////////////E
       WRITE(IOU6,38)
-   38 FORMAT(/,'SEQGP cards generated by CM have been recovered',
-     -       ' and placed on bandit.f07')
+   38 FORMAT(/,'SEQGP cards generated by CM have been recovered',              &
+             ' and placed on bandit.f07')
       GO TO 20
-C
+!
 ! *********************************************************************
-C KUMP = 1: Quit since MAXGRD or MAXDEG too small
+! KUMP = 1: Quit since MAXGRD or MAXDEG too small
 ! --------
-C
+!
    10 WRITE(IOU6,15)
    15 FORMAT('Use $GRID N card and/or increase memory in code.')
       go to 20
-c
+!
 ! *********************************************************************
-c KUMP = 6: Quit since $DIM too small for rigid element
+! KUMP = 6: Quit since $DIM too small for rigid element
 ! --------
-c
+!
 60    KDIM=2*KDIM
       WRITE(IOU6,62) KDIM
 62    FORMAT('Resubmit job with'/5X,'$DIM',I8)
       go to 20
-C
+!
 ! *********************************************************************
 ! KUMP = 2: Quit for all other reasons than above
 ! --------
 
    20 WRITE(IOU8,'(A)') 'Fatal Error.  bandit.f08 deleted.'
       if(iparam(1).eq.3) close(iou8,status='delete')
-C     WRITE(IOU6,'(A)') '0End of BANDIT Job.'
-C     STOP 13
+!     WRITE(IOU6,'(A)') '0End of BANDIT Job.'
+!     STOP 13
       IER=KUMP
       RETURN
       END SUBROUTINE FINISH
 
 ! ##################################################################################################################################
       SUBROUTINE FIXIT(LIST,NL)
-C
-C     THIS ROUTINE COMPRESSES OUT ZEROS AND MULTIPLE ENTRIES IN A LIST
-C     ORIGINALLY OF LENGTH NL.  A CORRECTED LENGTH NL IS RETURNED TO
-C     THE CALLING PROGRAM.
-C
+!
+!     THIS ROUTINE COMPRESSES OUT ZEROS AND MULTIPLE ENTRIES IN A LIST
+!     ORIGINALLY OF LENGTH NL.  A CORRECTED LENGTH NL IS RETURNED TO
+!     THE CALLING PROGRAM.
+!
       INTEGER LIST(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
@@ -1871,13 +1871,13 @@ C
       INTEGER  I      ,I1     ,J      ,NL     ,NL1
 
 ! E////////////////////////////////////////////////////////////////////E
-C
-C     DELETE ZEROS.
-C
+!
+!     DELETE ZEROS.
+!
       CALL ZERO(LIST,NL)
-C
-C     DELETE DUPLICATE ENTRIES.
-C
+!
+!     DELETE DUPLICATE ENTRIES.
+!
       IF(NL.LE.1) RETURN
       NL1=NL-1
       DO 20 I=1,NL1
@@ -1888,18 +1888,18 @@ C
       GO TO 20
 10    CONTINUE
 20    CONTINUE
-C
-C     DELETE ZEROS AGAIN.
-C
+!
+!     DELETE ZEROS AGAIN.
+!
       CALL ZERO(LIST,NL)
       RETURN
       END SUBROUTINE FIXIT
 
 ! ##################################################################################################################################
       SUBROUTINE FLIP(LIST,N,INV,II3,IER)
-C
-C     CONVERT $-ARRAY LIST OF LENGTH N FROM ORIGINAL TO INTERNAL NUMBERS
-C
+!
+!     CONVERT $-ARRAY LIST OF LENGTH N FROM ORIGINAL TO INTERNAL NUMBERS
+!
       INTEGER II3, INV(2,II3),LIST(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
@@ -1907,7 +1907,7 @@ C
       INTEGER  I      ,IER    ,N
 
 ! E////////////////////////////////////////////////////////////////////E
-C     CHECK FOR DUPLICATE AND ZERO ENTRIES AND REDUCE N IF NECESSARY.
+!     CHECK FOR DUPLICATE AND ZERO ENTRIES AND REDUCE N IF NECESSARY.
       CALL FIXIT(LIST,N)
       IF(N.LE.0) RETURN
       DO 10 I=1,N
@@ -1917,88 +1917,88 @@ C     CHECK FOR DUPLICATE AND ZERO ENTRIES AND REDUCE N IF NECESSARY.
       END SUBROUTINE FLIP
 
 ! ##################################################################################################################################
-      SUBROUTINE FNDIAM(SND1,SND2,NDSTK,NR,NDEG,LVL,LVLS1,LVLS2,
-     -  IWK,IDFLT,NDLST,IDIM,IER)
-C
-C  FNDIAM IS THE CONTROL PROCEDURE FOR FINDING THE PSEUDO-DIAMETER OF
-C  NDSTK AS WELL AS THE LEVEL STRUCTURE FROM EACH END
-C
-C  SND1-        ON INPUT THIS IS THE NODE NUMBER OF THE FIRST
-C               ATTEMPT AT FINDING A DIAMETER.  ON OUTPUT IT
-C               CONTAINS THE ACTUAL NUMBER USED.
-C  SND2-        ON OUTPUT CONTAINS OTHER END OF DIAMETER
-C  LVLS1-       ARRAY CONTAINING LEVEL STRUCTURE WITH SND1 AS ROOT
-C  LVLS2-       ARRAY CONTAINING LEVEL STRUCTURE WITH SND2 AS ROOT
-C  IDFLT-       FLAG USED IN PICKING FINAL LEVEL STRUCTURE, SET
-C               =1 IF WIDTH OF LVLS1 @ WIDTH OF LVLS2, OTHERWISE =2
-C  LVL,IWK-     WORKING STORAGE
-C
+      SUBROUTINE FNDIAM(SND1,SND2,NDSTK,NR,NDEG,LVL,LVLS1,LVLS2,               &
+        IWK,IDFLT,NDLST,IDIM,IER)
+!
+!  FNDIAM IS THE CONTROL PROCEDURE FOR FINDING THE PSEUDO-DIAMETER OF
+!  NDSTK AS WELL AS THE LEVEL STRUCTURE FROM EACH END
+!
+!  SND1-        ON INPUT THIS IS THE NODE NUMBER OF THE FIRST
+!               ATTEMPT AT FINDING A DIAMETER.  ON OUTPUT IT
+!               CONTAINS THE ACTUAL NUMBER USED.
+!  SND2-        ON OUTPUT CONTAINS OTHER END OF DIAMETER
+!  LVLS1-       ARRAY CONTAINING LEVEL STRUCTURE WITH SND1 AS ROOT
+!  LVLS2-       ARRAY CONTAINING LEVEL STRUCTURE WITH SND2 AS ROOT
+!  IDFLT-       FLAG USED IN PICKING FINAL LEVEL STRUCTURE, SET
+!               =1 IF WIDTH OF LVLS1 @ WIDTH OF LVLS2, OTHERWISE =2
+!  LVL,IWK-     WORKING STORAGE
+!
       INTEGER FLAG,NR,SND,SND1,SND2
       COMMON /GRA/ N,IDPTH,DUMG
       DIMENSION NDSTK(NR,*),NDEG(*),LVL(*),LVLS1(*),LVLS2(*),IWK(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IDFLT  ,IDIM   ,IDPTH  ,IER    ,IWK    ,LVL    ,
-     &         LVLBOT ,LVLN   ,LVLS1  ,LVLS2  ,LVLWTH ,MAXLW  ,mtw1   ,
-     &         MTW2   ,N      ,NDEG   ,NDSTK  ,NDXL   ,ndxn
+      INTEGER  I      ,IDFLT  ,IDIM   ,IDPTH  ,IER    ,IWK    ,LVL    ,        &
+               LVLBOT ,LVLN   ,LVLS1  ,LVLS2  ,LVLWTH ,MAXLW  ,mtw1   ,        &
+               MTW2   ,N      ,NDEG   ,NDSTK  ,NDXL   ,ndxn
 
       REAL    DUMG   
 
 ! E////////////////////////////////////////////////////////////////////E
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER NDLST(IDIM)
-C     DIMENSION OF NDLST IS THE MAX NUMBER OF NODES IN LAST LEVEL.
+!     DIMENSION OF NDLST IS THE MAX NUMBER OF NODES IN LAST LEVEL.
       mtw1=0
       ndxn=0
       FLAG=0
       MTW2=N
       SND=SND1
-C  ZERO LVL TO INDICATE ALL NODES ARE AVAILABLE TO TREE
+!  ZERO LVL TO INDICATE ALL NODES ARE AVAILABLE TO TREE
    20 DO 25 I=1,N
         LVL(I)=0
    25 CONTINUE
       LVLN=1
-C  DROP A TREE FROM SND
+!  DROP A TREE FROM SND
       CALL TREE(SND,NDSTK,NR,LVL,IWK,NDEG,LVLWTH,LVLBOT,LVLN,MAXLW,MTW2)
       IF(FLAG.GE.1) GO TO 110
       FLAG=1
    70 IDPTH=LVLN-1
       MTW1=MAXLW
-C  COPY LEVEL STRUCTURE INTO LVLS1
+!  COPY LEVEL STRUCTURE INTO LVLS1
       DO 75 I=1,N
         LVLS1(I)=LVL(I)
    75 CONTINUE
       NDXN=1
       NDXL=0
       MTW2=N
-C  SORT LAST LEVEL BY DEGREE  AND STORE IN NDLST
+!  SORT LAST LEVEL BY DEGREE  AND STORE IN NDLST
       CALL SORTDG(NDLST,IWK(LVLBOT),NDXL,LVLWTH,NDEG)
       IF(NDXL.LE.IDIM) GO TO 100
-C     DIMENSION EXCEEDED; STOP JOB.
+!     DIMENSION EXCEEDED; STOP JOB.
       CALL FINISH(3,IER)
       RETURN
   100 CONTINUE
       SND=NDLST(1)
       GO TO 20
   110 IF(IDPTH.GE.LVLN-1) GO TO 120
-C  START AGAIN WITH NEW STARTING NODE
+!  START AGAIN WITH NEW STARTING NODE
       SND1=SND
       GO TO 70
   120 IF(MAXLW.GE.MTW2) GO TO 130
       MTW2=MAXLW
       SND2=SND
-C  STORE NARROWEST REVERSE LEVEL STRUCTURE IN LVLS2
+!  STORE NARROWEST REVERSE LEVEL STRUCTURE IN LVLS2
       DO 125 I=1,N
         LVLS2(I)=LVL(I)
   125 CONTINUE
   130 IF(NDXN.EQ.NDXL) GO TO 140
-C  TRY NEXT NODE IN NDLST
+!  TRY NEXT NODE IN NDLST
       NDXN=NDXN+1
       SND=NDLST(NDXN)
       GO TO 20
@@ -2009,71 +2009,71 @@ C  TRY NEXT NODE IN NDLST
 
 ! ##################################################################################################################################
       SUBROUTINE FRONT(KG,ILD,NN,EL,MEM,IER)
-C
-C     GENERATE ELEMENT SEQUENCE FOR FRONTAL SOLVERS.
-C
-C     G.C. EVERSTINE, NSWCCD 204, 12/3/90 (revised 5/22/96)
-C
-C     KG      = ARRAY FOR STORING THE CONNECTIONS FOR AN ELEMENT
-C               (SCRATCH)
-C     ILD(I)  = NEW LABEL FOR NODE WITH ORIGINAL INTERNAL LABEL I
-C               (INPUT)
-C     NN      = NUMBER OF GRID POINTS IN MODEL (INPUT)
-C     EL(1,I) = ORIGINAL ELEMENT ID FOR ELEMENT I
-C     EL(2,I) = SMALLEST NODE NUMBER IN NEW SEQUENCE IN ELEMENT I
-C               (EL IS A SCRATCH ARRAY)
-C     MEM     = MEMORY AVAILABLE FOR EL ARRAY (INPUT)
-C
+!
+!     GENERATE ELEMENT SEQUENCE FOR FRONTAL SOLVERS.
+!
+!     G.C. EVERSTINE, NSWCCD 204, 12/3/90 (revised 5/22/96)
+!
+!     KG      = ARRAY FOR STORING THE CONNECTIONS FOR AN ELEMENT
+!               (SCRATCH)
+!     ILD(I)  = NEW LABEL FOR NODE WITH ORIGINAL INTERNAL LABEL I
+!               (INPUT)
+!     NN      = NUMBER OF GRID POINTS IN MODEL (INPUT)
+!     EL(1,I) = ORIGINAL ELEMENT ID FOR ELEMENT I
+!     EL(2,I) = SMALLEST NODE NUMBER IN NEW SEQUENCE IN ELEMENT I
+!               (EL IS A SCRATCH ARRAY)
+!     MEM     = MEMORY AVAILABLE FOR EL ARRAY (INPUT)
+!
       INTEGER KG(*),ILD(*),EL(2,*),EID,EMOD
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IEL    ,IER    ,J      ,J1     ,K      ,KFLAG  ,
-     &         KMIN   ,L      ,LOC    ,MEM    ,mflag  ,NBW    ,NCM    ,
-     &         NEED   ,NEL    ,NEL1   ,NEQ    ,NEQR   ,NLINK  ,NN     ,
-     &         NP     ,NPT    ,NZERO  ,OBW    ,OP     
+      INTEGER  I      ,IEL    ,IER    ,J      ,J1     ,K      ,KFLAG  ,        &
+               KMIN   ,L      ,LOC    ,MEM    ,mflag  ,NBW    ,NCM    ,        &
+               NEED   ,NEL    ,NEL1   ,NEQ    ,NEQR   ,NLINK  ,NN     ,        &
+               NP     ,NPT    ,NZERO  ,OBW    ,OP     
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /D/ OBW,NBW,OP,NP,NCM,NZERO,NEL,NEQ,NEQR,NLINK
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-C
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+!
       REWIND IOU13
-C
-C     CHECK MEMORY
-C
-c     I=MAX(NEL,NN)
+!
+!     CHECK MEMORY
+!
+!     I=MAX(NEL,NN)
       I=MAX(NEL,NN,mem/4)
       NEED=4*I
       IF(MEM.LT.NEED) then
          WRITE(IOU6,5) NEED,MEM
-5        FORMAT(/,'Fatal Error.  Insufficient memory available',
-     -          ' for element sort for frontal solver.'/
-     -          12X,I10,' words needed,',I10,' words available.')
+5        FORMAT(/,'Fatal Error.  Insufficient memory available',               &
+                ' for element sort for frontal solver.'/                       &
+                12X,I10,' words needed,',I10,' words available.')
          CALL FINISH(1,IER)
          RETURN
       end if
-C
-C     INITIALIZE THE SCATTER SORT ARRAY
-C
+!
+!     INITIALIZE THE SCATTER SORT ARRAY
+!
       EMOD=2*I-IFIX(2.3715*SQRT(FLOAT(I)))
       DO I=1,EMOD
          EL(1,I)=0
          EL(2,I)=0
       end do
-C
-C     READ ELEMENT CONNECTIONS IN ORIGINAL INTERNAL SORT.
-C     FIND LOWEST NUMBERED NODE IN NEW SEQUENCE.
-C     LOOK FOR DUPLICATE ELEMENT NUMBERS.
-C     FILL UP SCATTER SORT ARRAY (EL) SO AS TO PERFORM ROUGH SORT OF
-C        ELEMENTS IN ORDER OF LOWEST NUMBERED NODE IN NEW SEQUENCE.
-C        (FOR MOST STRUCTURES, THE ELEMENTS WILL BE IN PROPER SORT
-C        AFTER THIS STEP.)
-C
+!
+!     READ ELEMENT CONNECTIONS IN ORIGINAL INTERNAL SORT.
+!     FIND LOWEST NUMBERED NODE IN NEW SEQUENCE.
+!     LOOK FOR DUPLICATE ELEMENT NUMBERS.
+!     FILL UP SCATTER SORT ARRAY (EL) SO AS TO PERFORM ROUGH SORT OF
+!        ELEMENTS IN ORDER OF LOWEST NUMBERED NODE IN NEW SEQUENCE.
+!        (FOR MOST STRUCTURES, THE ELEMENTS WILL BE IN PROPER SORT
+!        AFTER THIS STEP.)
+!
       DO 50 IEL=1,NEL
          READ(IOU13) EID,NPT,(KG(I),I=1,NPT)
          KMIN=NN
@@ -2081,9 +2081,9 @@ C
             KMIN=MIN(ILD(KG(I)),KMIN)
          end do
          IF(KMIN.EQ.0) GO TO 180
-c        Add more space for tet meshes, which have lots of elements
-c        for each grid point.  Ideally, the memory available would
-c        be at least 40 times the number of grids.
+!        Add more space for tet meshes, which have lots of elements
+!        for each grid point.  Ideally, the memory available would
+!        be at least 40 times the number of grids.
          kmin=10*kmin
          LOC=KMIN-1
 30       LOC=MOD(LOC,EMOD)+1
@@ -2093,9 +2093,9 @@ c        be at least 40 times the number of grids.
 40       EL(1,LOC)=EID
          EL(2,LOC)=KMIN
 50    CONTINUE
-C
-C     SQUEEZE OUT THE ZEROS IN THE SORT ARRAY.
-C
+!
+!     SQUEEZE OUT THE ZEROS IN THE SORT ARRAY.
+!
       K=0
       DO 60 I=1,EMOD
          IF(EL(1,I).EQ.0) GO TO 60
@@ -2108,10 +2108,10 @@ C
          call finish(6,IER)
          RETURN
       end if
-C
-C     COMPLETE SORT OF ELEMENTS.  BY NOW, ELEMENTS ARE PROBABLY
-C     ALREADY IN SORT.  IF NOT, THIS BUBBLE SORT WILL FINISH IT.
-C
+!
+!     COMPLETE SORT OF ELEMENTS.  BY NOW, ELEMENTS ARE PROBABLY
+!     ALREADY IN SORT.  IF NOT, THIS BUBBLE SORT WILL FINISH IT.
+!
       IF(NEL.LE.1) RETURN
       NEL1=NEL-1
       DO 100 I=1,NEL1
@@ -2130,11 +2130,11 @@ C
 90       CONTINUE
          IF(KFLAG.EQ.0) GO TO 110
 100   CONTINUE
-C
-C     WRITE OUT ELEMENT ORDER ON OUTPUT FILE AND UNIT 14.
-c        mflag = 0    write to units 6 and 14
-c                1    write to unit 14 only
-C
+!
+!     WRITE OUT ELEMENT ORDER ON OUTPUT FILE AND UNIT 14.
+!        mflag = 0    write to units 6 and 14
+!                1    write to unit 14 only
+!
 110   mflag=1
       if(mflag.eq.0) then
          WRITE(IOU6,120)
@@ -2146,81 +2146,81 @@ C
          end do
       else
          write(iou6,145)
-145      format('See bandit.f14 for element ordering for',
-     -          ' frontal solution.')
+145      format('See bandit.f14 for element ordering for',                     &
+                ' frontal solution.')
       end if
       OPEN(IOU14,FILE='bandit.f14',FORM='FORMATTED',STATUS='replace')
       REWIND IOU14
       WRITE(IOU14,150) (EL(1,J),J=1,NEL)
 150   FORMAT(5I10)
       close(iou14)
-C
+!
       RETURN
-C
-c     Fatal error messages.
-c
+!
+!     Fatal error messages.
+!
 160   WRITE(IOU6,170) EID
 170   FORMAT(/,'Fatal Error.  Duplicate element ID',i10)
       call finish(6,IER)
       RETURN
-c
+!
 180   WRITE(IOU6,190) EID
-190   FORMAT(/,'Fatal Error.  Element',I9,
-     -       ' has a zero grid point connection.')
+190   FORMAT(/,'Fatal Error.  Element',I9,                                     &
+             ' has a zero grid point connection.')
       call finish(6,IER)
       RETURN
-C
+!
       END SUBROUTINE FRONT
 
 ! ##################################################################################################################################
-      SUBROUTINE GIBSTK(NDSTK,NR,IOLD,RENUM,NDEG,LVL,LVLS1,LVLS2,CCSTOR,
-     - IBW2,IPF2,JUMP,ICRIT,NHIGH,NLOW,NACUM,SIZE,STPT,IDIM,IER)
-C
-C  GIBBSTOCK USES GRAPH THEORETICAL METHODS TO PRODUCE A PERMUTATION
-C  OF AN INPUT ARRAY WHICH REDUCES ITS BANDWIDTH.
-C  PROGRAMMED BY H.L.CRANE JR.  COLLEGE OF WILLIAM + MARY   3/74.
-C
-C      MODIFIED BY G. C. EVERSTINE, DTRC.
-C
-C  THE FOLLOWING INPUT PARAMETERS ARE REQUIRED--NDSTK,NR,N,IDEG,IOLD
-C
-C  THESE INTEGER ARRAYS MUST BE DIMENSIONED IN THE CALLING PROGRAM--
-C  NDSTK(NR,D1),RENUM(D2+1),NDEG(D2),IOLD(D2),LVL(D2),LVLS1(D2),
-C  LVLS2(D2),CCSTOR(D2)   WHERE D1 .GE. MAX DEGREE OF ANY NODE AND
-C  D2 AND NR ARE .GE. THE TOTAL NUMBER OF NODES IN THE GRAPH.
-C
-C  EXPLANATION OF PARAMETERS--
-C  NDSTK-       ADJACENCY ARRAY REPRESENTING GRAPH TO BE PROCESSED
-C               NDSTK(I,J)=NODE NUMBER OF JTH CONNECTION TO NODE
-C               NUMBER I.  A CONNECTION OF A NODE TO ITSELF IS NOT
-C               LISTED.  EXTRA POSITIONS MUST HAVE ZERO FILL.
-C  NR-          ROW DIMENSION ASSIGNED NDSTK IN CALLING PROGRAM
-C  IOLD(I)-     RENUMBERING OF ITH NODE BEFORE GIBBSTOCK PROCESSING
-C               IF NO RENUMBERING EXISTS THEN ILD(1)=1,ILD(2)=2, ETC.
-C  N-           NUMBER OF NODES IN GRAPH BEING PROCESSED
-C  IDEG-        MAX DEGREE OF ANY NODE IN GRAPH BEING PROCESSED
-C   JUMP IS SET TO 0 IF EITHER CRITERION IS REDUCED.
-C     ICRIT=RESEQUENCING CRITERION
-C          1=RMS WAVEFRONT
-C          2=BANDWIDTH
-C          3=PROFILE
-C          4=WAVEFRONT (MAX)
-C  ON OUTPUT THESE VARIABLES CONTAIN THE FOLLOWING INFORMATION--
-C  RENUM(I)-    THE NEW NUMBER FOR THE ITH NODE
-C  NDEG(I)-     THE DEGREE OF THE ITH NODE
-C  IDPTH-       NUMBER OF LEVELS IN GIBBSTOCK LEVEL STRUCTURE
-C  IBW2-        THE BANDWITH AFTER RENUMBERING
-C  IPF2-        THE PROFILE AFTER RENUMBERING
-C  THE FOLLOWING ONLY HAVE MEANING IF THE GRAPH WAS ALL ONE COMPONENT
-C  LVL(I)-      INDEX INTO LVLS1 TO THE FIRST NODE IN LEVEL I
-C               LVL(I+1)-LVL(I)= NUMBER OF NODES IN ITH LEVEL
-C  LVLS1-       LEVEL STRUCTURE CHOSEN BY GIBBSTOCK
-C  LVLS2(I)-    THE LEVEL ASSIGNED TO NODE I BY GIBBSTOCK
-C
-C    THE FOLLOWING SUBROUTINES WERE WRITTEN BY N. GIBBS, W. POOLE,
-C    P. STOCKMEYER, AND H. CRANE OF THE COLLEGE OF WILLIAM AND MARY - -
-C     DGREE,FNDIAM,GIBSTK,NUMBER,PIKLVL,RSETUP,SORTDG,SORT2,TREE.
-C
+      SUBROUTINE GIBSTK(NDSTK,NR,IOLD,RENUM,NDEG,LVL,LVLS1,LVLS2,CCSTOR,       &
+       IBW2,IPF2,JUMP,ICRIT,NHIGH,NLOW,NACUM,SIZE,STPT,IDIM,IER)
+!
+!  GIBBSTOCK USES GRAPH THEORETICAL METHODS TO PRODUCE A PERMUTATION
+!  OF AN INPUT ARRAY WHICH REDUCES ITS BANDWIDTH.
+!  PROGRAMMED BY H.L.CRANE JR.  COLLEGE OF WILLIAM + MARY   3/74.
+!
+!      MODIFIED BY G. C. EVERSTINE, DTRC.
+!
+!  THE FOLLOWING INPUT PARAMETERS ARE REQUIRED--NDSTK,NR,N,IDEG,IOLD
+!
+!  THESE INTEGER ARRAYS MUST BE DIMENSIONED IN THE CALLING PROGRAM--
+!  NDSTK(NR,D1),RENUM(D2+1),NDEG(D2),IOLD(D2),LVL(D2),LVLS1(D2),
+!  LVLS2(D2),CCSTOR(D2)   WHERE D1 .GE. MAX DEGREE OF ANY NODE AND
+!  D2 AND NR ARE .GE. THE TOTAL NUMBER OF NODES IN THE GRAPH.
+!
+!  EXPLANATION OF PARAMETERS--
+!  NDSTK-       ADJACENCY ARRAY REPRESENTING GRAPH TO BE PROCESSED
+!               NDSTK(I,J)=NODE NUMBER OF JTH CONNECTION TO NODE
+!               NUMBER I.  A CONNECTION OF A NODE TO ITSELF IS NOT
+!               LISTED.  EXTRA POSITIONS MUST HAVE ZERO FILL.
+!  NR-          ROW DIMENSION ASSIGNED NDSTK IN CALLING PROGRAM
+!  IOLD(I)-     RENUMBERING OF ITH NODE BEFORE GIBBSTOCK PROCESSING
+!               IF NO RENUMBERING EXISTS THEN ILD(1)=1,ILD(2)=2, ETC.
+!  N-           NUMBER OF NODES IN GRAPH BEING PROCESSED
+!  IDEG-        MAX DEGREE OF ANY NODE IN GRAPH BEING PROCESSED
+!   JUMP IS SET TO 0 IF EITHER CRITERION IS REDUCED.
+!     ICRIT=RESEQUENCING CRITERION
+!          1=RMS WAVEFRONT
+!          2=BANDWIDTH
+!          3=PROFILE
+!          4=WAVEFRONT (MAX)
+!  ON OUTPUT THESE VARIABLES CONTAIN THE FOLLOWING INFORMATION--
+!  RENUM(I)-    THE NEW NUMBER FOR THE ITH NODE
+!  NDEG(I)-     THE DEGREE OF THE ITH NODE
+!  IDPTH-       NUMBER OF LEVELS IN GIBBSTOCK LEVEL STRUCTURE
+!  IBW2-        THE BANDWITH AFTER RENUMBERING
+!  IPF2-        THE PROFILE AFTER RENUMBERING
+!  THE FOLLOWING ONLY HAVE MEANING IF THE GRAPH WAS ALL ONE COMPONENT
+!  LVL(I)-      INDEX INTO LVLS1 TO THE FIRST NODE IN LEVEL I
+!               LVL(I+1)-LVL(I)= NUMBER OF NODES IN ITH LEVEL
+!  LVLS1-       LEVEL STRUCTURE CHOSEN BY GIBBSTOCK
+!  LVLS2(I)-    THE LEVEL ASSIGNED TO NODE I BY GIBBSTOCK
+!
+!    THE FOLLOWING SUBROUTINES WERE WRITTEN BY N. GIBBS, W. POOLE,
+!    P. STOCKMEYER, AND H. CRANE OF THE COLLEGE OF WILLIAM AND MARY - -
+!     DGREE,FNDIAM,GIBSTK,NUMBER,PIKLVL,RSETUP,SORTDG,SORT2,TREE.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Can't define SORT2 here. It is an integer function that is part of
 ! this BANDIT_MODULE module. In the version of BANDIT_SUBRS that is not
@@ -2231,39 +2231,39 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IBW1   ,IBW2   ,ICRIT  ,IDEG   ,IDFLT  ,IDIM   ,
-     &         IDPTH  ,IER    ,IPARAM ,IPF1   ,IPF2   ,ISDIR  ,IWALL  ,
-     &         JUMP   ,
-     &         LOWDG  ,LROOT  ,LVL    ,LVLBOT ,LVLN   ,LVLS1  ,LVLS2  ,
-     &         LVLWTH ,
-     &         MAXB   ,MAXB0  ,MAXLW  ,MAXW0  ,MAXW1  ,MAXWA  ,MAXWB  ,
-     &         MM     ,
-     &         N      ,NBW    ,NCM    ,NDEG   ,NDSTK  ,NFLG   ,NN     ,
-     &         NP     ,NR     ,NUM    ,NZERO  
+      INTEGER  I      ,IBW1   ,IBW2   ,ICRIT  ,IDEG   ,IDFLT  ,IDIM   ,        &
+               IDPTH  ,IER    ,IPARAM ,IPF1   ,IPF2   ,ISDIR  ,IWALL  ,        &
+               JUMP   ,                                                        &
+               LOWDG  ,LROOT  ,LVL    ,LVLBOT ,LVLN   ,LVLS1  ,LVLS2  ,        &
+               LVLWTH ,                                                        &
+               MAXB   ,MAXB0  ,MAXLW  ,MAXW0  ,MAXW1  ,MAXWA  ,MAXWB  ,        &
+               MM     ,                                                        &
+               N      ,NBW    ,NCM    ,NDEG   ,NDSTK  ,NFLG   ,NN     ,        &
+               NP     ,NR     ,NUM    ,NZERO  
 
-      REAL     AVERW0 ,AVERWB ,BRMS0  ,BRMS1  ,BRMSA  ,BRMSB  ,
-     &         CRIT1  ,CRIT2  ,DUMD   ,DUMS   ,RMS0   ,RMS1   ,
-     &         RMSA   ,RMSB   ,TA     ,TB
+      REAL     AVERW0 ,AVERWB ,BRMS0  ,BRMS1  ,BRMSA  ,BRMSB  ,                &
+               CRIT1  ,CRIT2  ,DUMD   ,DUMS   ,RMS0   ,RMS1   ,                &
+               RMSA   ,RMSB   ,TA     ,TB
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /D/ OBW,NBW,OP,NP,NCM,NZERO,DUMD(4)
-C     OLD AND NEW MAX AND RMS WAVEFRONT FOR ENTIRE PROBLEM,
-C          NOT JUST GIBSTK.
+!     OLD AND NEW MAX AND RMS WAVEFRONT FOR ENTIRE PROBLEM,
+!          NOT JUST GIBSTK.
       COMMON /W/ MAXW0,RMS0,MAXW1,RMS1,BRMS0,BRMS1
       COMMON /B/ IPARAM(20)
       COMMON /S/ NN,MM,DUMS(7)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       COMMON /GRA/ N,IDPTH,IDEG
       INTEGER NHIGH(IDIM),NLOW(IDIM),NACUM(IDIM),SIZE(*),STPT(*)
-C     SIZE AND STPT HAVE DIMENSION IDIM/2 AND SHOULD BE CONTIGUOUS IN
-C                  CORE WITH SIZE FIRST.
-C     XC=NUMBER OF SUB-COMPONENTS RESULTING AFTER REMOVING DIAMETER
-C        FROM ONE COMPONENT OF ORIGINAL GRAPH.
+!     SIZE AND STPT HAVE DIMENSION IDIM/2 AND SHOULD BE CONTIGUOUS IN
+!                  CORE WITH SIZE FIRST.
+!     XC=NUMBER OF SUB-COMPONENTS RESULTING AFTER REMOVING DIAMETER
+!        FROM ONE COMPONENT OF ORIGINAL GRAPH.
       DIMENSION NDSTK(NR,*),LVL(*),LVLS1(*),LVLS2(*),RENUM(*),NDEG(*)
       INTEGER CCSTOR(*),IOLD(*),OBW,OP,XCMAX,SUMW0,SUMWB
       REAL IM1,IM2
@@ -2273,46 +2273,46 @@ C        FROM ONE COMPONENT OF ORIGINAL GRAPH.
       N=NN
       IBW2=0
       IPF2=0
-C  SET RENUM(I)=0 FOR ALL I TO INDICATE NODE I IS UNNUMBERED
+!  SET RENUM(I)=0 FOR ALL I TO INDICATE NODE I IS UNNUMBERED
       DO 10 I=1,N
         RENUM(I)=0
    10 CONTINUE
-C   COMPUTE DEGREE OF EACH NODE AND ORIGINAL B AND P.
+!   COMPUTE DEGREE OF EACH NODE AND ORIGINAL B AND P.
       CALL DGREE(NDSTK,NR,NDEG,IOLD,IBW1,IPF1)
-C   COMPUTE ORIGINAL ACTIVE COLUMN DATA IF NOT ALREADY SUPPLIED BY
-C        CUTHILL.
+!   COMPUTE ORIGINAL ACTIVE COLUMN DATA IF NOT ALREADY SUPPLIED BY
+!        CUTHILL.
       IF(IPARAM(3)-9) 20,15,20
    15 MAXWA=MAXW1
       RMSA=RMS1
       BRMSA=BRMS1
       GO TO 25
    20 CONTINUE
-      CALL WAVEY(NDSTK,NR,IOLD,LVL,0,LVLS2,LVLS1,MAXB0,MAXW0,AVERW0,
-     - SUMW0,RMS0,BRMS0)
+      CALL WAVEY(NDSTK,NR,IOLD,LVL,0,LVLS2,LVLS1,MAXB0,MAXW0,AVERW0,           &
+       SUMW0,RMS0,BRMS0)
       MAXWA=MAXW0
       RMSA=RMS0
       BRMSA=BRMS0
       WRITE(IOU6,29)
    29 FORMAT(/,'Before resequencing:')
       WRITE(IOU6,51) MAXB0,SUMW0,MAXW0,AVERW0,RMS0,BRMS0
-   51 FORMAT(5X,'Bandwidth',I18/5X,'Profile',I20/
-     -       5X,'Max Wavefront',I14/5X,'Avg Wavefront',F14.3/
-     -       5X,'RMS Wavefront',F14.3/5X,'RMS Bandwidth',F14.3)
+   51 FORMAT(5X,'Bandwidth',I18/5X,'Profile',I20/                              &
+             5X,'Max Wavefront',I14/5X,'Avg Wavefront',F14.3/                  &
+             5X,'RMS Wavefront',F14.3/5X,'RMS Bandwidth',F14.3)
    25 CONTINUE
-C  SBNUM= LOW END OF AVAILABLE NUMBERS FOR RENUMBERING
-C  STNUM= HIGH END OF AVAILABLE NUMBERS FOR RENUMBERING
+!  SBNUM= LOW END OF AVAILABLE NUMBERS FOR RENUMBERING
+!  STNUM= HIGH END OF AVAILABLE NUMBERS FOR RENUMBERING
       SBNUM=1
       STNUM=N
-C  NUMBER THE NODES OF DEGREE ZERO
+!  NUMBER THE NODES OF DEGREE ZERO
       DO 40 I=1,N
         IF(NDEG(I).GT.0) GO TO 40
         RENUM(I)=STNUM
         STNUM=STNUM-1
    40 CONTINUE
-C   NODES OF ZERO DEGREE APPEAR LAST IN NEW SEQUENCE.
+!   NODES OF ZERO DEGREE APPEAR LAST IN NEW SEQUENCE.
       NZERO=N-STNUM
       NCM=NZERO
-C  FIND AN UNNUMBERED NODE OF MIN DEGREE TO START ON
+!  FIND AN UNNUMBERED NODE OF MIN DEGREE TO START ON
    50 LOWDG=IDEG+1
       NCM=NCM + 1
       NFLG=1
@@ -2323,19 +2323,19 @@ C  FIND AN UNNUMBERED NODE OF MIN DEGREE TO START ON
         LOWDG=NDEG(I)
         STNODE=I
    70 CONTINUE
-C  FIND PSEUDO-DIAMETER AND ASSOCIATED LEVEL STRUCTURES.
-C  STNODE AND RVNODE ARE THE ENDS OF THE DIAM AND LVLS1 AND LVLS2
-C  ARE THE RESPECTIVE LEVEL STRUCTURES.
-      CALL FNDIAM(STNODE,RVNODE,NDSTK,NR,NDEG,LVL,LVLS1,LVLS2,CCSTOR,
-     - IDFLT,SIZE,IDIM,IER)
+!  FIND PSEUDO-DIAMETER AND ASSOCIATED LEVEL STRUCTURES.
+!  STNODE AND RVNODE ARE THE ENDS OF THE DIAM AND LVLS1 AND LVLS2
+!  ARE THE RESPECTIVE LEVEL STRUCTURES.
+      CALL FNDIAM(STNODE,RVNODE,NDSTK,NR,NDEG,LVL,LVLS1,LVLS2,CCSTOR,          &
+       IDFLT,SIZE,IDIM,IER)
       IF(IER.GT.0) RETURN
       IF(NDEG(STNODE).LE.NDEG(RVNODE)) GO TO 75
-C  NFLG INDICATES THE END TO BEGIN NUMBERING ON
+!  NFLG INDICATES THE END TO BEGIN NUMBERING ON
       NFLG=-1
       STNODE=RVNODE
    75 CALL RSETUP(LVL,LVLS1,LVLS2,NACUM,IDIM,IER)
       IF(IER.GT.0) RETURN
-C  FIND ALL THE CONNECTED COMPONENTS  (XC COUNTS THEM)
+!  FIND ALL THE CONNECTED COMPONENTS  (XC COUNTS THEM)
       XC=0
       LROOT=1
       LVLN=1
@@ -2343,7 +2343,7 @@ C  FIND ALL THE CONNECTED COMPONENTS  (XC COUNTS THEM)
         IF(LVL(I).NE.0) GO TO 80
         XC=XC+1
         IF(XC.LE.XCMAX) GO TO 85
-C     DIMENSION EXCEEDED  . . .  STOP JOB.
+!     DIMENSION EXCEEDED  . . .  STOP JOB.
       CALL FINISH(3,IER)
       RETURN
    85   CONTINUE
@@ -2354,37 +2354,37 @@ C     DIMENSION EXCEEDED  . . .  STOP JOB.
         LVLN=LROOT
    80 CONTINUE
       IF(SORT2(XC,SIZE,STPT).EQ.0) GO TO 90
-      CALL PIKLVL(LVLS1,LVLS2,CCSTOR,IDFLT,ISDIR,XC,NHIGH,NLOW,
-     -  NACUM,SIZE,STPT)
-C  ON RETURN FROM PIKLVL, ISDIR INDICATES THE DIRECTION THE LARGEST
-C  COMPONENT FELL.  ISDIR IS MODIFIED NOW TO INDICATE THE NUMBERING
-C  DIRECTION.  NUM IS SET TO THE PROPER VALUE FOR THIS DIRECTION.
+      CALL PIKLVL(LVLS1,LVLS2,CCSTOR,IDFLT,ISDIR,XC,NHIGH,NLOW,                &
+        NACUM,SIZE,STPT)
+!  ON RETURN FROM PIKLVL, ISDIR INDICATES THE DIRECTION THE LARGEST
+!  COMPONENT FELL.  ISDIR IS MODIFIED NOW TO INDICATE THE NUMBERING
+!  DIRECTION.  NUM IS SET TO THE PROPER VALUE FOR THIS DIRECTION.
    90 ISDIR=ISDIR*NFLG
       NUM=SBNUM
       IF(ISDIR.LT.0) NUM=STNUM
-C
-      CALL NUMBR(STNODE,NUM,NDSTK,LVLS2,NDEG,RENUM,LVLS1,LVL,NR,NFLG,
-     -  IBW2,IPF2,CCSTOR,ISDIR,NHIGH,NLOW,NACUM,SIZE,IDIM,IER)
+!
+      CALL NUMBR(STNODE,NUM,NDSTK,LVLS2,NDEG,RENUM,LVLS1,LVL,NR,NFLG,          &
+        IBW2,IPF2,CCSTOR,ISDIR,NHIGH,NLOW,NACUM,SIZE,IDIM,IER)
       IF(IER.GT.0) RETURN
-C
-C  UPDATE STNUM OR SBNUM AFTER NUMBERING
+!
+!  UPDATE STNUM OR SBNUM AFTER NUMBERING
       IF(ISDIR.LT.0) STNUM=NUM
       IF(ISDIR.GT.0) SBNUM=NUM
       IF(SBNUM.LE.STNUM) GO TO 50
-C
-C  COMPUTE THE NEW BANDWIDTH, PROFILE, AND WAVEFRONT.
-C
-      CALL WAVEY(NDSTK,NR,RENUM,LVL,0,LVLS2,LVLS1,MAXB,MAXWB,AVERWB,
-     1   SUMWB,RMSB,BRMSB)
-C
+!
+!  COMPUTE THE NEW BANDWIDTH, PROFILE, AND WAVEFRONT.
+!
+      CALL WAVEY(NDSTK,NR,RENUM,LVL,0,LVLS2,LVLS1,MAXB,MAXWB,AVERWB,           &
+         SUMWB,RMSB,BRMSB)
+!
       IBW2=MAXB
       IPF2=SUMWB
       WRITE(IOU6,705)
   705 FORMAT(/,'After resequencing by Gibbs-Poole-Stockmeyer (GPS):')
       WRITE(IOU6,51) MAXB,SUMWB,MAXWB,AVERWB,RMSB,BRMSB
-C
-C     CHECK NEW NUMBERING AGAINST OLD NUMBERING.
-C
+!
+!     CHECK NEW NUMBERING AGAINST OLD NUMBERING.
+!
       GO TO (130,135,140,145), ICRIT
   130 IM1=RMSA
       IM2=IPF1
@@ -2409,9 +2409,9 @@ C
    92 CONTINUE
       IF(CRIT1-IM1) 110,94,97
    94 IF(CRIT2.LT.IM2) GO TO 110
-C
+!
    97 CONTINUE
-C  IF ORIGINAL NUMBERING IS BETTER THAN NEW ONE, SET UP TO RETURN IT
+!  IF ORIGINAL NUMBERING IS BETTER THAN NEW ONE, SET UP TO RETURN IT
       DO 100 I=1,N
         RENUM(I)=IOLD(I)
   100 CONTINUE
@@ -2421,9 +2421,9 @@ C  IF ORIGINAL NUMBERING IS BETTER THAN NEW ONE, SET UP TO RETURN IT
       RMSB=RMSA
       BRMSB=BRMSA
       GO TO 112
-C
-C    EQUATE CORRESPONDING GPS AND BANDIT VARIABLES.
-C
+!
+!    EQUATE CORRESPONDING GPS AND BANDIT VARIABLES.
+!
   110 CONTINUE
       JUMP=0
   112 CONTINUE
@@ -2437,7 +2437,7 @@ C
       BRMS1=BRMSB
       CALL TIMER(TB,IWALL,0,IOU6)
       TB=TB-TA
-c     IF(TB.GT.1.E-5) WRITE(IOU6,610) TB
+!     IF(TB.GT.1.E-5) WRITE(IOU6,610) TB
       WRITE(IOU6,610) TB
   610 FORMAT(5X,'CP time',F20.3)
       RETURN
@@ -2445,25 +2445,25 @@ c     IF(TB.GT.1.E-5) WRITE(IOU6,610) TB
 
 ! ##################################################################################################################################
       SUBROUTINE GRID(IER,IOU6)
-C
-C     PARTITION OPEN CORE AND COMPUTE PROBLEM SIZE LIMITS.
-C
+!
+!     PARTITION OPEN CORE AND COMPUTE PROBLEM SIZE LIMITS.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IBYTE  ,IER    ,IOU6   ,IPASS  ,KDIM   ,KMOD   ,KOR    ,
-     &         MAXDEG ,MAXGRD ,NBITIN ,NBYTE  ,NGRID  ,NW
+      INTEGER  IBYTE  ,IER    ,IOU6   ,IPASS  ,KDIM   ,KMOD   ,KOR    ,        &
+               MAXDEG ,MAXGRD ,NBITIN ,NBYTE  ,NGRID  ,NW
 
       REAL     DUM
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /BITS/ NBITIN,KOR,DUM,NGRID,IPASS,NW,NBYTE,IBYTE,KDIM
       COMMON /A/ MAXGRD,MAXDEG,KMOD
-C
+!
       NW=1
-CPACK NW=2
-C     NW = INTEGER PACKING DENSITY (NUMBER OF INTEGERS PER WORD)
-C     NBITIN IS USED ON CDC.  NBYTE AND IBYTE ARE USED ON PACKED CRAY.
+!PACK NW=2
+!     NW = INTEGER PACKING DENSITY (NUMBER OF INTEGERS PER WORD)
+!     NBITIN IS USED ON CDC.  NBYTE AND IBYTE ARE USED ON PACKED CRAY.
       NBITIN=30
       NBYTE=8/NW
       IBYTE=9-NBYTE
@@ -2472,7 +2472,7 @@ C     NBITIN IS USED ON CDC.  NBYTE AND IBYTE ARE USED ON PACKED CRAY.
       MAXDEG=(KOR-8*MAXGRD-3)/(MAXGRD/NW+1)
       MAXDEG=MIN(MAXDEG,MAXGRD-1)
       IF(MAXDEG.GT.0) RETURN
-C     MAXDEG NEGATIVE  - - -   FATAL ERROR.
+!     MAXDEG NEGATIVE  - - -   FATAL ERROR.
       CALL COREKO
       WRITE(IOU6,30)
    30 FORMAT(/,'Fatal Error.  Insufficient memory.')
@@ -2482,28 +2482,28 @@ C     MAXDEG NEGATIVE  - - -   FATAL ERROR.
 
 ! ##################################################################################################################################
       FUNCTION IDIST(NS,ML,MAXLEV,IG,II1,IC,IDEG,IDIS,IW,ICC)
-C
-C     THIS FUNCTION HAS AS ITS VALUE THE MAXIMUM DISTANCE OF ANY NODE
-C          IN COMPONENT IC(NS) FROM THE NODE NS.
-C     THE DISTANCE OF EACH NODE IN THIS COMPONENT IS STORED IN THE
-C          ARRAY IDIS.
-C     THE MAXIMUM NUMBER OF NODES AT THE SAME DISTANCE FROM NS IS
-C          STORED IN ML.
-C
-C     INPUT:  IG,IC,IDEG,ICC,NS,MAXLEV
-C     OUTPUT: IDIS,IW,ML
-C
+!
+!     THIS FUNCTION HAS AS ITS VALUE THE MAXIMUM DISTANCE OF ANY NODE
+!          IN COMPONENT IC(NS) FROM THE NODE NS.
+!     THE DISTANCE OF EACH NODE IN THIS COMPONENT IS STORED IN THE
+!          ARRAY IDIS.
+!     THE MAXIMUM NUMBER OF NODES AT THE SAME DISTANCE FROM NS IS
+!          STORED IN ML.
+!
+!     INPUT:  IG,IC,IDEG,ICC,NS,MAXLEV
+!     OUTPUT: IDIS,IW,ML
+!
       INTEGER II1
       DIMENSION IG(II1,*),IC(*),IDEG(*),IDIS(*),IW(*),ICC(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IA     ,IC     ,ICC    ,ICN    ,IDEG   ,IDIS   ,
-     &         IDIST  ,IG     ,II     ,IW     ,
-     &         K      ,KI     ,KMOD   ,KO     ,
-     &         L      ,LL     ,
-     &         MAXDEG ,MAXGRD ,MAXLEV ,ML     ,
-     &         N      ,NBITIN ,NN     ,NNC    ,NS
+      INTEGER  I      ,IA     ,IC     ,ICC    ,ICN    ,IDEG   ,IDIS   ,        &
+               IDIST  ,IG     ,II     ,IW     ,                                &
+               K      ,KI     ,KMOD   ,KO     ,                                &
+               L      ,LL     ,                                                &
+               MAXDEG ,MAXGRD ,MAXLEV ,ML     ,                                &
+               N      ,NBITIN ,NN     ,NNC    ,NS
 
       REAL     DUMBB  ,DUMS
 
@@ -2537,7 +2537,7 @@ C
       IF(N)140,215,140
   140 DO 200 I=1,N
       IA=IG(II,I)
-CPACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
+!PACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
       IF(IDIS(IA))200,150,200
 150   IDIS(IA)=L
       KO=KO+1
@@ -2559,19 +2559,19 @@ CPACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
 
 ! ##################################################################################################################################
       SUBROUTINE IGNOR(IG,II1,INV,II3,LIST,N,IER)
-C
-C     SET UP LIST OF POINTS TO IGNORE IN LIST ARRAY OF LENGTH N.
-C
-C UPON ENTRY, LIST ALREADY CONTAINS SET OF MPC DEPENDENT NODES, IF ANY.
+!
+!     SET UP LIST OF POINTS TO IGNORE IN LIST ARRAY OF LENGTH N.
+!
+! UPON ENTRY, LIST ALREADY CONTAINS SET OF MPC DEPENDENT NODES, IF ANY.
       INTEGER II1, II3
       DIMENSION IG(II1,*),INV(2,II3),LIST(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IDIM   ,IER    ,IFIR   ,IG     ,IGDEG  ,IGNORE ,
-     &         IIG    ,INV    ,ISTA   ,ISTART ,
-     &         J      ,KMOD   ,LIST   ,
-     &         MAXDEG ,MAXGRD ,MM     ,N      ,NBITIN ,NN
+      INTEGER  I      ,IDIM   ,IER    ,IFIR   ,IG     ,IGDEG  ,IGNORE ,        &
+               IIG    ,INV    ,ISTA   ,ISTART ,                                &
+               J      ,KMOD   ,LIST   ,                                        &
+               MAXDEG ,MAXGRD ,MM     ,N      ,NBITIN ,NN
 
       REAL     DUMBB  ,DUMS
 
@@ -2581,9 +2581,9 @@ C UPON ENTRY, LIST ALREADY CONTAINS SET OF MPC DEPENDENT NODES, IF ANY.
       COMMON /S/ NN,MM,DUMS(7)
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /BITS/ NBITIN,DUMBB(8)
-C
-C     ADD IGNORE POINTS TO LIST.
-C
+!
+!     ADD IGNORE POINTS TO LIST.
+!
       IF(IIG.LE.0) GO TO 20
       CALL FLIP(IGNORE,IIG,INV,II3,IER)
       IF(IER.GT.0) RETURN
@@ -2591,18 +2591,18 @@ C
       DO 10 I=1,IIG
       J=IGNORE(I)
    10 LIST(J)=J
-C
-C     ADD POINTS OF DEGREE GT IGDEG TO LIST.
-C
+!
+!     ADD POINTS OF DEGREE GT IGDEG TO LIST.
+!
    20 IF(IGDEG.LE.0) GO TO 40
       IF(IGDEG.GE.MM) GO TO 40
       DO 30 I=1,NN
       IF(IG(I,IGDEG+1).GT.0) LIST(I)=I
-CPACK IF(IUNPK(IG,MAXGRD*IGDEG+I,NBITIN).GT.0) LIST(I)=I
+!PACK IF(IUNPK(IG,MAXGRD*IGDEG+I,NBITIN).GT.0) LIST(I)=I
    30 CONTINUE
-C
-C     COMPRESS OUT ZEROES FROM LIST.
-C
+!
+!     COMPRESS OUT ZEROES FROM LIST.
+!
    40 N=NN
       CALL ZERO(LIST,N)
       RETURN
@@ -2610,17 +2610,17 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE INSERT(KA,KT)
-C
-C     READ AND INSERT CONTENTS OF INSERT FILE (bandit.ins).
-C
-C     $INSERT CARD MUST APPEAR BEFORE BEGIN BULK TO BE RECOGNIZED BY
-C     BANDIT.  FORMAT IS  $INSERT NCARD , WHERE THE PARAMETER NCARD IS
-C     THE NUMBER OF CARDS TO BE INSERTED.  IF NCARD IS MISSING OR ZERO,
-C     THE ENTIRE FILE 10 WILL BE INSERTED.  ONLY THE FIRST $INSERT CARD
-C     IN DECK WILL BE HONORED.
-C
-C     KT = RUNNING COUNTER ON TOTAL NUMBER OF CASE CONTROL CARDS
-C
+!
+!     READ AND INSERT CONTENTS OF INSERT FILE (bandit.ins).
+!
+!     $INSERT CARD MUST APPEAR BEFORE BEGIN BULK TO BE RECOGNIZED BY
+!     BANDIT.  FORMAT IS  $INSERT NCARD , WHERE THE PARAMETER NCARD IS
+!     THE NUMBER OF CARDS TO BE INSERTED.  IF NCARD IS MISSING OR ZERO,
+!     THE ENTIRE FILE 10 WILL BE INSERTED.  ONLY THE FIRST $INSERT CARD
+!     IN DECK WILL BE HONORED.
+!
+!     KT = RUNNING COUNTER ON TOTAL NUMBER OF CASE CONTROL CARDS
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add this so when READIT is called with NCARD we will use NCARD_array
 ! instead. Needed so Lahey doesn't complain about shape of NCARD being
@@ -2631,15 +2631,15 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
       INTEGER  I      ,II     ,IN     ,KT     ,L      ,NCARD
 
 ! E////////////////////////////////////////////////////////////////////E
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       DATA IN/0/
       IF(IN.EQ.1) RETURN
       IN=1
@@ -2648,7 +2648,7 @@ C
       NCARD = NCARD_array(1)
 ! E////////////////////////////////////////////////////////////////////E
       IF(NCARD.LE.0) NCARD=999999
-C
+!
       OPEN(IOU10,FILE='bandit.ins',FORM='FORMATTED',STATUS='UNKNOWN')
       REWIND IOU10
       DO 40 II=1,NCARD
@@ -2665,24 +2665,24 @@ C
 
 ! ##################################################################################################################################
       FUNCTION INTERN(IGRID,INV,II3,IER)
-C
-C     THIS FUNCTION HAS AS ITS VALUE THE INTERNAL NODE LABEL ASSIGNED
-C     BY BANDIT TO ORIGINAL GRID POINT IGRID.
-C
+!
+!     THIS FUNCTION HAS AS ITS VALUE THE INTERNAL NODE LABEL ASSIGNED
+!     BY BANDIT TO ORIGINAL GRID POINT IGRID.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  IER    ,IGRID  ,II3    ,INTERN ,KMOD   ,LOC    ,MAXDEG ,
-     &         MAXGRD
+      INTEGER  IER    ,IGRID  ,II3    ,INTERN ,KMOD   ,LOC    ,MAXDEG ,        &
+               MAXGRD
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /A/ MAXGRD,MAXDEG,KMOD
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER INV(2,II3)
       intern=0
       IF(IGRID.LE.0) GO TO 20
@@ -2692,9 +2692,9 @@ C
       IF(INV(1,LOC).NE.IGRID) GO TO 10
       INTERN=INV(2,LOC)
       RETURN
-C
-C     ABORT JOB DUE TO REFERENCE TO NON-EXISTENT GRID POINT.
-C
+!
+!     ABORT JOB DUE TO REFERENCE TO NON-EXISTENT GRID POINT.
+!
    20 WRITE(IOU6,30) IGRID
    30 FORMAT(/,'Fatal Error.  Grid point',I9,' on $ card not found.')
       call finish(6,IER)
@@ -2703,24 +2703,24 @@ C
 
 ! ##################################################################################################################################
       FUNCTION KOMPNT(IG,II1,IC,IDEG,IW,ICC)
-C
-C     THIS FUNCTION HAS AS ITS VALUE THE NUMBER OF COMPONENTS STORED
-C     IN THE CONNECTION ARRAY IG.
-C     ALSO, IC AND ICC ARE SET UP.
-C     IC(I)=COMPONENT INDEX FOR NODE I
-C     ICC(I)=THE STARTING POSITION TO BE USED FOR LABELS IN COMPONENT I
-C     THUS, ICC(I+1)-ICC(I)= THE NUMBER OF NODES IN COMPONENT I
-C
+!
+!     THIS FUNCTION HAS AS ITS VALUE THE NUMBER OF COMPONENTS STORED
+!     IN THE CONNECTION ARRAY IG.
+!     ALSO, IC AND ICC ARE SET UP.
+!     IC(I)=COMPONENT INDEX FOR NODE I
+!     ICC(I)=THE STARTING POSITION TO BE USED FOR LABELS IN COMPONENT I
+!     THUS, ICC(I+1)-ICC(I)= THE NUMBER OF NODES IN COMPONENT I
+!
       INTEGER II1
       DIMENSION IG(II1,*),IC(*),IDEG(*),IW(*),ICC(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IA     ,IC     ,ICC    ,IDEG   ,IG     ,II     ,
-     &         IS     ,IW     ,
-     &         KI     ,KMOD   ,KO     ,KOMPNT ,
-     &         MAXDEG ,MAXGRD ,MM     ,
-     &         N      ,NBITIN ,NC     ,NN
+      INTEGER  I      ,IA     ,IC     ,ICC    ,IDEG   ,IG     ,II     ,        &
+               IS     ,IW     ,                                                &
+               KI     ,KMOD   ,KO     ,KOMPNT ,                                &
+               MAXDEG ,MAXGRD ,MM     ,                                        &
+               N      ,NBITIN ,NC     ,NN
 
       REAL     DUMBB  ,DUMS
 
@@ -2753,7 +2753,7 @@ C
       IF(N)140,105,140
   140 DO 200 I=1,N
       IA=IG(II,I)
-CPACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
+!PACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
       IF(IC(IA)) 200,150,200
 150   IC(IA)=NC
       KO=KO+1
@@ -2766,108 +2766,108 @@ CPACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
 
 ! ##################################################################################################################################
       SUBROUTINE LEFT(KA,ITYPE)
-C
-C     LEFT-ADJUST BULK DATA CARD MNEUMONIC AND RETURN IN KA THE NEW
-C     CARD IN FORMAT OF A1,A4,A3,64A1,A1,A4,A3.
-C
+!
+!     LEFT-ADJUST BULK DATA CARD MNEUMONIC AND RETURN IN KA THE NEW
+!     CARD IN FORMAT OF A1,A4,A3,64A1,A1,A4,A3.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
       INTEGER  I      ,ITYPE  ,MA     ,MB     ,NUM
       
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER KA(70)
       ITYPE=0
-C
-C     RETURN IF MNEUMONIC IS ALREADY LEFT-ADJUSTED.
-C              (SEE IF COL. 1 IS BLANK)
-C
+!
+!     RETURN IF MNEUMONIC IS ALREADY LEFT-ADJUSTED.
+!              (SEE IF COL. 1 IS BLANK)
+!
       IF(KA(1).NE.MB(2)) RETURN
-C
+!
       BACKSPACE IOU5
       READ(IOU5,10) (KA(I),I=1,70)
    10 FORMAT(70A1)
-C
-C     RETURN IF CARD IS ENDDATA CARD.
-C
+!
+!     RETURN IF CARD IS ENDDATA CARD.
+!
       ITYPE=NDATA(KA)
       IF(ITYPE.EQ.1) RETURN
       BACKSPACE IOU5
-C
-C     COUNT NUMBER OF LEADING BLANKS.
-C
+!
+!     COUNT NUMBER OF LEADING BLANKS.
+!
       DO I=2,8
          IF(KA(I).NE.MB(2)) GO TO 40
       end do
       READ(IOU5,30) (KA(I),I=1,70)
    30 FORMAT(A1,A4,A3,65A1,A4,A3)
       RETURN
-C
-C     VARIABLE FORMATS FOR LEFT-ADJUSTING.
-C
+!
+!     VARIABLE FORMATS FOR LEFT-ADJUSTING.
+!
    40 KA(2)=MB(2)
       KA(3)=MB(2)
       I=I-1
       GO TO (50,60,70,80,90,100,110), I
-C     I=NUMBER OF LEADING BLANKS
-C
-C     1 BLANK
-C
+!     I=NUMBER OF LEADING BLANKS
+!
+!     1 BLANK
+!
    50 READ(IOU5,55) (KA(I),I=1,70)
    55 FORMAT(1X,A1,A4,A2,65A1,A4,A3)
       RETURN
-C
-C     2 BLANKS
-C
+!
+!     2 BLANKS
+!
    60 READ(IOU5,65) (KA(I),I=1,70)
    65 FORMAT(2X,A1,A4,66A1,A4,A3)
       RETURN
-C
-C     3 BLANKS
-C
+!
+!     3 BLANKS
+!
    70 READ(IOU5,75) KA(1),KA(2),(KA(I),I=4,70)
    75 FORMAT(3X,A1,A4,65A1,A4,A3)
       RETURN
-C
-C     4 BLANKS
-C
+!
+!     4 BLANKS
+!
    80 READ(IOU5,85) KA(1),KA(2),(KA(I),I=4,70)
    85 FORMAT(4X,A1,A3,65A1,A4,A3)
       RETURN
-C
-C     5 BLANKS
-C
+!
+!     5 BLANKS
+!
    90 READ(IOU5,95) KA(1),KA(2),(KA(I),I=4,70)
    95 FORMAT(5X,A1,A2,65A1,A4,A3)
       RETURN
-C
-C     6 BLANKS
-C
+!
+!     6 BLANKS
+!
   100 READ(IOU5,105) KA(1),KA(2),(KA(I),I=4,70)
   105 FORMAT(6X,67A1,A4,A3)
       RETURN
-C
-C     7 BLANKS
-C
+!
+!     7 BLANKS
+!
   110 READ(IOU5,115) KA(1),(KA(I),I=4,70)
   115 FORMAT(7X,66A1,A4,A3)
       RETURN
-C
+!
       END SUBROUTINE LEFT
 
 ! ##################################################################################################################################
       FUNCTION LENCAS(KA,N)
-C
-C     DETERMINE THE LENGTH OF AN EXECUTIVE/CASE CONTROL LINE.
-C     N = DIMENSION OF ARRAY KA
-C
+!
+!     DETERMINE THE LENGTH OF AN EXECUTIVE/CASE CONTROL LINE.
+!     N = DIMENSION OF ARRAY KA
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
@@ -2889,11 +2889,11 @@ C
 
 ! ##################################################################################################################################
       FUNCTION MAXDGR(NC,IC,IDEG)
-C
-C     THIS FUNCTION HAS AS ITS VALUE THE MAXIMUM DEGREE OF ANY NODE OF
-C     COMPONENT NC IF NC.GT.0
-C     IF NC.LE.0, ALL COMPONENTS ARE CONSIDERED.
-C
+!
+!     THIS FUNCTION HAS AS ITS VALUE THE MAXIMUM DEGREE OF ANY NODE OF
+!     COMPONENT NC IF NC.GT.0
+!     IF NC.LE.0, ALL COMPONENTS ARE CONSIDERED.
+!
       INTEGER IC(*),IDEG(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
@@ -2917,11 +2917,11 @@ C
 
 ! ##################################################################################################################################
       FUNCTION MINDEG(NC,IC,IDEG)
-C
-C     THIS FUNCTION HAS AS ITS VALUE THE MINIMUM DEGREE OF ANY NODE OF
-C     COMPONENT NC IF NC.GT.0
-C     IF NC.LE.0, ALL COMPONENTS ARE CONSIDERED.
-C
+!
+!     THIS FUNCTION HAS AS ITS VALUE THE MINIMUM DEGREE OF ANY NODE OF
+!     COMPONENT NC IF NC.GT.0
+!     IF NC.LE.0, ALL COMPONENTS ARE CONSIDERED.
+!
       INTEGER IC(*),IDEG(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
@@ -2945,27 +2945,27 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE MORRIS(LIST,NL,IG,II1)
-C
-C     THIS ROUTINE DELETES ALL REFERENCE IN THE CONNECTION TABLE IG
-C     TO THOSE POINTS IN A LIST OF LENGTH NL.
-C
-C     NEDGE = NUMBER OF UNIQUE EDGES.
-C
-C     REVISED 12/4/91 (TO AVOID CRAY COMPILER BUG)
-C
+!
+!     THIS ROUTINE DELETES ALL REFERENCE IN THE CONNECTION TABLE IG
+!     TO THOSE POINTS IN A LIST OF LENGTH NL.
+!
+!     NEDGE = NUMBER OF UNIQUE EDGES.
+!
+!     REVISED 12/4/91 (TO AVOID CRAY COMPILER BUG)
+!
       INTEGER II1
       DIMENSION IG(II1,*),LIST(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IER    ,IG     ,IJ     ,
-     &         J      ,K      ,KMOD   ,L      ,LIST   ,
-     &         MAXDEG ,MAXGRD ,MM     ,MM1    ,
-     &         N      ,NBITIN ,NEDGE  ,NL     ,NN
+      INTEGER  I      ,IER    ,IG     ,IJ     ,                                &
+               J      ,K      ,KMOD   ,L      ,LIST   ,                        &
+               MAXDEG ,MAXGRD ,MM     ,MM1    ,                                &
+               N      ,NBITIN ,NEDGE  ,NL     ,NN
 
       REAL     DUM    ,DUMBB  ,DUMS
 
@@ -2973,35 +2973,35 @@ C
       COMMON /S/ NN,MM,DUM(3),NEDGE,DUMS(3)
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /BITS/ NBITIN,DUMBB(8)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-C
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+!
       IF(NL.LE.0) RETURN
       MM1=MM-1
       DO 60 IJ=1,NL
       I=LIST(IJ)
       DO 50 J=1,MM
       L=IG(I,J)
-CPACK L=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
+!PACK L=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
       IF(L.EQ.0) GO TO 60
       NEDGE=NEDGE-1
       DO 10 K=1,MM
       IF(IG(L,K).EQ.I) GO TO 15
-CPACK IF(IUNPK(IG,MAXGRD*(K-1)+L,NBITIN).EQ.I) GO TO 15
+!PACK IF(IUNPK(IG,MAXGRD*(K-1)+L,NBITIN).EQ.I) GO TO 15
 10    CONTINUE
       WRITE(IOU6,'(A)') ' Logic error in MORRIS'
       call finish(6,IER)
 15    IF(K.GE.MM) GO TO 40
       DO 30 N=K,MM1
       IG(L,N)=IG(L,N+1)
-CPACK IS=IUNPK(IG,MAXGRD*N+L,NBITIN)
-CPACK CALL PACK(IG,MAXGRD*(N-1)+L,NBITIN,IS)
+!PACK IS=IUNPK(IG,MAXGRD*N+L,NBITIN)
+!PACK CALL PACK(IG,MAXGRD*(N-1)+L,NBITIN,IS)
 30    CONTINUE
 40    CONTINUE
       IG(L,MM)=0
       IG(I,J)=0
-CPACK CALL PACK(IG,MAXGRD*MM1+L,NBITIN,0)
-CPACK CALL PACK(IG,MAXGRD*(J-1)+I,NBITIN,0)
+!PACK CALL PACK(IG,MAXGRD*MM1+L,NBITIN,0)
+!PACK CALL PACK(IG,MAXGRD*(J-1)+I,NBITIN,0)
    50 CONTINUE
    60 CONTINUE
       RETURN
@@ -3009,39 +3009,39 @@ CPACK CALL PACK(IG,MAXGRD*(J-1)+I,NBITIN,0)
 
 ! ##################################################################################################################################
       SUBROUTINE MPC(KA,ITYPE,KG,MAXI,INV,II3,NORIG,IER)
-C
-C     EXTRACT GRID POINTS FROM MPC EQUATION AND STORE IN KG.
-C
-C     MAXI=MAXIMUM NUMBER OF GRID POINTS ALLOWED PER ELEMENT.
-C     MODIFIED 4/16/93 TO ADD MPCAX CARDS (SHORT FIELD ONLY).
-C     ASSUMES FIELD 6 OF FIRST LOGICAL MPCAX CARD IS NOT BLANK.
-C
+!
+!     EXTRACT GRID POINTS FROM MPC EQUATION AND STORE IN KG.
+!
+!     MAXI=MAXIMUM NUMBER OF GRID POINTS ALLOWED PER ELEMENT.
+!     MODIFIED 4/16/93 TO ADD MPCAX CARDS (SHORT FIELD ONLY).
+!     ASSUMES FIELD 6 OF FIRST LOGICAL MPCAX CARD IS NOT BLANK.
+!
       INTEGER MAXI
       INTEGER KA(70),KG(MAXI),INV(*),NORIG(*),ENDP(2)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IDUM   ,IER    ,II3    ,IPARAM ,ITYPE  , 
-     &         J      ,K      ,L      ,
-     &         MA     ,MB     ,NIP    ,NOUT   ,NUM
+      INTEGER  I      ,IDUM   ,IER    ,II3    ,IPARAM ,ITYPE  ,                &
+               J      ,K      ,L      ,                                        &
+               MA     ,MB     ,NIP    ,NOUT   ,NUM
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
       COMMON /B/ IPARAM(20)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       NOUT=IOU12
-C
-C     L=1 OR 2 FOR SHORT OR LONG FIELDS, RESPECTIVELY
+!
+!     L=1 OR 2 FOR SHORT OR LONG FIELDS, RESPECTIVELY
       L=ITYPE-1
       IF(ITYPE.EQ.112) L=1
-C     I=COUNTER ON THE GRID POINT COMING UP (I.E., THE NEXT ONE).
+!     I=COUNTER ON THE GRID POINT COMING UP (I.E., THE NEXT ONE).
       I=1
-C
+!
    20 J=4+8*L
       IF(ITYPE.EQ.112.AND.I.EQ.1) J=36
       IF(ITYPE.EQ.112.AND.I.GT.1) J=4
@@ -3056,9 +3056,9 @@ C
       ENDP(2)=KA(70)
       READ(IOU5,50,END=120) KA
    50 FORMAT(A1,A4,A3,65A1,A4,A3)
-C
-C     LEFT-ADJUST FIELD 1.
-C
+!
+!     LEFT-ADJUST FIELD 1.
+!
       CALL LEFT(KA,IDUM)
       IF(KA(1).NE.MB(4)) GO TO 90
       IF(KA(2).NE.ENDP(1)) GO TO 90
@@ -3071,9 +3071,9 @@ C
 65    ENDP(1)=KA(69)
       ENDP(2)=KA(70)
       READ(IOU5,50,END=120) KA
-C
-C     LEFT-ADJUST FIELD 1.
-C
+!
+!     LEFT-ADJUST FIELD 1.
+!
       CALL LEFT(KA,IDUM)
       DO K=3,4
          IF(KA(1).EQ.MB(K)) GO TO 80
@@ -3085,72 +3085,72 @@ C
       L=1
       IF(K.EQ.5) L=2
       GO TO 20
-C
-C     END OF LOOP STARTING AT STATEMENT 20.
-C
+!
+!     END OF LOOP STARTING AT STATEMENT 20.
+!
    90 BACKSPACE IOU5
       I=I-1
-C
-C     CONVERT ORIGINAL GRID NUMBERS TO INTERNAL LABELS.
-C
+!
+!     CONVERT ORIGINAL GRID NUMBERS TO INTERNAL LABELS.
+!
       CALL SCAT(KG,I,INV,II3,NORIG,IER)
       IF(IER.GT.0) RETURN
-C
-C     DELETE DUPLICATE ENTRIES IN LIST.
-C
+!
+!     DELETE DUPLICATE ENTRIES IN LIST.
+!
       DO J=2,I
          IF(KG(J).EQ.KG(1)) KG(J)=0
       end do
       CALL FIXIT(KG,I)
-C
-C     WRITE OUT LIST OF NODES.
-C
+!
+!     WRITE OUT LIST OF NODES.
+!
       WRITE(NOUT) I,(KG(J),J=1,I)
       RETURN
-C
-C     FATAL ERROR MESSAGE IF MPC EQUATION HAS MORE THAN MAXI TERMS.
-C
+!
+!     FATAL ERROR MESSAGE IF MPC EQUATION HAS MORE THAN MAXI TERMS.
+!
   100 WRITE(IOU6,110) MAXI
   110 FORMAT(/,'Fatal Error.  MPC equation has more than',I8,' terms.')
       WRITE(IOU6,115)
-  115 FORMAT('Use $DIM N card, where 4*N exceeds the maximum number',
-     - ' of terms in any one MPC equation.')
+  115 FORMAT('Use $DIM N card, where 4*N exceeds the maximum number',          &
+       ' of terms in any one MPC equation.')
       call finish(6,IER)
       RETURN
-C
-C     END-OF-FILE ENCOUNTERED
-C
+!
+!     END-OF-FILE ENCOUNTERED
+!
 120   CALL FINISH(4,IER)
       RETURN
       END SUBROUTINE MPC
 
 ! ##################################################################################################################################
-      SUBROUTINE NASNUM(IG,II1,INV,II3,INT,ICC,ILD,NORIG,IP,KOR,
-     -                  KORDIM,IER)
-C
-C     READ BULK DATA, SET UP CONNECTION TABLE, RESEQUENCE NODES,
-C     AND GENERATE SEQGP CARDS.
-C
+      SUBROUTINE NASNUM(IG,II1,INV,II3,INT,ICC,ILD,NORIG,IP,KOR,               &
+                        KORDIM,IER)
+!
+!     READ BULK DATA, SET UP CONNECTION TABLE, RESEQUENCE NODES,
+!     AND GENERATE SEQGP CARDS.
+!
       DIMENSION IG(*),INV(*),INT(*),ICC(*),ILD(*),NORIG(*),IP(*)
       INTEGER KORDIM ,KOR(KORDIM)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IADD   ,IBW2   ,IBYTE  ,ICC    ,ICRIT  ,IDIM   ,
-     &         IER    ,IFIR   ,IG     ,IGDEG  ,IGNORE ,II1    ,II3    ,
-     &         IIG    ,ILD    ,INT    ,INV    ,IP     ,IPARAM ,IPASS  ,
-     &         IPF2   ,IPR    ,ISTA   ,ISTART ,IWALL  ,
-     &         J      ,JUMP   ,
-     &         K      ,K1     ,K2     ,K3     ,K4     ,K5     ,KDIM   ,
-     &         KMOD   ,KORE   ,L      ,
-     &         MAXDEG ,MAXGRD ,MEM    ,MINDEG ,MM     ,
-     &         N      ,NBW    ,NBYTE  ,NCM    ,NEDGE  ,NEL    ,NEQ    ,
-     &         NEQR   ,NLINK  ,NN     ,NORIG  ,NP     ,NW     ,NZERO  ,
-     &         OBW    ,OP
+      INTEGER  I      ,IADD   ,IBW2   ,IBYTE  ,ICC    ,ICRIT  ,IDIM   ,        &
+               IER    ,IFIR   ,IG     ,IGDEG  ,IGNORE ,II1    ,II3    ,        &
+               IIG    ,ILD    ,INT    ,INV    ,IP     ,IPARAM ,IPASS  ,        &
+               IPF2   ,IPR    ,ISTA   ,ISTART ,IWALL  ,                        &
+               J      ,JUMP   ,                                                &
+               K      ,K1     ,K2     ,K3     ,K4     ,K5     ,KDIM   ,        &
+               KMOD   ,KORE   ,L      ,                                        &
+               MAXDEG ,MAXGRD ,MEM    ,MINDEG ,MM     ,                        &
+               N      ,NBW    ,NBYTE  ,NCM    ,NEDGE  ,NEL    ,NEQ    ,        &
+               NEQR   ,NLINK  ,NN     ,NORIG  ,NP     ,NW     ,NZERO  ,        &
+               OBW    ,OP
 
       REAL     DUM    ,DUMM   ,DUMS   ,DUMY   ,TA     ,TB
 
@@ -3162,22 +3162,22 @@ C
       COMMON /DOL/ ISTART(100),IGNORE(100)
       COMMON /DOLL/ IDIM,ISTA,IIG,IFIR,IGDEG
       COMMON /D/ OBW,NBW,OP,NP,NCM,NZERO,NEL,NEQ,NEQR,NLINK
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-C
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+!
       CALL TIMER(TA,IWALL,0,IOU6)
-C
-C     COPY IOU5 TO IOU11 AND REDEFINE IOU5.
-C
+!
+!     COPY IOU5 TO IOU11 AND REDEFINE IOU5.
+!
       CALL NEWIN(IG,IER)
       IF(IER.GT.0) RETURN
-C
-C     ZERO OUT THE WORKING STORAGE.  THE ARRAY NAME USED HERE MUST
-C        BE THE FIRST ONE.
-C
+!
+!     ZERO OUT THE WORKING STORAGE.  THE ARRAY NAME USED HERE MUST
+!        BE THE FIRST ONE.
+!
       DO 10 I=1,KORE
 10    ILD(I)=0
-C
+!
       NN=0
       MM=0
       NEDGE=0
@@ -3185,118 +3185,118 @@ C
       MINDEG=500000
       KMOD=2*MAXGRD-IFIX(2.3715*SQRT(FLOAT(MAXGRD)))
       REWIND IOU9
-C
-C     READ BULK DATA DECK AND SET UP CONNECTION TABLE IG.
-C
+!
+!     READ BULK DATA DECK AND SET UP CONNECTION TABLE IG.
+!
       CALL REED(IG,II1,INV,II3,NORIG,KOR,KORDIM,INT,IER)
       IF(IER.GT.0) RETURN
       REWIND IOU11
-C
+!
       IF(NN.GT.0) GO TO 16
-C
+!
       WRITE(IOU6,15)
-   15 FORMAT(/,'Fatal Error.  No grid points found on',
-     -       ' connection cards.')
+   15 FORMAT(/,'Fatal Error.  No grid points found on',                        &
+             ' connection cards.')
       call finish(6,IER)
       RETURN
-C
+!
    16 IF(MM.GT.0) GO TO 18
       WRITE(IOU6,17)
    17 FORMAT(/,'Fatal Error.  No connections found.')
       call finish(6,IER)
       RETURN
-C
+!
    18 I=NEQ+IIG+IGDEG
       IF(I.LE.0) GO TO 19
-C
-C     MODIFY IG TO ACCOUNT FOR MPC EQUATIONS.
-C
+!
+!     MODIFY IG TO ACCOUNT FOR MPC EQUATIONS.
+!
       CALL TIGER(IG,II1,ICC,NORIG,KOR,KORDIM,IER)
       IF(IER.GT.0) RETURN
-C
-C     SET UP LIST OF POINTS TO IGNORE IN ICC ARRAY.
-C
+!
+!     SET UP LIST OF POINTS TO IGNORE IN ICC ARRAY.
+!
       CALL IGNOR(IG,II1,INV,II3,ICC,N,IER)
       IF(IER.GT.0) RETURN
-C
-C     DELETE POINTS LISTED IN ICC FROM IG.
-C
+!
+!     DELETE POINTS LISTED IN ICC FROM IG.
+!
       CALL MORRIS(ICC,N,IG,II1)
-C
-C     SORT ORIGINAL GRID NUMBERS AND OUTPUT LIST IN INT.   DETERMINE
-C     CORRESPONDENCE ILD BETWEEN UNSORTED AND SORTED INTERNAL LABELS.
-C
+!
+!     SORT ORIGINAL GRID NUMBERS AND OUTPUT LIST IN INT.   DETERMINE
+!     CORRESPONDENCE ILD BETWEEN UNSORTED AND SORTED INTERNAL LABELS.
+!
    19 CALL BRIGIT(INV,II3,INT,ILD,IER)
       IF(IER.GT.0) RETURN
-C
+!
       CALL TIMER(TB,IWALL,0,IOU6)
       TB=TB-TA
       WRITE(IOU6,195) TB
 195   FORMAT('CP time to set up connection table',F12.3,' seconds')
       WRITE(IOU6,196) NN
-196   FORMAT('Number of grid points appearing on connection cards',I9/
-     -       'Grid cards are not used.')
+196   FORMAT('Number of grid points appearing on connection cards',I9/         &
+             'Grid cards are not used.')
       WRITE(IOU6,198) MM
   198 FORMAT('Maximum nodal degree before any nodes are ignored',I8)
-C
-C     WRITE OUT CONNECTION TABLE IF REQUESTED.
-C
+!
+!     WRITE OUT CONNECTION TABLE IF REQUESTED.
+!
       IF(IPARAM(2).EQ.4) CALL PUNCON(IG,II1,IP,ILD)
-C
+!
       IF(IPARAM(10).EQ.5) GO TO 20
-C
-C     PRINT TABLES IF MAXIMUM PRINTING REQUESTED.
-C
-c     CALL TABLE1(INV,II3,INT,IER)
-c     The following four lines replace the call to Table1.
+!
+!     PRINT TABLES IF MAXIMUM PRINTING REQUESTED.
+!
+!     CALL TABLE1(INV,II3,INT,IER)
+!     The following four lines replace the call to Table1.
       WRITE(IOU6,23)
 23    FORMAT(/4(5X,'Grid   Grid BANDIT')/4(7X,'ID  Count  Label'))
       write(iou6,24) (int(i),i,intern(int(i),inv,ii3,ier),i=1,nn)
 24    FORMAT(4(I9,2I7))
-c
+!
       IF(IER.GT.0) RETURN
-C
+!
       CALL TABLE2(IG,II1,NORIG,IP)
 20    continue
-C
-C     CONVERT USER-SELECTED STARTING NODES, IF ANY, TO INTERNAL LABELS.
-C
+!
+!     CONVERT USER-SELECTED STARTING NODES, IF ANY, TO INTERNAL LABELS.
+!
       IF(ISTA.GT.0) CALL FLIP(ISTART,ISTA,INV,II3,IER)
       IF(IER.GT.0) RETURN
-C
-C     SAVE ORIGINAL ORDERING (ILD) IF NECESSARY.
-C
+!
+!     SAVE ORIGINAL ORDERING (ILD) IF NECESSARY.
+!
       CALL RESET(1,ILD,INT,JUMP)
-C
+!
       IPR=0
       IF(IPARAM(10).EQ.6) IPR=1
-C     INITIALIZE JUMP.
+!     INITIALIZE JUMP.
       JUMP=1
-C     JUMP=1, NO IMPROVEMENT OF CRITERION SELECTED
-C         =0, IMPROVEMENT
-C
-C     CHOOSE CRITERION FOR RESEQUENCING
-C
+!     JUMP=1, NO IMPROVEMENT OF CRITERION SELECTED
+!         =0, IMPROVEMENT
+!
+!     CHOOSE CRITERION FOR RESEQUENCING
+!
       ICRIT=2
       IF(IPARAM(6).EQ.11) ICRIT=3
       IF(IPARAM(6).EQ.12) ICRIT=1
       IF(IPARAM(6).EQ.13) ICRIT=4
-C
+!
       I=MAXGRD+2
       J=I+MAXGRD
       K=J+MAXGRD
       IF(IPARAM(3).EQ.8) GO TO 25
-C
-C     RESEQUENCE NODES WITH CUTHILL-MCKEE ALGORITHM.
-C
-      CALL CUTHIL(80,1,2,ICRIT,IPR,IG,II1,INV,INV(I),INV(J),INV(K),
-     -  INT,ICC,ILD,IP,JUMP,KOR,KORDIM,IER)
-c
-c     Write to a file the component and original grid id for each grid
-c     (to allow sorting to get list of grids in each component).
-c     On exit from subroutine cuthil, inv contains array 'ic'.
-c     Method CM must be included to get this list.
-c
+!
+!     RESEQUENCE NODES WITH CUTHILL-MCKEE ALGORITHM.
+!
+      CALL CUTHIL(80,1,2,ICRIT,IPR,IG,II1,INV,INV(I),INV(J),INV(K),            &
+        INT,ICC,ILD,IP,JUMP,KOR,KORDIM,IER)
+!
+!     Write to a file the component and original grid id for each grid
+!     (to allow sorting to get list of grids in each component).
+!     On exit from subroutine cuthil, inv contains array 'ic'.
+!     Method CM must be included to get this list.
+!
       if(iparam(10).eq.6) then
          open(iou15,file='bandit.f15',form='formatted',status='replace')
          write(iou15,'(a)') 'Component   Grid'
@@ -3306,67 +3306,67 @@ c
          close(iou15)
       end if
       IF(IER.GT.0) RETURN
-C
+!
       IF(IPARAM(3).EQ.7) GO TO 28
-C
+!
    25 CONTINUE
-C
-C     RESET ILD, IF NECESSARY, AND COPY TO INT.
-C
+!
+!     RESET ILD, IF NECESSARY, AND COPY TO INT.
+!
       CALL RESET(2,ILD,INT,JUMP)
-C
-C     SAVE SEQGP CARDS ON IOU9 AFTER EXECUTING CM.  THEN, IN CASE
-C     GPS ABORTS DUE TO EXCEEDING SCRATCH DIMENSION, THE CM RESULTS
-C     CAN BE RECOVERED AND WRITTEN TO UNIT 7.  SEE SUBROUTINE FINISH.
-C     IADD IS IGNORED HERE.
-C
+!
+!     SAVE SEQGP CARDS ON IOU9 AFTER EXECUTING CM.  THEN, IN CASE
+!     GPS ABORTS DUE TO EXCEEDING SCRATCH DIMENSION, THE CM RESULTS
+!     CAN BE RECOVERED AND WRITTEN TO UNIT 7.  SEE SUBROUTINE FINISH.
+!     IADD IS IGNORED HERE.
+!
       REWIND IOU9
       WRITE(IOU9,26) (NORIG(L),ILD(L),L=1,NN)
    26 FORMAT('SEQGP   ',8I8)
       REWIND IOU9
-C
-C
-C     RESEQUENCE NODES WITH GPS ALGORITHM.
-C
+!
+!
+!     RESEQUENCE NODES WITH GPS ALGORITHM.
+!
       KDIM=KORDIM/4
       K1=1
       K2=K1+KDIM
       K3=K2+KDIM
       K4=K3+KDIM
       K5=K4+KDIM/2
-      CALL GIBSTK(IG,II1,INT,ILD,INV(I),INV,INV(J),INV(K),ICC,IBW2,IPF2,
-     -  JUMP,ICRIT,KOR(K1),KOR(K2),KOR(K3),KOR(K4),KOR(K5),KDIM,IER)
+      CALL CGIBSTK(IG,II1,INT,ILD,INV(I),INV,INV(J),INV(K),ICC,IBW2,IPF2,      &
+        JUMP,ICRIT,KOR(K1),KOR(K2),KOR(K3),KOR(K4),KOR(K5),KDIM,IER)
       IF(IER.GT.0) RETURN
-C
+!
    28 CONTINUE
-C
-C     GENERATE SEQGP CARDS.
-C
+!
+!     GENERATE SEQGP CARDS.
+!
       CALL SEQGP(NORIG,ILD,INT,JUMP)
-C
-C     IF REQUESTED, GENERATE SET OF SCALAR SPRINGS (CELAS3) WITH SAME
-C     CONNECTIVITY AS ORIGINAL STRUCTURE ON bandit.f09
-C
+!
+!     IF REQUESTED, GENERATE SET OF SCALAR SPRINGS (CELAS3) WITH SAME
+!     CONNECTIVITY AS ORIGINAL STRUCTURE ON bandit.f09
+!
       IF(IPARAM(7).EQ.4) CALL SPRING(IP)
-C
-C     GENERATE ELEMENT ORDERING FOR FRONTAL SOLVERS.
-C
+!
+!     GENERATE ELEMENT ORDERING FOR FRONTAL SOLVERS.
+!
       IF(IPARAM(11).EQ.4) THEN
-C        COMPUTE MEMORY AVAILABLE FOR ELEMENT SORT (INV ARRAY).
+!        COMPUTE MEMORY AVAILABLE FOR ELEMENT SORT (INV ARRAY).
          MEM=KORE-(MAXGRD+1)
          CALL FRONT(KOR,ILD,NN,INV,MEM,IER)
          IF(IER.GT.0) RETURN
       END IF
-C
+!
       RETURN
       END SUBROUTINE NASNUM
 
 ! ##################################################################################################################################
       FUNCTION NBULK(KA)
-C
-C     THIS FUNCTION RETURNS 1 AS ITS VALUE IF A CARD READ BY 80A1 IS
-C     THE BEGIN BULK CARD. IF NOT, 0 IS RETURNED.
-C
+!
+!     THIS FUNCTION RETURNS 1 AS ITS VALUE IF A CARD READ BY 80A1 IS
+!     THE BEGIN BULK CARD. IF NOT, 0 IS RETURNED.
+!
       INTEGER KA(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
@@ -3376,28 +3376,28 @@ C
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
       NBULK=0
-C
-C     LOOK FOR FIRST NON-BLANK.
-C
+!
+!     LOOK FOR FIRST NON-BLANK.
+!
       DO I=1,64
          IF(KA(I).NE.MB(2)) GO TO 20
       end do
       RETURN
-C
+!
    20 IF(KA(I  ).NE.MA( 2)) RETURN
       IF(KA(I+1).NE.MA( 5)) RETURN
       IF(KA(I+2).NE.MA( 7)) RETURN
       IF(KA(I+3).NE.MA( 9)) RETURN
       IF(KA(I+4).NE.MA(14)) RETURN
       K=I+5
-C
-C     LOOK FOR FIRST NON-BLANK AFTER -BEGIN-.
-C
+!
+!     LOOK FOR FIRST NON-BLANK AFTER -BEGIN-.
+!
       DO I=K,69
          IF(KA(I).NE.MB(2)) GO TO 40
       end do
       RETURN
-C
+!
    40 IF(KA(I  ).NE.MA( 2)) RETURN
       IF(KA(I+1).NE.MA(21)) RETURN
       IF(KA(I+2).NE.MA(12)) RETURN
@@ -3408,35 +3408,35 @@ C
 
 ! ##################################################################################################################################
       FUNCTION NDATA(KA)
-C
-C     THIS FUNCTION RETURNS 1 AS ITS VALUE IF A CARD READ BY 70A1 IS
-C     THE ENDDATA CARD.  OTHERWISE, 0 IS RETURNED.
-C
+!
+!     THIS FUNCTION RETURNS 1 AS ITS VALUE IF A CARD READ BY 70A1 IS
+!     THE ENDDATA CARD.  OTHERWISE, 0 IS RETURNED.
+!
       INTEGER KA(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
       INTEGER  I      ,MA     ,MB     ,NDATA  ,NUM
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       NDATA=0
-C
-C     LOOK FOR FIRST NON-BLANK.
-C
+!
+!     LOOK FOR FIRST NON-BLANK.
+!
       DO I=1,64
          IF(KA(I).NE.MB(2)) GO TO 20
       end do
       RETURN
-C
-C     LOOK FOR -ENDDATA-.
-C
+!
+!     LOOK FOR -ENDDATA-.
+!
    20 IF(KA(I  ).NE.MA( 5)) RETURN
       IF(KA(I+1).NE.MA(14)) RETURN
       IF(KA(I+2).NE.MA( 4)) RETURN
@@ -3450,24 +3450,24 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE NEWIN(KA,IER)
-C
-C     COPY BULK DATA DECK FROM UNIT 5 TO UNIT 11.
-C     REDEFINE IOU5 TO BE IOU11.
-C
+!
+!     COPY BULK DATA DECK FROM UNIT 5 TO UNIT 11.
+!     REDEFINE IOU5 TO BE IOU11.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
       INTEGER  IER    ,L
 
 ! E////////////////////////////////////////////////////////////////////E
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER KA(80)
-C     KA IS SCRATCH SPACE.
+!     KA IS SCRATCH SPACE.
       L=IOU11
       REWIND L
     5 READ(IOU5,10,END=30) KA
@@ -3475,34 +3475,34 @@ C     KA IS SCRATCH SPACE.
       WRITE(L,10) KA
       IF(NDATA(KA).EQ.0) GO TO 5
       REWIND L
-C     REDEFINE IOU5
+!     REDEFINE IOU5
       IOU5=L
       RETURN
-C
+!
 30    CALL FINISH(4,IER)
       RETURN
       END SUBROUTINE NEWIN
 
 ! ##################################################################################################################################
       SUBROUTINE NOSEQ(KA)
-C
-C     WRITE BULK DATA DECK IF RESEQUENCING NOT REQUESTED.
-C
+!
+!     WRITE BULK DATA DECK IF RESEQUENCING NOT REQUESTED.
+!
       INTEGER KA(80)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
       INTEGER  IPARAM
 
 ! E////////////////////////////////////////////////////////////////////E
-C     KA IS SCRATCH SPACE.
+!     KA IS SCRATCH SPACE.
       COMMON /B/ IPARAM(20)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       WRITE(IOU6,10)
    10 FORMAT(/,'Grid point resequencing not requested.' )
    20 READ(IOU5,30,END=40) KA
@@ -3514,12 +3514,12 @@ C     KA IS SCRATCH SPACE.
 
 ! ##################################################################################################################################
       FUNCTION NTHRU(KA,N)
-C
-C     THIS FUNCTION RETURNS 1 AS ITS VALUE IF A FIELD READ N A1
-C     CONTAINS THE CHARACTER STRING "THRU".  IF NOT, 0 IS RETURNED.
-C
-C     N=NUMBER OF CARD COLUMNS TO SEARCH STARTING AT KA(1)
-C
+!
+!     THIS FUNCTION RETURNS 1 AS ITS VALUE IF A FIELD READ N A1
+!     CONTAINS THE CHARACTER STRING "THRU".  IF NOT, 0 IS RETURNED.
+!
+!     N=NUMBER OF CARD COLUMNS TO SEARCH STARTING AT KA(1)
+!
       INTEGER KA(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
@@ -3529,18 +3529,18 @@ C
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
       NTHRU=0
-C
-C     LOOK FOR FIRST NON-BLANK.
-C
+!
+!     LOOK FOR FIRST NON-BLANK.
+!
       NA=N-3
       IF(NA.LT.1) RETURN
       DO I=1,NA
          IF(KA(I).NE.MB(2)) GO TO 20
       end do
       RETURN
-C
-C     LOOK FOR  -THRU-.
-C
+!
+!     LOOK FOR  -THRU-.
+!
    20 IF(KA(I  ).NE.MA(20)) RETURN
       IF(KA(I+1).NE.MA( 8)) RETURN
       IF(KA(I+2).NE.MA(18)) RETURN
@@ -3550,27 +3550,27 @@ C
       END FUNCTION NTHRU
 
 ! ##################################################################################################################################
-      SUBROUTINE NUMBR(SND,NUM,NDSTK,LVLS2,NDEG,RENUM,LVLST,LSTPT,NR,
-     -                 NFLG,IBW2,IPF2,IPFA,ISDIR,STKA,STKB,STKC,STKD,
-     -                 IDIM,IER)
-C
-C  NUMBR PRODUCES THE NUMBERING OF THE GRAPH FOR MIN BANDWIDTH
-C
-C  SND-         ON INPUT THE NODE TO BEGIN NUMBERING ON
-C  NUM-         ON INPUT AND OUTPUT, THE NEXT AVAILABLE NUMBER
-C  LVLS2-       THE LEVEL STRUCTURE TO BE USED IN NUMBERING
-C  RENUM-       THE ARRAY USED TO STORE THE NEW NUMBERING
-C  LVLST-       ON OUTPUT CONTAINS LEVEL STRUCTURE
-C  LSTPT(I)-    ON OUTPUT, INDEX INTO LVLST TO FIRST NODE IN ITH LVL
-C               LSTPT(I+1) - LSTPT(I) = NUMBER OF NODES IN ITH LVL
-C  NFLG-        =+1 IF SND IS FORWARD END OF PSEUDO-DIAM
-C               =-1 IF SND IS REVERSE END OF PSEUDO-DIAM
-C  IBW2-        BANDWIDTH OF NEW NUMBERING COMPUTED BY NUMBER
-C  IPF2-        PROFILE OF NEW NUMBERING COMPUTED BY NUMBER
-C      IBW2 AND IPF2 HERE DO NOT INCLUDE DIAGONAL TERMS.
-C  IPFA-        WORKING STORAGE USED TO COMPUTE PROFILE AND BANDWIDTH
-C  ISDIR-       INDICATES STEP DIRECTION USED IN NUMBERING(+1 OR -1)
-C
+      SUBROUTINE NUMBR(SND,NUM,NDSTK,LVLS2,NDEG,RENUM,LVLST,LSTPT,NR,          &
+                       NFLG,IBW2,IPF2,IPFA,ISDIR,STKA,STKB,STKC,STKD,          &
+                       IDIM,IER)
+!
+!  NUMBR PRODUCES THE NUMBERING OF THE GRAPH FOR MIN BANDWIDTH
+!
+!  SND-         ON INPUT THE NODE TO BEGIN NUMBERING ON
+!  NUM-         ON INPUT AND OUTPUT, THE NEXT AVAILABLE NUMBER
+!  LVLS2-       THE LEVEL STRUCTURE TO BE USED IN NUMBERING
+!  RENUM-       THE ARRAY USED TO STORE THE NEW NUMBERING
+!  LVLST-       ON OUTPUT CONTAINS LEVEL STRUCTURE
+!  LSTPT(I)-    ON OUTPUT, INDEX INTO LVLST TO FIRST NODE IN ITH LVL
+!               LSTPT(I+1) - LSTPT(I) = NUMBER OF NODES IN ITH LVL
+!  NFLG-        =+1 IF SND IS FORWARD END OF PSEUDO-DIAM
+!               =-1 IF SND IS REVERSE END OF PSEUDO-DIAM
+!  IBW2-        BANDWIDTH OF NEW NUMBERING COMPUTED BY NUMBER
+!  IPF2-        PROFILE OF NEW NUMBERING COMPUTED BY NUMBER
+!      IBW2 AND IPF2 HERE DO NOT INCLUDE DIAGONAL TERMS.
+!  IPFA-        WORKING STORAGE USED TO COMPUTE PROFILE AND BANDWIDTH
+!  ISDIR-       INDICATES STEP DIRECTION USED IN NUMBERING(+1 OR -1)
+!
       INTEGER IDIM, SND,XA,XB,XC,XD,CX,END,RENUM,TEST
       COMMON /GRA/ N,IDPTH,IDEG
       INTEGER STKA(IDIM),STKB(IDIM),STKC(IDIM),STKD(IDIM)
@@ -3581,19 +3581,19 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IBW2   ,IDEG   ,IDPTH  ,IER    ,INX    ,
-     &         IPF2   ,IPRO   ,ISDIR  ,
-     &         J      ,
-     &         KMOD   ,
-     &         LND    ,LST    ,LSTPT  ,LVLN   ,LVLS2  ,LVLST  ,
-     &         MAXDEG ,MAXGRD ,MAXI   ,
-     &         N      ,NBITIN ,NBW    ,NDEG   ,NDSTK  ,NFLG   ,
-     &         NSTPT  ,NUM
+      INTEGER  I      ,IBW2   ,IDEG   ,IDPTH  ,IER    ,INX    ,                &
+               IPF2   ,IPRO   ,ISDIR  ,                                        &
+               J      ,                                                        &
+               KMOD   ,                                                        &
+               LND    ,LST    ,LSTPT  ,LVLN   ,LVLS2  ,LVLST  ,                &
+               MAXDEG ,MAXGRD ,MAXI   ,                                        &
+               N      ,NBITIN ,NBW    ,NDEG   ,NDSTK  ,NFLG   ,                &
+               NSTPT  ,NUM
 
       REAL     DUMBB 
 
 ! E////////////////////////////////////////////////////////////////////E
-C  SET UP LVLST AND LSTPT FROM LVLS2
+!  SET UP LVLST AND LSTPT FROM LVLS2
       DO 3 I=1,N
         IPFA(I)=0
     3 CONTINUE
@@ -3606,11 +3606,11 @@ C  SET UP LVLST AND LSTPT FROM LVLS2
           NSTPT=NSTPT+1
     5 CONTINUE
       LSTPT(IDPTH+1)=NSTPT
-C  THIS ROUTINE USES FOUR STACKS, A,B,C,AND D, WITH POINTERS
-C  XA,XB,XC, AND XD.  CX IS A SPECIAL POINTER INTO STKC WHICH
-C  INDICATES THE PARTICULAR NODE BEING PROCESSED.
-C  LVLN KEEPS TRACK OF THE LEVEL WE ARE WORKING AT.
-C  INITIALLY STKC CONTAINS ONLY THE INITIAL NODE, SND.
+!  THIS ROUTINE USES FOUR STACKS, A,B,C,AND D, WITH POINTERS
+!  XA,XB,XC, AND XD.  CX IS A SPECIAL POINTER INTO STKC WHICH
+!  INDICATES THE PARTICULAR NODE BEING PROCESSED.
+!  LVLN KEEPS TRACK OF THE LEVEL WE ARE WORKING AT.
+!  INITIALLY STKC CONTAINS ONLY THE INITIAL NODE, SND.
       LVLN=0
       IF(NFLG.LT.0) LVLN=IDPTH+1
       XC=1
@@ -3620,28 +3620,28 @@ C  INITIALLY STKC CONTAINS ONLY THE INITIAL NODE, SND.
       LVLN=LVLN+NFLG
       LST=LSTPT(LVLN)
       LND=LSTPT(LVLN+1)-1
-C  BEGIN PROCESSING NODE STKC(CX)
+!  BEGIN PROCESSING NODE STKC(CX)
    20 IPRO=STKC(CX)
       RENUM(IPRO)=NUM
       NUM=NUM+ISDIR
       END=NDEG(IPRO)
       XA=0
       XB=0
-C  CHECK ALL ADJACENT NODES
+!  CHECK ALL ADJACENT NODES
       DO 50 I=1,END
         TEST=NDSTK(IPRO,I)
-CPACK   TEST=IUNPK(NDSTK,MAXGRD*(I-1)+IPRO,NBITIN)
+!PACK   TEST=IUNPK(NDSTK,MAXGRD*(I-1)+IPRO,NBITIN)
 26      INX=RENUM(TEST)
-C  ONLY NODES NOT NUMBERED OR ALREADY ON A STACK ARE ADDED
+!  ONLY NODES NOT NUMBERED OR ALREADY ON A STACK ARE ADDED
         IF(INX.EQ.0) GO TO 30
         IF(INX.LT.0) GO TO 50
-C  DO PRELIMINARY BANDWIDTH AND PROFILE CALCULATIONS
+!  DO PRELIMINARY BANDWIDTH AND PROFILE CALCULATIONS
         NBW=(RENUM(IPRO)-INX)*ISDIR
         IF(ISDIR.GT.0) INX=RENUM(IPRO)
         IF(IPFA(INX).LT.NBW) IPFA(INX)=NBW
         GO TO 50
    30   RENUM(TEST)=-1
-C  PUT NODES ON SAME LEVEL ON STKA, ALL OTHERS ON STKB
+!  PUT NODES ON SAME LEVEL ON STKA, ALL OTHERS ON STKB
         IF(LVLS2(TEST).EQ.LVLS2(IPRO)) GO TO 40
         XB=XB+1
       IF(XB.GT.IDIM) GO TO 150
@@ -3651,8 +3651,8 @@ C  PUT NODES ON SAME LEVEL ON STKA, ALL OTHERS ON STKB
       IF(XA.GT.IDIM) GO TO 150
         STKA(XA)=TEST
    50 CONTINUE
-C  SORT STKA AND STKB INTO INCREASING DEGREE AND ADD STKA TO STKC
-C  AND STKB TO STKD
+!  SORT STKA AND STKB INTO INCREASING DEGREE AND ADD STKA TO STKC
+!  AND STKB TO STKD
       IF(XA.EQ.0) GO TO 55
       IF(XA.EQ.1) GO TO 52
       CALL SORTDG(STKC,STKA,XC,XA,NDEG)
@@ -3667,11 +3667,11 @@ C  AND STKB TO STKD
    62 XD=XD+1
       IF(XD.GT.IDIM) GO TO 150
       STKD(XD)=STKB(XB)
-C  BE SURE TO PROCESS ALL NODES IN STKC
+!  BE SURE TO PROCESS ALL NODES IN STKC
    65 CX=CX+1
       IF(XC.GE.CX) GO TO 20
-C  WHEN STKC IS EXHAUSTED LOOK FOR MIN DEGREE NODE IN SAME LEVEL
-C  WHICH HAS NOT BEEN PROCESSED
+!  WHEN STKC IS EXHAUSTED LOOK FOR MIN DEGREE NODE IN SAME LEVEL
+!  WHICH HAS NOT BEEN PROCESSED
       MAXI=IDEG+1
       SND=N+1
       DO 70 I=LST,LND
@@ -3688,71 +3688,71 @@ C  WHICH HAS NOT BEEN PROCESSED
       IF(XC.GT.IDIM) GO TO 150
       STKC(XC)=SND
       GO TO 20
-C  IF STKD IS EMPTY WE ARE DONE, OTHERWISE COPY STKD ONTO STKC
-C  AND BEGIN PROCESSING NEW STKC
+!  IF STKD IS EMPTY WE ARE DONE, OTHERWISE COPY STKD ONTO STKC
+!  AND BEGIN PROCESSING NEW STKC
    75 IF(XD.EQ.0) GO TO 100
       DO 80 I=1,XD
         STKC(I)=STKD(I)
    80 CONTINUE
       XC=XD
       GO TO 10
-C  DO FINAL BANDWIDTH AND PROFILE CALCULATIONS
+!  DO FINAL BANDWIDTH AND PROFILE CALCULATIONS
   100 DO 120 I=1,N
         IF(IPFA(I).GT.IBW2) IBW2=IPFA(I)
         IPF2=IPF2+IPFA(I)
   120 CONTINUE
       RETURN
-C     DIMENSION EXCEEDED  . . .  STOP JOB.
+!     DIMENSION EXCEEDED  . . .  STOP JOB.
   150 CALL FINISH(3,IER)
       RETURN
       END SUBROUTINE NUMBR
 
 ! ##################################################################################################################################
-      SUBROUTINE PIKLVL(LVLS1,LVLS2,CCSTOR,IDFLT,ISDIR,XC,NHIGH,NLOW,
-     -                  NACUM,SIZE,STPT)
-C
-C  PIKLVL CHOOSES THE LEVEL STRUCTURE  USED IN NUMBERING GRAPH
-C
-C  LVLS1-       ON INPUT CONTAINS FORWARD LEVELING INFO
-C  LVLS2-       ON INPUT CONTAINS REVERSE LEVELING INFO
-C               ON OUTPUT THE FINAL LEVEL STRUCTURE CHOSEN
-C  CCSTOR-      ON INPUT CONTAINS CONNECTED COMPONENT INFO
-C  IDFLT-       ON INPUT =1 IF WDTH LVLS1@WDTH LVLS2, =2 OTHERWISE
-C  NHIGH        KEEPS TRACK OF LEVEL WIDTHS FOR HIGH NUMBERING
-C  NLOW-        KEEPS TRACK OF LEVEL WIDTHS FOR LOW NUMBERING
-C  NACUM-       KEEPS TRACK OF LEVEL WIDTHS FOR CHOSEN LEVEL STRUCTURE
-C  XC-          NUMBER OF CONNECTED COMPONENTS
-C  SIZE(I)-     SIZE OF ITH CONNECTED COMPONENT
-C  STPT(I)-     INDEX INTO CCSTORE OF 1ST NODE IN ITH CON COMPT
-C  ISDIR-       FLAG WHICH INDICATES WHICH WAY THE LARGEST CONNECTED
-C               COMPONENT FELL.  =+1 IF LOW AND -1 IF HIGH
-C
+      SUBROUTINE PIKLVL(LVLS1,LVLS2,CCSTOR,IDFLT,ISDIR,XC,NHIGH,NLOW,          &
+                        NACUM,SIZE,STPT)
+!
+!  PIKLVL CHOOSES THE LEVEL STRUCTURE  USED IN NUMBERING GRAPH
+!
+!  LVLS1-       ON INPUT CONTAINS FORWARD LEVELING INFO
+!  LVLS2-       ON INPUT CONTAINS REVERSE LEVELING INFO
+!               ON OUTPUT THE FINAL LEVEL STRUCTURE CHOSEN
+!  CCSTOR-      ON INPUT CONTAINS CONNECTED COMPONENT INFO
+!  IDFLT-       ON INPUT =1 IF WDTH LVLS1@WDTH LVLS2, =2 OTHERWISE
+!  NHIGH        KEEPS TRACK OF LEVEL WIDTHS FOR HIGH NUMBERING
+!  NLOW-        KEEPS TRACK OF LEVEL WIDTHS FOR LOW NUMBERING
+!  NACUM-       KEEPS TRACK OF LEVEL WIDTHS FOR CHOSEN LEVEL STRUCTURE
+!  XC-          NUMBER OF CONNECTED COMPONENTS
+!  SIZE(I)-     SIZE OF ITH CONNECTED COMPONENT
+!  STPT(I)-     INDEX INTO CCSTORE OF 1ST NODE IN ITH CON COMPT
+!  ISDIR-       FLAG WHICH INDICATES WHICH WAY THE LARGEST CONNECTED
+!               COMPONENT FELL.  =+1 IF LOW AND -1 IF HIGH
+!
       INTEGER XC,END
       COMMON /GRA/ N,IDPTH,DUMG
-C     DIMENSION OF NHIGH IS MAXIMUM ALLOWABLE NUMBER OF LEVELS.
-C     DIMENSION OF SIZE IS MAXIMUM ALLOWABLE NUMBER OF COMPONENTS.
+!     DIMENSION OF NHIGH IS MAXIMUM ALLOWABLE NUMBER OF LEVELS.
+!     DIMENSION OF SIZE IS MAXIMUM ALLOWABLE NUMBER OF COMPONENTS.
       INTEGER NHIGH(*),NLOW(*),NACUM(*),SIZE(*),STPT(*)
       INTEGER LVLS1(*),LVLS2(*),CCSTOR(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IDFLT  ,IDPTH  ,INODE  ,ISDIR  ,IT     ,
-     &         J      ,K      ,LVLNH  ,LVLNL  ,
-     &         MAX1   ,MAX2   ,N
+      INTEGER  I      ,IDFLT  ,IDPTH  ,INODE  ,ISDIR  ,IT     ,                &
+               J      ,K      ,LVLNH  ,LVLNL  ,                                &
+               MAX1   ,MAX2   ,N
 
       REAL     DUMG
 
 ! E////////////////////////////////////////////////////////////////////E
-C  FOR EACH CONNECTED COMPONENT DO
+!  FOR EACH CONNECTED COMPONENT DO
       DO 270 I=1,XC
         J=STPT(I)
         END=SIZE(I)+J-1
-C  SET NHIGH AND NLOW EQUAL TO NACUM
+!  SET NHIGH AND NLOW EQUAL TO NACUM
         DO 205 K=1,IDPTH
           NHIGH(K)=NACUM(K)
           NLOW(K)=NACUM(K)
   205   CONTINUE
-C  UPDATE NHIGH AND NLOW FOR EACH NODE IN CONNECTED COMPONENT
+!  UPDATE NHIGH AND NLOW FOR EACH NODE IN CONNECTED COMPONENT
         DO 210 K=J,END
           INODE=CCSTOR(K)
           LVLNH=LVLS1(INODE)
@@ -3762,30 +3762,30 @@ C  UPDATE NHIGH AND NLOW FOR EACH NODE IN CONNECTED COMPONENT
   210   CONTINUE
         MAX1=0
         MAX2=0
-C  SET MAX1=LARGEST NEW NUMBER IN NHIGH
-C  SET MAX2=LARGEST NEW NUMBER IN NLOW
+!  SET MAX1=LARGEST NEW NUMBER IN NHIGH
+!  SET MAX2=LARGEST NEW NUMBER IN NLOW
         DO 240 K=1,IDPTH
           IF(2*NACUM(K).EQ.NLOW(K)+NHIGH(K)) GO TO 240
           IF(NHIGH(K).GT.MAX1) MAX1=NHIGH(K)
           IF(NLOW(K).GT.MAX2) MAX2=NLOW(K)
   240   CONTINUE
-C  SET IT= NUMBER OF LEVEL STRUCTURE TO BE USED
+!  SET IT= NUMBER OF LEVEL STRUCTURE TO BE USED
         IT=1
         IF(MAX1.GT.MAX2) IT=2
         IF(MAX1.EQ.MAX2) IT=IDFLT
         IF(IT.EQ.2) GO TO 265
         IF(I.EQ.1) ISDIR=-1
-C  COPY LVLS1 INTO LVLS2 FOR EACH NODE IN CONNECTED COMPONENT
+!  COPY LVLS1 INTO LVLS2 FOR EACH NODE IN CONNECTED COMPONENT
         DO 260 K=J,END
           INODE=CCSTOR(K)
           LVLS2(INODE)=LVLS1(INODE)
   260   CONTINUE
-C  UPDATE NACUM TO BE THE SAME AS NHIGH
+!  UPDATE NACUM TO BE THE SAME AS NHIGH
         DO 262 K=1,IDPTH
           NACUM(K)=NHIGH(K)
   262   CONTINUE
         GO TO 270
-C  UPDATE NACUM TO BE THE SAME AS NLOW
+!  UPDATE NACUM TO BE THE SAME AS NLOW
   265   DO 267 K=1,IDPTH
           NACUM(K)=NLOW(K)
   267   CONTINUE
@@ -3795,32 +3795,32 @@ C  UPDATE NACUM TO BE THE SAME AS NLOW
 
 ! ##################################################################################################################################
       SUBROUTINE PUNCON(IG,II1,IP,ILD)
-C
-C     WRITE CONNECTION TABLE IG ON PERIPHERAL FILE (IOU16).
-C
-C     ILD(I) = SORTED INTERNAL LABEL FOR NODE WITH UNSORTED INTERNAL
-C              LABEL I
-C     NN     = NUMBER OF NODES.
-C     M      = MAX NODAL DEGREE.
-C     IP     = TEMPORARY STORAGE.
-C
-C     HEADER CARD GIVES NUMBER OF NODES (NN) AND MAX NODAL DEGREE (M)
-C     IN 2I5, THEN ONE CARD PER NODE, 24I5.
-C     FIELD 1 IS NODE, OTHER FIELDS ARE CONNECTIONS.
-C
+!
+!     WRITE CONNECTION TABLE IG ON PERIPHERAL FILE (IOU16).
+!
+!     ILD(I) = SORTED INTERNAL LABEL FOR NODE WITH UNSORTED INTERNAL
+!              LABEL I
+!     NN     = NUMBER OF NODES.
+!     M      = MAX NODAL DEGREE.
+!     IP     = TEMPORARY STORAGE.
+!
+!     HEADER CARD GIVES NUMBER OF NODES (NN) AND MAX NODAL DEGREE (M)
+!     IN 2I5, THEN ONE CARD PER NODE, 24I5.
+!     FIELD 1 IS NODE, OTHER FIELDS ARE CONNECTIONS.
+!
       INTEGER II1
       DIMENSION IG(II1,*),IP(*),ILD(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IG     ,ILD    ,IP     ,
-     &         J      ,K      ,KMOD   ,
-     &         M      ,MAXDEG ,MAXGRD ,
-     &         NBITIN ,NN
+      INTEGER  I      ,IG     ,ILD    ,IP     ,                                &
+               J      ,K      ,KMOD   ,                                        &
+               M      ,MAXDEG ,MAXGRD ,                                        &
+               NBITIN ,NN
 
       REAL     DUMBB  ,DUMS
 
@@ -3828,9 +3828,9 @@ C
       COMMON /S/ NN,M,DUMS(7)
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /BITS/ NBITIN,DUMBB(8)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-C
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+!
       WRITE(IOU16,30) NN,M
       DO 20 I=1,NN
       DO J=1,M
@@ -3838,21 +3838,21 @@ C
       end do
       DO J=1,M
          K=IG(I,J)
-CPACK    K=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
+!PACK    K=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
          IF(K.EQ.0) GO TO 15
          IP(J)=ILD(K)
       end do
    15 CONTINUE
       WRITE(IOU16,30) ILD(I),(IP(J),J=1,M)
    30 FORMAT(24I5)
-C
-C     24I5 IS CHOSEN SINCE 24*5=120 IS AN INTEGER MULTIPLE OF 10 (CDC),
-C     4 (IBM), AND 6 (UNIVAC), MAKING IT CONVENIENT FOR I/O BETWEEN
-C     DISSIMILAR COMPUTERS.
-C     120 CHARACTER LINES CAN ALSO BE LISTED ON A PRINTER IF DESIRED.
-C     IF THIS FORMAT IS CHANGED, SIMILAR CHANGES ARE REQUIRED IN
-C     SUBROUTINES SEQGP AND SPRING.
-C
+!
+!     24I5 IS CHOSEN SINCE 24*5=120 IS AN INTEGER MULTIPLE OF 10 (CDC),
+!     4 (IBM), AND 6 (UNIVAC), MAKING IT CONVENIENT FOR I/O BETWEEN
+!     DISSIMILAR COMPUTERS.
+!     120 CHARACTER LINES CAN ALSO BE LISTED ON A PRINTER IF DESIRED.
+!     IF THIS FORMAT IS CHANGED, SIMILAR CHANGES ARE REQUIRED IN
+!     SUBROUTINES SEQGP AND SPRING.
+!
    20 CONTINUE
       WRITE(IOU6,40) IOU16
    40 FORMAT(/,'Connection table generated on bandit.f',I2)
@@ -3861,33 +3861,33 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE READIT(KA,N,MAXI,IP,NIP)
-C
-C     INTERPRET NUMERIC DATA READ IN 80A1 FORMAT.  ONLY NON-NEGATIVE
-C     INTEGERS ARE FOUND.
-C
-C     KA(I) = ITH CHARACTER (A1 FORMAT) (INPUT)
-C     N     = NUMBER OF INTEGERS SOUGHT (INPUT)
-C     MAXI  = MAXIMUM VALUE OF I FOR SEARCH (INPUT)
-C     IP(J) = JTH INTEGER FOUND (OUTPUT)
-C     NIP   = NUMBER OF INTEGERS FOUND (OUTPUT)
-C
-C     TO CONVERT READIT TO A STAND-ALONE UTILITY NOT DEPENDENT ON
-C     COMMON BLOCK /ALPHA/, WHICH SUPPLIES THE ARRAY NUM, REPLACE
-C     THE COMMON STATEMENT BELOW WITH THE DATA STATEMENT FOR NUM
-C     WHICH IS COMMENTED OUT.
-C
-C     G.C. EVERSTINE, DTRC 128, SEPT. 1973 (REVISED JULY 1978)
-C
+!
+!     INTERPRET NUMERIC DATA READ IN 80A1 FORMAT.  ONLY NON-NEGATIVE
+!     INTEGERS ARE FOUND.
+!
+!     KA(I) = ITH CHARACTER (A1 FORMAT) (INPUT)
+!     N     = NUMBER OF INTEGERS SOUGHT (INPUT)
+!     MAXI  = MAXIMUM VALUE OF I FOR SEARCH (INPUT)
+!     IP(J) = JTH INTEGER FOUND (OUTPUT)
+!     NIP   = NUMBER OF INTEGERS FOUND (OUTPUT)
+!
+!     TO CONVERT READIT TO A STAND-ALONE UTILITY NOT DEPENDENT ON
+!     COMMON BLOCK /ALPHA/, WHICH SUPPLIES THE ARRAY NUM, REPLACE
+!     THE COMMON STATEMENT BELOW WITH THE DATA STATEMENT FOR NUM
+!     WHICH IS COMMENTED OUT.
+!
+!     G.C. EVERSTINE, DTRC 128, SEPT. 1973 (REVISED JULY 1978)
+!
       INTEGER KA(*),IP(*),FLAG,BLANK
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,J      ,KOL    ,
-     &         MA     ,MAXI   ,MB     ,N      ,NIP    ,NUM
+      INTEGER  I      ,J      ,KOL    ,                                        &
+               MA     ,MAXI   ,MB     ,N      ,NIP    ,NUM
 
 ! E////////////////////////////////////////////////////////////////////E
-C     DATA NUM/1H0,1H1,1H2,1H3,1H4,1H5,1H6,1H7,1H8,1H9/
+!     DATA NUM/1H0,1H1,1H2,1H3,1H4,1H5,1H6,1H7,1H8,1H9/
 ! B////////////////////////////////////////////////////////////////////B
       DATA BLANK/1H /
 ! E////////////////////////////////////////////////////////////////////E
@@ -3916,9 +3916,9 @@ C     DATA NUM/1H0,1H1,1H2,1H3,1H4,1H5,1H6,1H7,1H8,1H9/
 
 ! ##################################################################################################################################
       SUBROUTINE REED(IG,II1,INV,II3,NORIG,KG,MAXI,IDUM,IER)
-C
-C     READ BULK DATA DECK AND SET UP CONNECTION TABLE IG.
-C
+!
+!     READ BULK DATA DECK AND SET UP CONNECTION TABLE IG.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add this so when READIT is called with EID we will use EID_array
 ! instead. Needed so Lahey doesn't complain about shape of EID being
@@ -3931,29 +3931,29 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,I1     ,I2     ,IER    ,IFLD   ,IG     ,II     ,
-     &         INV    ,IPARAM ,ISAVE  ,ITYPE  ,
-     &         J      ,K      ,L      ,LEN    ,LOOP   ,
-     &         MA     ,MB     ,MDIM   ,ME     ,
-     &         NCARD  ,NCON   ,NEL    ,NELEM  ,NEQ    ,NEQR   ,NLINK  ,
-     &         NORIG  ,npt    ,NTYPE  ,NUM
+      INTEGER  I      ,I1     ,I2     ,IER    ,IFLD   ,IG     ,II     ,        &
+               INV    ,IPARAM ,ISAVE  ,ITYPE  ,                                &
+               J      ,K      ,L      ,LEN    ,LOOP   ,                        &
+               MA     ,MB     ,MDIM   ,ME     ,                                &
+               NCARD  ,NCON   ,NEL    ,NELEM  ,NEQ    ,NEQR   ,NLINK  ,        &
+               NORIG  ,npt    ,NTYPE  ,NUM
 
       REAL     DUMD   
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
-      COMMON /ELEM/ NTYPE,VYPE(160),TYPE(160),WYPE(160),ME(160),
-     -              NELEM(160),MDIM
+      COMMON /ELEM/ NTYPE,VYPE(160),TYPE(160),WYPE(160),ME(160),               &
+                    NELEM(160),MDIM
       COMMON /B/ IPARAM(20)
       COMMON /D/ DUMD(6),NEL,NEQ,NEQR,NLINK
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-C     MAXI=MAXIMUM NUMBER OF GRID POINTS ALLOWED PER ELEMENT
-c          (=kdim4 from main) (input)
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+!     MAXI=MAXIMUM NUMBER OF GRID POINTS ALLOWED PER ELEMENT
+!          (=kdim4 from main) (input)
       LOGICAL LESSOK,rigide
       IF(IPARAM(11).EQ.4) THEN
          OPEN(IOU13,FORM='UNFORMATTED',STATUS='SCRATCH')
@@ -3964,119 +3964,119 @@ c          (=kdim4 from main) (input)
       NEQR=0
       NLINK=0
       NCARD=0
-C     NEL   = NUMBER OF ELEMENTS NOT COUNTING RIGID ELEMENTS
-C     NEQ   = OVERALL NUMBER OF MPC EQUATIONS, INCLUDING NEQR
-C     NEQR  = NUMBER OF MPC EQUATIONS ARISING FROM RIGID LINKS.
-C     NLINK = NUMBER OF RIGID LINKS (ELEMENTS)
-C     NCARD = NUMBER OF BULK DATA CARDS
-C
-C     READ BULK DATA CARD.
-C
+!     NEL   = NUMBER OF ELEMENTS NOT COUNTING RIGID ELEMENTS
+!     NEQ   = OVERALL NUMBER OF MPC EQUATIONS, INCLUDING NEQR
+!     NEQR  = NUMBER OF MPC EQUATIONS ARISING FROM RIGID LINKS.
+!     NLINK = NUMBER OF RIGID LINKS (ELEMENTS)
+!     NCARD = NUMBER OF BULK DATA CARDS
+!
+!     READ BULK DATA CARD.
+!
    20 READ(IOU5,30,END=170) KA
    30 FORMAT(A1,A4,A3,65A1,A4,A3)
       NCARD=NCARD+1
-c     IF(MOD(NCARD,100).EQ.0) WRITE(IOU17,35) NCARD
+!     IF(MOD(NCARD,100).EQ.0) WRITE(IOU17,35) NCARD
 35    FORMAT(I9)
-C
-C     LEFT-ADJUST MNEUMONIC.
-C
+!
+!     LEFT-ADJUST MNEUMONIC.
+!
       CALL LEFT(KA,ITYPE)
-C
-C     RETURN IF ENDDATA CARD  (A LEFT-ADJUSTED ENDDATA WILL NOT BE
-C        FOUND UNTIL LATER).
-C
+!
+!     RETURN IF ENDDATA CARD  (A LEFT-ADJUSTED ENDDATA WILL NOT BE
+!        FOUND UNTIL LATER).
+!
    55 IF(ITYPE.EQ.1) THEN
          WRITE(IOU6,60) NCARD
 60       FORMAT(/,'Number of Bulk Data records read',I14)
          RETURN
       END IF
-C
-C     DETERMINE CARD TYPE.
-C
+!
+!     DETERMINE CARD TYPE.
+!
       CALL ELTYPE(KA,ITYPE,NCON,IFLD,LOOP,MAXI,LEN,LESSOK,IER)
       IF(IER.GT.0) RETURN
-c
-c     Set rigid element flag.
-c
+!
+!     Set rigid element flag.
+!
       rigide=.false.
       if(itype.ge.91.and.itype.le.93) rigide=.true.
       if(itype.ge.128.and.itype.le.137) rigide=.true.
-C
-C     IF NOT ENDDATA CARD, WRITE CARD AND CONTINUE.
-C
+!
+!     IF NOT ENDDATA CARD, WRITE CARD AND CONTINUE.
+!
       IF(ITYPE.EQ.1) THEN
          WRITE(IOU6,60) NCARD
          RETURN
       END IF
-C
+!
       WRITE(IOU8,30) KA
-C
-C     IF NO MATCH FOUND, CHECK FOR AXIC, THEN GO BACK AND READ
-C             ANOTHER CARD.
-C
+!
+!     IF NO MATCH FOUND, CHECK FOR AXIC, THEN GO BACK AND READ
+!             ANOTHER CARD.
+!
       IF(ITYPE.EQ.0) THEN
          CALL TAXI(KA,IOU6)
          GO TO 20
       END IF
-C
-C     CHECK IF MPC CARDS ARE TO BE PROCESSED (MPC, MPC*, MPCAX)
-C
+!
+!     CHECK IF MPC CARDS ARE TO BE PROCESSED (MPC, MPC*, MPCAX)
+!
       if(itype.le.3.or.itype.eq.112) then
          IF(IPARAM(4).EQ.3) GO TO 20
          NEQ=NEQ+1
-C        NEQ=NUMBER OF MPC EQUATIONS
+!        NEQ=NUMBER OF MPC EQUATIONS
          CALL MPC(KA,ITYPE,KG,MAXI,INV,II3,NORIG,IER)
          IF(IER.GT.0) RETURN
          GO TO 20
       end if
-C
-C     CHECK FOR AND INTERPRET selected RIGID ELEMENTs
-C
-      IF(ITYPE.EQ.91.OR.ITYPE.EQ.92.or.
-     -      (itype.ge.130.and.itype.le.133)) then
+!
+!     CHECK FOR AND INTERPRET selected RIGID ELEMENTs
+!
+      IF(ITYPE.EQ.91.OR.ITYPE.EQ.92.or.                                        &
+            (itype.ge.130.and.itype.le.133)) then
          CALL RIGID(KA,ITYPE,KG,MAXI,INV,II3,NORIG,IDUM,IER,npt)
 84       format('frigid',8i6)
          IF(IER.GT.0) RETURN
-c        Since RBE1 is read like a rigid element, but processed like a
-c        regular element, keep going.
+!        Since RBE1 is read like a rigid element, but processed like a
+!        regular element, keep going.
          if(itype.eq.130.or.itype.eq.131) go to 87
          NLINK=NLINK+1
          NELEM(ITYPE)=NELEM(ITYPE)+1
          GO TO 20
       END IF
 87    continue
-C
-C     BLANK OUT FIELD 5 FOR SCALAR ELEMENTS WITH CONNECTIONS NOT LISTED
-c         CONSECUTIVELY.
-C
+!
+!     BLANK OUT FIELD 5 FOR SCALAR ELEMENTS WITH CONNECTIONS NOT LISTED
+!         CONSECUTIVELY.
+!
       IF(ITYPE.LE.9.or.(ITYPE.GE.73.AND.ITYPE.LE.75)) then
-C        LEN=1 FOR SHORT FIELD CARD, 2 FOR LONG FIELD CARD
+!        LEN=1 FOR SHORT FIELD CARD, 2 FOR LONG FIELD CARD
          I1=4+24*LEN
          I2=I1-1+8*LEN
          DO I=I1,I2
             KA(I)=MB(2)
          end do
       end if
-C
-C     PROCESS CONNECTION CARD.
-C
-C     LOOP=NUMBER OF ELEMENTS DEFINABLE ON ONE CARD (1 OR 2, USUALLY 1)
-C
+!
+!     PROCESS CONNECTION CARD.
+!
+!     LOOP=NUMBER OF ELEMENTS DEFINABLE ON ONE CARD (1 OR 2, USUALLY 1)
+!
       DO 140 II=1,LOOP
-C
-C     GET ELEMENT ID (EID) (needed for frontal ordering)
-C     I1=SUBSCRIPT IN KA ARRAY CORRESPONDING TO BEGINNING OF EID FIELD
+!
+!     GET ELEMENT ID (EID) (needed for frontal ordering)
+!     I1=SUBSCRIPT IN KA ARRAY CORRESPONDING TO BEGINNING OF EID FIELD
       I1=4
       IF(II.EQ.2.AND.LEN.EQ.1) I1=36
 ! B////////////////////////////////////////////////////////////////////B
       CALL READIT(KA(I1),1,8*LEN,EID_array(1),J)
       EID = EID_array(1)
 ! E////////////////////////////////////////////////////////////////////E
-C
-C     DETERMINE GRID CONNECTIONS AND STORE IN KG.
-c     THE ACTUAL NUMBER OF NON-ZERO NODES IS RETURNED IN NPT.
-c     Grid connections have already been found for RBE1 by Subroutine RIGID.
-c
+!
+!     DETERMINE GRID CONNECTIONS AND STORE IN KG.
+!     THE ACTUAL NUMBER OF NON-ZERO NODES IS RETURNED IN NPT.
+!     Grid connections have already been found for RBE1 by Subroutine RIGID.
+!
       if(itype.eq.130.or.itype.eq.131) go to 103
         CALL SETUP(KA,NCON,IFLD,KG,NPT,LEN,LESSOK,IER)
         IF(IER.GT.0) RETURN
@@ -4085,28 +4085,28 @@ c
         WRITE(IOU6,102) KA
 102     FORMAT('Warning.  Missing connection(s) on'/A1,A4,A3,65A1,A4,A3)
 103   IF(NPT.LE.0) GO TO 130
-C
+!
       if(rigide) then
          nlink=nlink+1
       else
          nel=nel+1
       end if
       NELEM(ITYPE)=NELEM(ITYPE)+1
-C
-C     CONVERT KG FROM ORIGINAL TO INTERNAL NUMBERS.
-C
+!
+!     CONVERT KG FROM ORIGINAL TO INTERNAL NUMBERS.
+!
       CALL SCAT(KG,npt,INV,II3,NORIG,IER)
       IF(IER.GT.0) RETURN
-C
-C     WRITE EID AND INTERNAL CONNECTIONS ON UNIT 13.
-C     SKIP FOR "$FRONTAL NO" and for rigid elements.
-C
+!
+!     WRITE EID AND INTERNAL CONNECTIONS ON UNIT 13.
+!     SKIP FOR "$FRONTAL NO" and for rigid elements.
+!
       IF(IPARAM(11).EQ.3.or.eid.eq.0.or.rigide) GO TO 108
       WRITE(IOU13) EID,NPT,(KG(I),I=1,NPT)
 108   CONTINUE
-C
-C     FILL CONNECTION TABLE IG.
-C
+!
+!     FILL CONNECTION TABLE IG.
+!
       IF(npt.le.1) then
          npt=2
          KG(2)=0
@@ -4133,36 +4133,36 @@ C
       WRITE(IOU8,30) KA
       IFLD=4
 140   CONTINUE
-C
-C     GO BACK AND READ ANOTHER CARD.
-C
+!
+!     GO BACK AND READ ANOTHER CARD.
+!
       GO TO 20
-C
-C     WARNING MESSAGE.
-C
+!
+!     WARNING MESSAGE.
+!
   150 WRITE(IOU6,160) KA
-  160 FORMAT(/,'Warning.  The continuation to the card preceding'/
-     - A1,A4,A3,65A1,A4,A3/'does not immediately follow its parent',
-     - ' and hence will not be found by BANDIT.')
+  160 FORMAT(/,'Warning.  The continuation to the card preceding'/             &
+       A1,A4,A3,65A1,A4,A3/'does not immediately follow its parent',           &
+       ' and hence will not be found by BANDIT.')
       ITYPE=ISAVE
       GO TO 55
-C
-C     END-OF-FILE ENCOUNTERED
-C
+!
+!     END-OF-FILE ENCOUNTERED
+!
 170   CALL FINISH(4,IER)
       RETURN
       END SUBROUTINE REED
 
 ! ##################################################################################################################################
-      SUBROUTINE RELABL(NS,NODES,IG,II1,IC,IDEG,IDIS,IW,NEW,ICC,
-     -                  ILD,IAJ,IDIM,IER)
-C
-C     GENERATE A RELABELING SCHEME STARTING WITH NS NODES FOR WHICH
-C     LABELS HAVE BEEN STORED IN ARRAY NODES.
-C     SET UP ILD AND NEW.
-C     ILD(OLD)=NEW
-C     NEW(NEW)=OLD,   THE INVERSE OF ILD
-C
+      SUBROUTINE RELABL(NS,NODES,IG,II1,IC,IDEG,IDIS,IW,NEW,ICC,               &
+                        ILD,IAJ,IDIM,IER)
+!
+!     GENERATE A RELABELING SCHEME STARTING WITH NS NODES FOR WHICH
+!     LABELS HAVE BEEN STORED IN ARRAY NODES.
+!     SET UP ILD AND NEW.
+!     ILD(OLD)=NEW
+!     NEW(NEW)=OLD,   THE INVERSE OF ILD
+!
       DIMENSION IG(II1,*),IC(*),IDEG(*),IDIS(*),IW(*),NEW(*),ICC(*)
       INTEGER ILD(*)
       COMMON /S/ NN,DUMS(8)
@@ -4173,14 +4173,14 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IA     ,IC     ,ICC    ,ICN    ,IDEG   ,
-     &         IDIS   ,IER    ,IG     ,II     ,II1    ,IJ     ,IW     ,
-     &         IZ     ,
-     &         J      ,JJ     ,JT     ,
-     &         KI     ,KMOD   ,KO     ,
-     &         L      ,LL     ,
-     &         MAXDEG ,MAXGRD ,
-     &         N      ,NBITIN ,NEW    ,NN     ,NNC    ,NS     ,NT
+      INTEGER  I      ,IA     ,IC     ,ICC    ,ICN    ,IDEG   ,                &
+               IDIS   ,IER    ,IG     ,II     ,II1    ,IJ     ,IW     ,        &
+               IZ     ,                                                        &
+               J      ,JJ     ,JT     ,                                        &
+               KI     ,KMOD   ,KO     ,                                        &
+               L      ,LL     ,                                                &
+               MAXDEG ,MAXGRD ,                                                &
+               N      ,NBITIN ,NEW    ,NN     ,NNC    ,NS     ,NT
 
       REAL     DUMBB  ,DUMS
 
@@ -4214,7 +4214,7 @@ C
 140   IJ=0
       DO 200 I=1,N
       IA=IG(II,I)
-CPACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
+!PACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
       IF(IDIS(IA)) 200,150,200
 150   IJ=IJ+1
       IF(IJ.GT.IDIM) GO TO 270
@@ -4249,45 +4249,45 @@ CPACK IA=IUNPK(IG,MAXGRD*(I-1)+II,NBITIN)
 240   CONTINUE
 250   IF(KO-NNC)130,255,255
 255   CONTINUE
-C
-C     REVERSE SEQUENCE FOR THIS COMPONENT (ICN).
-C
-C     ICC IS AN ARRAY USED FOR IDENTIFYING COMPONENTS IN THE NEW ARRAY.
-C     ICC(I) CONTAINS THE INDEX FOR THE NEW ARRAY AT WHICH COMPONENT I
-C        STARTS.
-C     NEW(I) = OLD LABEL FOR NODE NOW LABELLED I.
-C     I = NUMBER OF NODES IN PREVIOUS COMPONENTS.
-C     J = NUMBER OF NODES IN LATER COMPONENTS.
+!
+!     REVERSE SEQUENCE FOR THIS COMPONENT (ICN).
+!
+!     ICC IS AN ARRAY USED FOR IDENTIFYING COMPONENTS IN THE NEW ARRAY.
+!     ICC(I) CONTAINS THE INDEX FOR THE NEW ARRAY AT WHICH COMPONENT I
+!        STARTS.
+!     NEW(I) = OLD LABEL FOR NODE NOW LABELLED I.
+!     I = NUMBER OF NODES IN PREVIOUS COMPONENTS.
+!     J = NUMBER OF NODES IN LATER COMPONENTS.
       I=ICC(ICN)-1
       J=NN-ICC(ICN+1) +1
       IF(J.GT.NN) J=0
-C
-C     GET REVERSE CM SEQUENCE.
-C
+!
+!     GET REVERSE CM SEQUENCE.
+!
       CALL REVERS(NEW,ILD,NN,I,J)
-C
+!
       RETURN
-C
-C     DIMENSION EXCEEDED.  STOP JOB.
-C
+!
+!     DIMENSION EXCEEDED.  STOP JOB.
+!
 270   CALL FINISH(5,IER)
       RETURN
       END SUBROUTINE RELABL
 
 ! ##################################################################################################################################
       SUBROUTINE RESET(IGOTO,ILD,INT,JUMP)
-C
-C     THIS ROUTINE MAKES A COPY OF THE ORIGINAL GRID POINT SEQUENCE IF
-C     BOTH METHODS ARE TO BE USED.  ALSO, IF CUTHILL ACHIEVES NO BW
-C     REDUCTION, THIS SEQUENCE IS RETRIEVED BEFORE CALLING GIBSTK.
-C
+!
+!     THIS ROUTINE MAKES A COPY OF THE ORIGINAL GRID POINT SEQUENCE IF
+!     BOTH METHODS ARE TO BE USED.  ALSO, IF CUTHILL ACHIEVES NO BW
+!     REDUCTION, THIS SEQUENCE IS RETRIEVED BEFORE CALLING GIBSTK.
+!
       INTEGER ILD(*),INT(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
       INTEGER  I      ,IGOTO  ,IPARAM ,JUMP   ,L      ,NN
 
@@ -4296,29 +4296,29 @@ C
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /S/ NN,DUMS(8)
       COMMON /B/ IPARAM(20)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       L=IOU12
       GO TO (10,20), IGOTO
-C
-C     SAVE ORIGINAL ORDERING (ILD) BEFORE CUTHILL IS CALLED.
-C
+!
+!     SAVE ORIGINAL ORDERING (ILD) BEFORE CUTHILL IS CALLED.
+!
    10 IF(IPARAM(3).NE. 9) RETURN
       REWIND L
       WRITE(L) (ILD(I),I=1,NN)
       RETURN
-C
-C     RESET ILD, IF NECESSARY, AND COPY TO INT.
-C
+!
+!     RESET ILD, IF NECESSARY, AND COPY TO INT.
+!
    20 IF(IPARAM(3).NE. 9) GO TO 30
       REWIND L
-C     IF CM MAKES NO IMPROVEMENT IN SEQUENCE, READ ORIGINAL SEQUENCE
-C        BACK INTO ILD.
+!     IF CM MAKES NO IMPROVEMENT IN SEQUENCE, READ ORIGINAL SEQUENCE
+!        BACK INTO ILD.
       IF(JUMP.NE.0) READ (L) (ILD(I),I=1,NN)
       REWIND L
-c     ENDFILE L
-c     REWIND L
-C
+!     ENDFILE L
+!     REWIND L
+!
    30 DO 40 I=1,NN
    40 INT(I)=ILD(I)
       RETURN
@@ -4326,38 +4326,38 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE REVERS(NEW,ILD,NN,N1,N2)
-C
-C     REVERSE THE NODAL SEQUENCE, OMITTING THE FIRST N1 AND THE LAST
-C     N2 POINTS.
-C
-C     NEW(I) = OLD LABEL FOR NODE NOW LABELLED I (INPUT AND OUTPUT)
-C     ILD(I) = NEW LABEL FOR NODE ORIGINALLY LABELED I (OUTPUT)
-C     NN     = NUMBER OF NODES (INPUT)
-C     N1     = NUMBER OF POINTS AT BEGINNING OF SEQUENCE TO OMIT FROM
-C              REVERSAL (INPUT)
-C     N2     = NUMBER OF POINTS AT END OF SEQUENCE TO OMIT FROM
-C              REVERSAL (INPUT)
-C
+!
+!     REVERSE THE NODAL SEQUENCE, OMITTING THE FIRST N1 AND THE LAST
+!     N2 POINTS.
+!
+!     NEW(I) = OLD LABEL FOR NODE NOW LABELLED I (INPUT AND OUTPUT)
+!     ILD(I) = NEW LABEL FOR NODE ORIGINALLY LABELED I (OUTPUT)
+!     NN     = NUMBER OF NODES (INPUT)
+!     N1     = NUMBER OF POINTS AT BEGINNING OF SEQUENCE TO OMIT FROM
+!              REVERSAL (INPUT)
+!     N2     = NUMBER OF POINTS AT END OF SEQUENCE TO OMIT FROM
+!              REVERSAL (INPUT)
+!
       INTEGER NEW(*),ILD(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,J      ,K      ,L      ,LL     ,M      ,
-     &         N1     ,N2     ,NN
+      INTEGER  I      ,J      ,K      ,L      ,LL     ,M      ,                &
+               N1     ,N2     ,NN
 
 ! E////////////////////////////////////////////////////////////////////E
-C     J = NUMBER OF INTERCHANGES TO MAKE.
+!     J = NUMBER OF INTERCHANGES TO MAKE.
       J = (NN - N1 - N2)/2
       IF(J.LE.0) RETURN
       LL = NN - N2 + 1
-C     MAKE INTERCHANGES IN NEW ARRAY.
+!     MAKE INTERCHANGES IN NEW ARRAY.
       DO 10 I = 1 , J
       L=LL-I
       K=NEW(L)
       M=N1+I
       NEW(L) = NEW(M)
    10 NEW(M) = K
-C     CORRECT ILD, THE INVERSE OF NEW.
+!     CORRECT ILD, THE INVERSE OF NEW.
       L=1+N1
       M=NN-N2
       DO 20 I=L,M
@@ -4368,12 +4368,12 @@ C     CORRECT ILD, THE INVERSE OF NEW.
 
 ! ##################################################################################################################################
       SUBROUTINE RIGID(KA,ITYPE,KG,MAXI,INV,II3,NORIG,LG,IER,npoint)
-c
-c     Extract grid points from rigid element card, and, in most cases,
-c     generate equivalent MPCs.
-c
-C     CARD CONTENTS ARE STORED IN KA IN THE FORMAT A1,A4,A3,65A1,A4,A3
-C
+!
+!     Extract grid points from rigid element card, and, in most cases,
+!     generate equivalent MPCs.
+!
+!     CARD CONTENTS ARE STORED IN KA IN THE FORMAT A1,A4,A3,65A1,A4,A3
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add this so when READIT is called with IG we will use IG_array
 ! instead. Needed so Lahey doesn't complain about shape of IG being
@@ -4393,17 +4393,17 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IBEG   ,IDUM   ,IEND   ,IER    ,IG     ,II3    ,
-     &         IPARAM ,IT     ,ITYPE  ,
-     &         K      ,KMOD   ,
-     &         L      ,LOCDGP ,LOCIGP ,
-     &         MA     ,MAXDEG ,MAXGRD ,MB     ,
-     &         N      ,NDGP   ,NEQ    ,NEQR   ,NF     ,NFSDGP ,NLINK  ,
-     &         npoint ,NUM
+      INTEGER  I      ,IBEG   ,IDUM   ,IEND   ,IER    ,IG     ,II3    ,        &
+               IPARAM ,IT     ,ITYPE  ,                                        &
+               K      ,KMOD   ,                                                &
+               L      ,LOCDGP ,LOCIGP ,                                        &
+               MA     ,MAXDEG ,MAXGRD ,MB     ,                                &
+               N      ,NDGP   ,NEQ    ,NEQR   ,NF     ,NFSDGP ,NLINK  ,        &
+               npoint ,NUM
 
       REAL     DUMD
 
@@ -4412,38 +4412,38 @@ C
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /B/ IPARAM(20)
       COMMON /D/ DUMD(7),NEQ,NEQR,NLINK
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-C
-C     DETERMINE RIGID ELEMENT TYPE.
-C
-C     IT = 1  CRIGD1 ON LEVEL 16 (of Nastran)
-C          2  CRIGD2 ON LEVEL 16
-C          3  CRIGD1 ON LEVEL 17 AND ABOVE
-C          4  CRIGD2 ON LEVEL 17 AND ABOVE
-C          5  CRIGD1 ON LEVEL 17 AND ABOVE (THRU OPTION)
-c          6  CRBE1 or RBE1 (read here but treated like regular element)
-c          7  CRBE2 or RBE2
-c
-c     This routine processes the elements listed above.
-c     CRIGD1, CRIGD2, and RBE2 generate equivalent MPCs.
-c     RBE1 is read in this routine because of the complicated syntax of
-c     the element, but RBE1 is otherwise treated like a regular element.
-c     The following rigid elements are processed and also handled like
-c     regular elements:
-c     CRIGDR(93), CRBAR(128), RBAR(129), CRROD(134), RROD(135),
-c     CRTRPLT(136), RTRPLT(137).
-C     No other rigid elements are currently recognizable.
-C
-C     CHECK FOR BLANK FIELD 3 TO DISTINGUISH BETWEEN LEVEL 16 AND
-C     LEVEL 17 FORMATS FOR CRIGD1 AND CRIGD2
-C     (WHICH ARE DIFFERENT, BELIEVE IT OR NOT)
-C
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+!
+!     DETERMINE RIGID ELEMENT TYPE.
+!
+!     IT = 1  CRIGD1 ON LEVEL 16 (of Nastran)
+!          2  CRIGD2 ON LEVEL 16
+!          3  CRIGD1 ON LEVEL 17 AND ABOVE
+!          4  CRIGD2 ON LEVEL 17 AND ABOVE
+!          5  CRIGD1 ON LEVEL 17 AND ABOVE (THRU OPTION)
+!          6  CRBE1 or RBE1 (read here but treated like regular element)
+!          7  CRBE2 or RBE2
+!
+!     This routine processes the elements listed above.
+!     CRIGD1, CRIGD2, and RBE2 generate equivalent MPCs.
+!     RBE1 is read in this routine because of the complicated syntax of
+!     the element, but RBE1 is otherwise treated like a regular element.
+!     The following rigid elements are processed and also handled like
+!     regular elements:
+!     CRIGDR(93), CRBAR(128), RBAR(129), CRROD(134), RROD(135),
+!     CRTRPLT(136), RTRPLT(137).
+!     No other rigid elements are currently recognizable.
+!
+!     CHECK FOR BLANK FIELD 3 TO DISTINGUISH BETWEEN LEVEL 16 AND
+!     LEVEL 17 FORMATS FOR CRIGD1 AND CRIGD2
+!     (WHICH ARE DIFFERENT, BELIEVE IT OR NOT)
+!
 ! B////////////////////////////////////////////////////////////////////B
       CALL READIT(KA(12),1,8,IG_array(1),I)
       IG = IG_array(1)
 ! E////////////////////////////////////////////////////////////////////E
-C
+!
       IT=0
       IF(ITYPE.EQ.91.AND.I.EQ.0) IT=1
       IF(ITYPE.EQ.92.AND.I.EQ.0) IT=2
@@ -4453,15 +4453,15 @@ C
       IF(ITYPE.EQ.130.or.itype.eq.131) IT=6
       IF(ITYPE.EQ.132.or.itype.eq.133) IT=7
       IF(IT.EQ.0) RETURN
-C
-C     SET PARAMETERS FOR INTERPRETING physical CARD
-c     (the first card of the logical card)
-C
-C     LOCIGP=LOCATION IN KA ARRAY OF INDEPENDENT GRID POINT
-C     LOCDGP=LOCATION IN KA ARRAY OF FIRST DEPENDENT GRID POINT ON CARD
-C     NDGP  =NUMBER OF DEP. G.P. ON CARD
-C     NFSDGP=NUMBER OF FIELDS SEPARATING DEP. G.P. ON CARD
-C
+!
+!     SET PARAMETERS FOR INTERPRETING physical CARD
+!     (the first card of the logical card)
+!
+!     LOCIGP=LOCATION IN KA ARRAY OF INDEPENDENT GRID POINT
+!     LOCDGP=LOCATION IN KA ARRAY OF FIRST DEPENDENT GRID POINT ON CARD
+!     NDGP  =NUMBER OF DEP. G.P. ON CARD
+!     NFSDGP=NUMBER OF FIELDS SEPARATING DEP. G.P. ON CARD
+!
       GO TO (40,42,44,46,48,50,52), IT
    40 LOCIGP=20
       LOCDGP=28
@@ -4499,28 +4499,28 @@ C
       NFSDGP=1
       GO TO 75
    75 CONTINUE
-C
-C     GET INDEPENDENT GRID POINT IG.
-C
+!
+!     GET INDEPENDENT GRID POINT IG.
+!
 ! B////////////////////////////////////////////////////////////////////B
       CALL READIT(KA(LOCIGP),1,8,IG_array(1),N)
       IG = IG_array(1)
 ! E////////////////////////////////////////////////////////////////////E
-C
-C     IS IG THERE?
+!
+!     IS IG THERE?
       IF(IG.eq.0) then
          WRITE(IOU6,20)
-20       FORMAT(/,'Fatal Error.  Independent grid point on rigid',
-     -          ' element not found.')
+20       FORMAT(/,'Fatal Error.  Independent grid point on rigid',             &
+                ' element not found.')
          WRITE(IOU6,295) KA
          call finish(6,IER)
          RETURN
       end if
       kg(1)=ig
       npoint=1
-C
-C     CONVERT IG TO INTERNAL LABEL.
-C
+!
+!     CONVERT IG TO INTERNAL LABEL.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Modify call to SCAT so that 1st arg is an array (like in subr SCAT)
       IG_array(1) = IG
@@ -4528,18 +4528,18 @@ C
       IG = IG_array(1)
 ! E////////////////////////////////////////////////////////////////////E
       IF(IER.GT.0) RETURN
-C
-C     INTERPRET DEPENDENT GRID POINTS ON PARENT OR CONTINUATION CARD.
-C
+!
+!     INTERPRET DEPENDENT GRID POINTS ON PARENT OR CONTINUATION CARD.
+!
 90    CONTINUE
       DO I=1,NDGP
          K=LOCDGP+(I-1)*8*NFSDGP
          CALL READIT(KA(K),1,8,LG(I),NF) ! This is OK. LG is an array
       end do
-C     ELIMINATE ZEROS OR DUPLICATE ENTRIES FROM LIST OF DEP. G.P.
+!     ELIMINATE ZEROS OR DUPLICATE ENTRIES FROM LIST OF DEP. G.P.
       NF=NDGP
       CALL FIXIT(LG,NF)
-C     SET UP FOR NEXT CARD.
+!     SET UP FOR NEXT CARD.
       GO TO (110,112,114,116,118,124,126), IT
   110 LOCDGP=4
       NDGP=8
@@ -4553,7 +4553,7 @@ C     SET UP FOR NEXT CARD.
   116 LOCDGP=4
       NDGP=4
       GO TO 150
-C     LIST OUT POINTS INCLUDED ON THRU OPTION.
+!     LIST OUT POINTS INCLUDED ON THRU OPTION.
   118 CONTINUE
       IF(NF.LT.2) GO TO 120
       IBEG=LG(1)
@@ -4577,7 +4577,7 @@ C     LIST OUT POINTS INCLUDED ON THRU OPTION.
       NDGP=8
       GO TO 150
 150   CONTINUE
-c     add points to KG list containing all points on rigid element
+!     add points to KG list containing all points on rigid element
       if((npoint+nf).gt.maxi) then
          write(iou6,155)
 155      format(/,'Fatal error.  Insufficient space for rigid element.')
@@ -4589,84 +4589,84 @@ c     add points to KG list containing all points on rigid element
       end do
       npoint=npoint+nf
       IF(NF.LE.0) GO TO 235
-C
-C     CONVERT new DEPENDENT POINTS TO INTERNAL LABELS
-c     (except those rigid elements which are read in this routine but
-c     treated like regular elements: RBE1)
-C
+!
+!     CONVERT new DEPENDENT POINTS TO INTERNAL LABELS
+!     (except those rigid elements which are read in this routine but
+!     treated like regular elements: RBE1)
+!
       if(it.ne.6) then
          CALL SCAT(LG,NF,INV,II3,NORIG,IER)
          IF(IER.GT.0) RETURN
-C
-C        WRITE OUT EQUIVALENT MPCs ON IOU12
-C
+!
+!        WRITE OUT EQUIVALENT MPCs ON IOU12
+!
          DO L=1,NF
-c           KG(1)=LG(L)
-c           KG(2)=IG
-c           I=2
-c           WRITE(IOU12) I,(KG(J),J=1,I)
+!           KG(1)=LG(L)
+!           KG(2)=IG
+!           I=2
+!           WRITE(IOU12) I,(KG(J),J=1,I)
             write(iou12) 2,LG(L),IG
-C           INCREMENT OVERALL MPC EQUATION COUNTER.
+!           INCREMENT OVERALL MPC EQUATION COUNTER.
             NEQ=NEQ+1
-C           INCREMENT COUNTER OF MPC EQUATIONS ARISING FROM RIGID ELEMENTS.
+!           INCREMENT COUNTER OF MPC EQUATIONS ARISING FROM RIGID ELEMENTS.
             NEQR=NEQR+1
          end do
       end if
       IF(IT.EQ.5) RETURN
-C
-C     READ ANOTHER CARD.
-C
-C     SAVE OLD FIELD 10 FOR COMPARISON TO NEW FIELD 1.
+!
+!     READ ANOTHER CARD.
+!
+!     SAVE OLD FIELD 10 FOR COMPARISON TO NEW FIELD 1.
   235 ENDP(1)=KA(69)
       ENDP(2)=KA(70)
       READ(IOU5,240,END=310) KA
   240 FORMAT(A1,A4,A3,65A1,A4,A3)
-C     LEFT-ADJUST FIELD 1.
+!     LEFT-ADJUST FIELD 1.
       CALL LEFT(KA,IDUM)
-C     CHECK IF CONTINUATION CARD.
+!     CHECK IF CONTINUATION CARD.
       DO I=3,4
          IF(KA(1).EQ.MB(I)) GO TO 290
       end do
-C     NO CONTINUATION.  END OF LOGICAL CARD FOUND.
+!     NO CONTINUATION.  END OF LOGICAL CARD FOUND.
   280 BACKSPACE IOU5
-C     ELIMINATE ZEROS and DUPLICATE ENTRIES FROM LIST OF grids
+!     ELIMINATE ZEROS and DUPLICATE ENTRIES FROM LIST OF grids
       call fixit(kg,npoint)
       RETURN
-C
-C     CONTINUATION FOUND.
+!
+!     CONTINUATION FOUND.
   290 CONTINUE
       IF(KA(2).NE.ENDP(1)) GO TO 280
       IF(KA(3).NE.ENDP(2)) GO TO 280
-C     IS MATCHING CONTINUATION A LONG-FIELD CARD . . .
+!     IS MATCHING CONTINUATION A LONG-FIELD CARD . . .
       IF(I.NE.5) GO TO 296
       WRITE(IOU6,293)
-  293 FORMAT(/,'Fatal Error.  BANDIT cannot read a long field',
-     -       ' continuation to a rigid element card.')
+  293 FORMAT(/,'Fatal Error.  BANDIT cannot read a long field',                &
+             ' continuation to a rigid element card.')
       WRITE(IOU6,295) KA
 295   FORMAT(A1,A4,A3,65A1,A4,A3)
       call finish(6,IER)
       RETURN
   296 CONTINUE
-C     WRITE CARD OUT ON UNIT 8.
+!     WRITE CARD OUT ON UNIT 8.
       WRITE(IOU8,240)  KA
-C     GO BACK AND INTERPRET THIS CARD.
+!     GO BACK AND INTERPRET THIS CARD.
       GO TO 90
-C
-C     END-OF-FILE ENCOUNTERED
-C
+!
+!     END-OF-FILE ENCOUNTERED
+!
 310   CALL FINISH(4,IER)
       RETURN
       END SUBROUTINE RIGID
 
 ! ##################################################################################################################################
       SUBROUTINE RSETUP(LVL,LVLS1,LVLS2,NACUM,IDIM,IER)
-C
-C     SETUP COMPUTES THE REVERSE LEVELING INFO FROM LVLS2 AND STORES
-C     IT INTO LVLS2.  NACUM(I) IS INITIALIZED TO NODES/ITH LEVEL FOR
-C     NODES ON THE PSEUDO-DIAMETER OF THE GRAPH.  LVL IS INITIALIZED
-C     TO NONZERO FOR NODES ON THE PSEUDO-DIAM AND NODES IN A DIFFERENT
-C     COMPONENT OF THE GRAPH.
-C
+!
+!     SETUP COMPUTES THE REVERSE LEVELING INFO FROM LVLS2 AND STORES
+!     IT INTO LVLS2.  NACUM(I) IS INITIALIZED TO NODES/ITH LEVEL FOR
+!     NODES ON THE PSEUDO-DIAMETER OF THE GRAPH.  LVL IS INITIALIZED
+!     TO NONZERO FOR NODES ON THE PSEUDO-DIAM AND NODES IN A DIFFERENT
+!     COMPONENT OF THE GRAPH.
+!
       COMMON /GRA/ N,IDPTH,DUMG
       INTEGER IDIM
       INTEGER NACUM(IDIM),LVL(*),LVLS1(*),LVLS2(*)
@@ -4678,9 +4678,9 @@ C
       REAL     DUMG
 
 ! E////////////////////////////////////////////////////////////////////E
-C     IDIM=NUMBER OF LEVELS IN A GIVEN COMPONENT.
+!     IDIM=NUMBER OF LEVELS IN A GIVEN COMPONENT.
       IF(IDPTH.LE.IDIM)  GO TO 20
-C     DIMENSION EXCEEDED  . . .  STOP JOB.
+!     DIMENSION EXCEEDED  . . .  STOP JOB.
       CALL FINISH(3,IER)
       RETURN
    20 CONTINUE
@@ -4702,33 +4702,33 @@ C     DIMENSION EXCEEDED  . . .  STOP JOB.
 
 ! ##################################################################################################################################
       SUBROUTINE SCAT(KG,NCON,INV,II3,NORIG,IER)
-C
-C     THIS ROUTINE USES SCATTER SORT TECHNIQUES FOR EACH GRID POINT
-C     ENCOUNTERED TO DETERMINE WHETHER OR NOT THE POINT HAS BEEN
-C     SEEN BEFORE.  IF NOT, INV, NORIG, AND NN ARE UPDATED.
-C
-C     INV(1,I) CONTAINS AN ORIGINAL GRID POINT NUMBER
-C     INV(2,I) CONTAINS THE INTERNAL NUMBER ASSIGNED TO IT (BEFORE
-C              SORTING)
-C
+!
+!     THIS ROUTINE USES SCATTER SORT TECHNIQUES FOR EACH GRID POINT
+!     ENCOUNTERED TO DETERMINE WHETHER OR NOT THE POINT HAS BEEN
+!     SEEN BEFORE.  IF NOT, INV, NORIG, AND NN ARE UPDATED.
+!
+!     INV(1,I) CONTAINS AN ORIGINAL GRID POINT NUMBER
+!     INV(2,I) CONTAINS THE INTERNAL NUMBER ASSIGNED TO IT (BEFORE
+!              SORTING)
+!
       INTEGER II3,INV(2,II3),NORIG(*),KG(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IER    ,KMOD   ,LOC    ,
-     &         MAXDEG ,MAXGRD ,NCON   ,NN     ,NOLD
+      INTEGER  I      ,IER    ,KMOD   ,LOC    ,                                &
+               MAXDEG ,MAXGRD ,NCON   ,NN     ,NOLD
 
       REAL     DUMS
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /S/ NN,DUMS(8)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       IF(NCON.LT.1) RETURN
       DO 50 I=1,NCON
       NOLD=KG(I)
@@ -4754,33 +4754,33 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE SEQGP(NORIG,ILD,NEW,JUMP)
-C
+!
 ! B////////////////////////////////////////////////////////////////////B
       USE IOUNT1, ONLY                :  WRT_LOG, SEQ
 ! E////////////////////////////////////////////////////////////////////E
-C     WRITE SEQGP BULK DATA CARDS ON 7 and 8.
-C
-C     NN       = NUMBER OF GRID POINTS
-C     NORIG(I) = ORIGINAL GRID POINT CORRESPONDING TO BANDIT INTERNAL
-C                LABEL I
-C     NEW(I)   = SCRATCH ARRAY
-C     ILD(I)   = NEW RESEQUENCED LABEL CORRESPONDING TO BANDIT INTERNAL
-C                LABEL I
-C     JUMP     = 1 IF NO SEQGP CARDS ARE TO BE GENERATED (E.G., IF NO
-C                IMPROVEMENT IN BW HAS RESULTED).
-C
+!     WRITE SEQGP BULK DATA CARDS ON 7 and 8.
+!
+!     NN       = NUMBER OF GRID POINTS
+!     NORIG(I) = ORIGINAL GRID POINT CORRESPONDING TO BANDIT INTERNAL
+!                LABEL I
+!     NEW(I)   = SCRATCH ARRAY
+!     ILD(I)   = NEW RESEQUENCED LABEL CORRESPONDING TO BANDIT INTERNAL
+!                LABEL I
+!     JUMP     = 1 IF NO SEQGP CARDS ARE TO BE GENERATED (E.G., IF NO
+!                IMPROVEMENT IN BW HAS RESULTED).
+!
       INTEGER NORIG(*),ILD(*),NEW(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IADD   ,ILOOP  ,IPARAM ,ITIME  ,
-     &         J      ,JUMP   ,
-     &         MAXW   ,MM     ,
-     &         NAXIC  ,NBW    ,NLOOP  ,NN     ,NP     ,NRMS
+      INTEGER  I      ,IADD   ,ILOOP  ,IPARAM ,ITIME  ,                        &
+               J      ,JUMP   ,                                                &
+               MAXW   ,MM     ,                                                &
+               NAXIC  ,NBW    ,NLOOP  ,NN     ,NP     ,NRMS
 
       REAL     DMY    ,DUM    ,DUMD   ,DUMS   ,DUMW   ,RMS
 
@@ -4789,8 +4789,8 @@ C
       COMMON /B/ IPARAM(20)
       COMMON /D/ OBW,NBW,OP,NP,DUMD(6)
       COMMON /W/ DUM(2),MAXW,RMS,DUMW(2)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER OBW,OP
       REWIND IOU7
 ! B////////////////////////////////////////////////////////////////////B
@@ -4799,15 +4799,15 @@ C
 ! E////////////////////////////////////////////////////////////////////E
       IF(NN.LE.0) RETURN
       WRITE(IOU6,2)
-2     FORMAT(/,'Field 10 of first SEQGP card shows new grid',
-     -       ' point rms wavefront.')
+2     FORMAT(/,'Field 10 of first SEQGP card shows new grid',                  &
+             ' point rms wavefront.')
       IF(IADD.NE.0) WRITE(IOU6,3) IADD
     3 FORMAT(/,'Integer added to new sequence numbers',I8)
-C
+!
       NRMS=RMS+0.5
-C     NRMS = NEW RMS WAVEFRONT ROUNDED TO NEAREST INTEGER
+!     NRMS = NEW RMS WAVEFRONT ROUNDED TO NEAREST INTEGER
       IF(JUMP.NE.1) GO TO 9
-C
+!
       WRITE(IOU6,7)
     7 FORMAT(/,'No SEQGP cards generated.')
       REWIND IOU7
@@ -4816,38 +4816,38 @@ C
       CLOSE (SEQ, STATUS='DELETE')
 ! E////////////////////////////////////////////////////////////////////E
       GO TO 60
-C
+!
     9 CONTINUE
       WRITE(IOU6,13)
 13    FORMAT(/,'See bandit.f07 for SEQGP cards generated.')
-C
-C     IF SPRINGS ARE REQUESTED WITH $SPRING YES, THE SEQGP CARDS
-C     RESEQUENCE THE CONSECUTIVELY NUMBERED OLD NUMBERS RATHER THAN
-C     THE ORIGINAL GRID NUMBERS ASSIGNED BY THE USER.
-C
+!
+!     IF SPRINGS ARE REQUESTED WITH $SPRING YES, THE SEQGP CARDS
+!     RESEQUENCE THE CONSECUTIVELY NUMBERED OLD NUMBERS RATHER THAN
+!     THE ORIGINAL GRID NUMBERS ASSIGNED BY THE USER.
+!
       IF(IPARAM(7).EQ.3) GO TO 150
       WRITE(IOU6,125)
-  125 FORMAT('Since scalar springs were requested with $SPRING YES,',
-     - ' the SEQGP cards resequence the consecutively numbered old'/
-     - 'numbers rather than the user-assigned original grid number.'/)
+  125 FORMAT('Since scalar springs were requested with $SPRING YES,',          &
+       ' the SEQGP cards resequence the consecutively numbered old'/           &
+       'numbers rather than the user-assigned original grid number.'/)
       REWIND iou16
       READ(iou16,130) I,MM
   130 FORMAT(24I5)
-C     DETERMINE REPLACEMENT NORIG ARRAY.
+!     DETERMINE REPLACEMENT NORIG ARRAY.
       DO I=1,NN
          READ(iou16,130) NORIG(I),(NEW(J),J=1,MM)
-C        NEW IS DUMMY SPACE HERE TO INSURE THAT THE RIGHT NUMBER OF
-c        CARDS IS READ.
+!        NEW IS DUMMY SPACE HERE TO INSURE THAT THE RIGHT NUMBER OF
+!        CARDS IS READ.
       end do
       REWIND iou16
   150 CONTINUE
-C
-C     ADD THE NON-NEGATIVE INTEGER IADD TO THE NEW SEQUENCE NUMBERS.
-C
+!
+!     ADD THE NON-NEGATIVE INTEGER IADD TO THE NEW SEQUENCE NUMBERS.
+!
       DO I=1,NN
          ILD(I)=ILD(I)+IADD
       end do
-C
+!
       NLOOP=0
       IF(NAXIC.NE.99999) NLOOP=IABS(NAXIC)
       DO 30 ILOOP=0,NLOOP
@@ -4865,18 +4865,18 @@ C
             WRITE(SEQ, 10) (NORIG(I),ILD(I),I=1,NN)
 ! E////////////////////////////////////////////////////////////////////E
          ELSE
-            WRITE(IOU8,10) (NORIG(I),ILD(I),I=1,4),NRMS,
-     -                     (NORIG(J),ILD(J),J=5,NN)
-            WRITE(IOU7,10) (NORIG(I),ILD(I),I=1,4),NRMS,
-     -                     (NORIG(J),ILD(J),J=5,NN)
+            WRITE(IOU8,10) (NORIG(I),ILD(I),I=1,4),NRMS,                       &
+                           (NORIG(J),ILD(J),J=5,NN)
+            WRITE(IOU7,10) (NORIG(I),ILD(I),I=1,4),NRMS,                       &
+                           (NORIG(J),ILD(J),J=5,NN)
 ! B////////////////////////////////////////////////////////////////////B
-            WRITE(SEQ, 10) (NORIG(I),ILD(I),I=1,4),NRMS,
-     -                     (NORIG(J),ILD(J),J=5,NN)
+            WRITE(SEQ, 10) (NORIG(I),ILD(I),I=1,4),NRMS,                       &
+                           (NORIG(J),ILD(J),J=5,NN)
 ! E////////////////////////////////////////////////////////////////////E
 10       FORMAT('SEQGP*          ',8I16,I16/('SEQGP*          ',8I16))
          END IF
 30    CONTINUE
-C
+!
 60    WRITE(IOU8,70)
 70    FORMAT('ENDDATA')
       REWIND IOU7
@@ -4885,25 +4885,25 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE SETIG(KG1,KG2,IG,II1,NORIG,IER)
-C
-C     THIS ROUTINE SETS IG(KG1,-)=KG2 AND IG(KG2,-)=KG1 IF THIS
-C        CONNECTION HAS NOT ALREADY BEEN SET.
-C
-C     NEDGE = NUMBER OF UNIQUE EDGES.
+!
+!     THIS ROUTINE SETS IG(KG1,-)=KG2 AND IG(KG2,-)=KG1 IF THIS
+!        CONNECTION HAS NOT ALREADY BEEN SET.
+!
+!     NEDGE = NUMBER OF UNIQUE EDGES.
       INTEGER II1
       DIMENSION IG(II1,*),NORIG(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  IER    ,IG     ,IS     ,
-     &         K      ,KG1    ,KG2    ,KMOD   ,
-     &         L      ,LOOP   ,
-     &         M      ,MAXDEG ,MAXGRD ,MM     ,
-     &         NBITIN ,NEDGE  ,NN     ,NORIG
+      INTEGER  IER    ,IG     ,IS     ,                                        &
+               K      ,KG1    ,KG2    ,KMOD   ,                                &
+               L      ,LOOP   ,                                                &
+               M      ,MAXDEG ,MAXGRD ,MM     ,                                &
+               NBITIN ,NEDGE  ,NN     ,NORIG
 
       REAL     DUM    ,DUMBB  ,DUMS
 
@@ -4911,9 +4911,9 @@ C     NEDGE = NUMBER OF UNIQUE EDGES.
       COMMON /S/ NN,MM,DUM(3),NEDGE,DUMS(3)
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /BITS/ NBITIN,DUMBB(8)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-C
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+!
       IF(KG1.EQ.0 .OR. KG2.EQ.0 .OR. KG1.EQ.KG2) RETURN
       L=KG1
       K=KG2
@@ -4925,22 +4925,22 @@ C
    30 M=M+1
       IF(M.GT.MAXDEG) GO TO 60
       IS=IG(L,M)
-CPACK IS=IUNPK(IG,MAXGRD*(M-1)+L,NBITIN)
+!PACK IS=IUNPK(IG,MAXGRD*(M-1)+L,NBITIN)
       IF(IS.EQ.0) GO TO 40
       IF(IS.NE.K) GO TO 30
       GO TO 55
 40    CONTINUE
       IG(L,M)=K
-CPACK CALL PACK(IG,MAXGRD*(M-1)+L,NBITIN,K)
+!PACK CALL PACK(IG,MAXGRD*(M-1)+L,NBITIN,K)
       MM=MAX(MM,M)
       IF(LOOP.EQ.1) NEDGE = NEDGE + 1
    50 CONTINUE
    55 RETURN
-C
+!
 ! B////////////////////////////////////////////////////////////////////B
    60 WRITE(IOU6,70) NORIG(L),M,MAXDEG
-70    FORMAT(/,'Fatal Error.  The number of connections for point',I9/
-     - ' = ',I9,' and exceeds the nodal degree limit of',I8)
+70    FORMAT(/,'Fatal Error.  The number of connections for point',I9/        &
+       ' = ',I9,' and exceeds the nodal degree limit of',I8)
 ! E////////////////////////////////////////////////////////////////////E
       CALL FINISH(1,IER)
       RETURN
@@ -4948,41 +4948,41 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE SETUP(KA,NCON,IFLD,KG,NPT,LEN,LESSOK,IER)
-C
-C     SET UP ARRAY KG CONTAINING THE LIST OF CONNECTIONS FOR AN ELEMENT.
-C
-C     DATA CARD ARRAY KA WAS READ A1,A4,A3,64A1,A1,A4,A3
-C
-C     NCON   = NUMBER OF CONNECTIONS (INPUT)
-C     IFLD   = FIELD NUMBER OF FIRST CONNECTION (INPUT)
-C     KG     = LIST OF CONNECTIONS (OUTPUT)
-C     NPT    = ACTUAL NUMBER OF NON-ZERO CONNECTIONS FOUND (OUTPUT)
-C     LEN    = 1 FOR SHORT FIELD DATA CARD, 2 FOR  LONG FIELD DATA CARD
-C              (INPUT)
-C     LESSOK = .TRUE. IF THE CONNECTION CARD NEED NOT HAVE ALL GRID
-C              POINTS PRESENT (E.G., CELAS1 OR CPENTA), OTHERWISE FALSE
-C              (INPUT)
-C
+!
+!     SET UP ARRAY KG CONTAINING THE LIST OF CONNECTIONS FOR AN ELEMENT.
+!
+!     DATA CARD ARRAY KA WAS READ A1,A4,A3,64A1,A1,A4,A3
+!
+!     NCON   = NUMBER OF CONNECTIONS (INPUT)
+!     IFLD   = FIELD NUMBER OF FIRST CONNECTION (INPUT)
+!     KG     = LIST OF CONNECTIONS (OUTPUT)
+!     NPT    = ACTUAL NUMBER OF NON-ZERO CONNECTIONS FOUND (OUTPUT)
+!     LEN    = 1 FOR SHORT FIELD DATA CARD, 2 FOR  LONG FIELD DATA CARD
+!              (INPUT)
+!     LESSOK = .TRUE. IF THE CONNECTION CARD NEED NOT HAVE ALL GRID
+!              POINTS PRESENT (E.G., CELAS1 OR CPENTA), OTHERWISE FALSE
+!              (INPUT)
+!
       INTEGER KA(70),KG(*),ENDP(2)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,      IER    ,IFLD   ,IPARAM ,ITYPE  ,
-     &         J      ,K      ,L      ,LEN    ,LEN8   ,
-     &         M      ,M1     ,MA     ,MB     ,
-     &         N      ,NCON   ,NIP    ,NPT    ,NUM
+      INTEGER  I      ,      IER    ,IFLD   ,IPARAM ,ITYPE  ,                  &
+               J      ,K      ,L      ,LEN    ,LEN8   ,                        &
+               M      ,M1     ,MA     ,MB     ,                                &
+               N      ,NCON   ,NIP    ,NPT    ,NUM
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /ALPHA/ MA(26),NUM(10),MB(4)
       COMMON /B/ IPARAM(20)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       LOGICAL LESSOK
-C
+!
       DO I=1,NCON
          KG(I)=0
       end do
@@ -4991,12 +4991,12 @@ C
       LEN8=LEN*8
       J = 4 + 8 * (IFLD- 2 ) * LEN
       L = 14 - IFLD - 4 * LEN
-C
-C     N=NO. OF CONNECTION FIELDS PROCESSED SO FAR
-C     J=SUBSCRIPT IN KA CORRESPONDING TO FIRST CONNECTION FIELD ON CARD
-C     L=NO. OF FIELDS FROM FIRST CONNECTION FIELD ON CARD TO END OF CARD
-C     K=MAX. NO. OF CONNECTIONS POSSIBLE ON A GIVEN PHYSICAL CARD
-C
+!
+!     N=NO. OF CONNECTION FIELDS PROCESSED SO FAR
+!     J=SUBSCRIPT IN KA CORRESPONDING TO FIRST CONNECTION FIELD ON CARD
+!     L=NO. OF FIELDS FROM FIRST CONNECTION FIELD ON CARD TO END OF CARD
+!     K=MAX. NO. OF CONNECTIONS POSSIBLE ON A GIVEN PHYSICAL CARD
+!
 20    K=MIN(L,NCON-N)
       DO M=1,K
          M1=J+LEN8*(M-1)
@@ -5006,15 +5006,15 @@ C
       end do
       N=N+K
       IF(N.GE.NCON) RETURN
-C     SAVE ENDPUNCHING (FIELD 10).
+!     SAVE ENDPUNCHING (FIELD 10).
       ENDP(1)=KA(69)
       ENDP(2)=KA(70)
-C     READ NEXT CARD.
+!     READ NEXT CARD.
       READ(IOU5,40,END=100) KA
 40    FORMAT(A1,A4,A3,65A1,A4,A3)
-C     LEFT-ADJUST FIELD 1.
+!     LEFT-ADJUST FIELD 1.
       CALL LEFT(KA,ITYPE)
-C     CHECK NEW FIELD 1 AGAINST PREVIOUS FIELD 10 FOR MATCH.
+!     CHECK NEW FIELD 1 AGAINST PREVIOUS FIELD 10 FOR MATCH.
       DO I=3,4
          IF(KA(1).EQ.MB(I)) GO TO 60
       end do
@@ -5027,45 +5027,45 @@ C     CHECK NEW FIELD 1 AGAINST PREVIOUS FIELD 10 FOR MATCH.
       L=8/LEN
       J=4
       GO TO 20
-C     END OF LOOP STARTING AT STATEMENT 20.
-C
-C     ABORT JOB IF CONNECTION CARD CONTINUATIONS DO NOT IMMEDIATELY
-C        FOLLOW THEIR PARENTS, UNLESS IT IS FOR AN ELEMENT FOR WHICH
-C        IT IS OK IF NOT ALL CONNECTIONS ARE PRESENT (E.G., CELAS1
-C        OR CPENTA)
-C
+!     END OF LOOP STARTING AT STATEMENT 20.
+!
+!     ABORT JOB IF CONNECTION CARD CONTINUATIONS DO NOT IMMEDIATELY
+!        FOLLOW THEIR PARENTS, UNLESS IT IS FOR AN ELEMENT FOR WHICH
+!        IT IS OK IF NOT ALL CONNECTIONS ARE PRESENT (E.G., CELAS1
+!        OR CPENTA)
+!
 70    CONTINUE
       IF(LESSOK) GO TO 90
       WRITE(IOU6,80) KA
-80    FORMAT(/,'Fatal Error.  The following data card is out of sort.'/
-     - A1,A4,A3,65A1,A4,A3/
-     - 'Since BANDIT does not sort the data, continuations must'/
-     - 'immediately follow their parents.')
+80    FORMAT(/,'Fatal Error.  The following data card is out of sort.'/        &
+       A1,A4,A3,65A1,A4,A3/                                                    &
+       'Since BANDIT does not sort the data, continuations must'/              &
+       'immediately follow their parents.')
       call finish(6,IER)
       RETURN
-C
+!
 90    CONTINUE
       BACKSPACE IOU5
       RETURN
-C
-C     END-OF-FILE ENCOUNTERED
-C
+!
+!     END-OF-FILE ENCOUNTERED
+!
 100   CALL FINISH(4,IER)
       RETURN
       END SUBROUTINE SETUP
 
 ! ##################################################################################################################################
       SUBROUTINE SORT(LIST,NL)
-C
-C     SORT A LIST OF INTEGERS OF LENGTH NL.  THIS ROUTINE OPERATES
-C        FASTEST FOR THOSE LISTS NOT BADLY OUT OF SORT.
-C
+!
+!     SORT A LIST OF INTEGERS OF LENGTH NL.  THIS ROUTINE OPERATES
+!        FASTEST FOR THOSE LISTS NOT BADLY OUT OF SORT.
+!
       INTEGER LIST(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,J      ,J1     ,K      ,KFLAG  ,L      ,
-     &         NL     ,NL1
+      INTEGER  I      ,J      ,J1     ,K      ,KFLAG  ,L      ,                &
+               NL     ,NL1
 
 ! E////////////////////////////////////////////////////////////////////E
       IF(NL.LE.1) RETURN
@@ -5088,18 +5088,18 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE SORTDG(STK1,STK2,X1,X2,NDEG)
-C
-C     SORTDG SORTS STK2 BY DEGREE OF THE NODE AND ADDS IT TO THE END
-C     OF STK1 IN ORDER OF LOWEST TO HIGHEST DEGREE.  X1 AND X2 ARE THE
-C     NUMBER OF NODES IN STK1 AND STK2 RESPECTIVELY.
-C
+!
+!     SORTDG SORTS STK2 BY DEGREE OF THE NODE AND ADDS IT TO THE END
+!     OF STK1 IN ORDER OF LOWEST TO HIGHEST DEGREE.  X1 AND X2 ARE THE
+!     NUMBER OF NODES IN STK1 AND STK2 RESPECTIVELY.
+!
       COMMON /GRA/ N,IDPTH,DUMG
       INTEGER NDEG(*),STK1(*),STK2(*),X1,X2,TEMP
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IDPTH  ,IND    ,ISTK2  ,ITEST  ,
-     &         J      ,JSTK2  ,N
+      INTEGER  I      ,IDPTH  ,IND    ,ISTK2  ,ITEST  ,                        &
+               J      ,JSTK2  ,N
 
       REAL     DUMG
 
@@ -5128,12 +5128,12 @@ C
 
 ! ##################################################################################################################################
       INTEGER FUNCTION SORT2(XC,SIZE,STPT)
-C
-C     SORT2 SORTS SIZE AND STPT INTO DESENDING ORDER ACCORDING TO
-C     VALUES OF SIZE.
-C
-C     XC=NUMBER OF ENTRIES IN EACH ARRAY
-C
+!
+!     SORT2 SORTS SIZE AND STPT INTO DESENDING ORDER ACCORDING TO
+!     VALUES OF SIZE.
+!
+!     XC=NUMBER OF ENTRIES IN EACH ARRAY
+!
       INTEGER SIZE(*),STPT(*),TEMP,XC
 ! B////////////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
@@ -5141,8 +5141,8 @@ C
       INTEGER  I      ,IND    ,ITEST  ,J
 
 ! E////////////////////////////////////////////////////////////////////E
-C     THE DIMENSION OF SIZE AND STPT IS THE MAXIMUM ALLOWABLE NUMBER
-C            OF CONNECTED COMPONENTS.
+!     THE DIMENSION OF SIZE AND STPT IS THE MAXIMUM ALLOWABLE NUMBER
+!            OF CONNECTED COMPONENTS.
       SORT2=0
       IF(XC.EQ.0) RETURN
       SORT2=1
@@ -5167,25 +5167,25 @@ C            OF CONNECTED COMPONENTS.
 
 ! ##################################################################################################################################
       SUBROUTINE SPRING(IP)
-C
-C     GENERATE SCALAR SPRING ELEMENTS CONSISTENT WITH THE CONNECTIVITY
-C     MATRIX IG.  CELAS3 ELEMENTS ARE WRITTEN ON UNIT 9.
-C     IP = TEMPORARY STORAGE.
-C
+!
+!     GENERATE SCALAR SPRING ELEMENTS CONSISTENT WITH THE CONNECTIVITY
+!     MATRIX IG.  CELAS3 ELEMENTS ARE WRITTEN ON UNIT 9.
+!     IP = TEMPORARY STORAGE.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
       INTEGER  I      ,II     ,J      ,MM     ,NN
 
       REAL     STIFF
 
 ! E////////////////////////////////////////////////////////////////////E
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER IP(*),EID,PID
       PID=101
       STIFF=2.71828
@@ -5194,9 +5194,9 @@ C
       EID=0
       READ(iou16,10) NN,MM
       IF((NN*MM).EQ.0) GO TO 55
-C
-C     GENERATE SPRINGS BETWEEN NODES.
-C
+!
+!     GENERATE SPRINGS BETWEEN NODES.
+!
       DO 25 II=1,NN
          READ(iou16,10) I,(IP(J),J=1,MM)
 10       FORMAT(24I5)
@@ -5208,28 +5208,28 @@ C
 15          FORMAT('CELAS3  ',4I8)
 20       CONTINUE
 25    CONTINUE
-C
-C     INSERT BLANK CARD FOR LEVY'S WAVEFRONT PROGRAM.
-C
+!
+!     INSERT BLANK CARD FOR LEVY'S WAVEFRONT PROGRAM.
+!
       WRITE(IOU9,'(1x)')
-C
-C     GENERATE SPRINGS TO GROUND.
-C
+!
+!     GENERATE SPRINGS TO GROUND.
+!
       PID=PID+1
       DO I=1,NN
          EID=EID+1
          WRITE(IOU9,35) EID,PID,I
 35       FORMAT('CELAS3  ',3I8)
       end do
-C
-C     CREATE PROPERTY CARD.
-C
+!
+!     CREATE PROPERTY CARD.
+!
       PID=PID-1
       WRITE(IOU9,50) PID,STIFF,NN,MM
    50 FORMAT('PELAS   ',I8,F8.5,48X,2I4)
       PID=PID+1
       WRITE(IOU9,50) PID,STIFF
-C
+!
    55 CONTINUE
       REWIND IOU9
       REWIND iou16
@@ -5240,20 +5240,20 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE STABLE(IG,II1,IC,IDEG,ILD,IP)
-C
-C     PRINT CONNECTION TABLE IN TERMS OF SORTED INTERNAL LABELS.
-C
+!
+!     PRINT CONNECTION TABLE IN TERMS OF SORTED INTERNAL LABELS.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IC     ,IDEG   ,IG     ,II1    ,ILD    ,IP     ,
-     &         J      ,K      ,KMOD   ,
-     &         MAXDEG ,MAXGRD ,MDIFF  ,MM     ,
-     &         NBITIN ,NN
+      INTEGER  I      ,IC     ,IDEG   ,IG     ,II1    ,ILD    ,IP     ,        &
+               J      ,K      ,KMOD   ,                                        &
+               MAXDEG ,MAXGRD ,MDIFF  ,MM     ,                                &
+               NBITIN ,NN
 
       REAL     DUM    ,DUMBB
 
@@ -5261,20 +5261,20 @@ C
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /S/ NN,MM,DUM(7)
       COMMON /BITS/ NBITIN,DUMBB(8)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       DIMENSION IG(II1,*),IC(*),IDEG(*),ILD(*),IP(*)
       IF((NN*MM).EQ.0) RETURN
       WRITE(IOU6,10)
-   10 FORMAT(/,'Sorted Internal Label Connection Table:'/
-     - 8X,'Sort       Max'/' Label Label Comp Diff Degr  Connections')
+   10 FORMAT(/,'Sorted Internal Label Connection Table:'/                      &
+       8X,'Sort       Max'/' Label Label Comp Diff Degr  Connections')
       DO 40 I=1,NN
       DO 20 J=1,MM
    20 IP(J)=0
       MDIFF=0
       DO 30 J=1,MM
       K=IG(I,J)
-CPACK K=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
+!PACK K=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
       IF(K.EQ.0) GO TO 40
       MDIFF=MAX(MDIFF,IABS(ILD(I)-ILD(K)))
    30 IP(J)=ILD(K)
@@ -5285,11 +5285,11 @@ CPACK K=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
 
 ! ##################################################################################################################################
       SUBROUTINE STACK(IDEG,NEW,ILD,IW)
-C
-C     STACK POINTS OF ZERO DEGREE AT END OF THE NUMBERING.
-C
+!
+!     STACK POINTS OF ZERO DEGREE AT END OF THE NUMBERING.
+!
       INTEGER IDEG(*),NEW(*),ILD(*),IW(*)
-C     IW IS SCRATCH STORAGE.
+!     IW IS SCRATCH STORAGE.
       COMMON /S/ NN,DUMS(8)
       COMMON /D/ DUM(5),KT,DUMD(4)
 ! B////////////////////////////////////////////////////////////////////B
@@ -5302,16 +5302,16 @@ C     IW IS SCRATCH STORAGE.
 ! E////////////////////////////////////////////////////////////////////E
       KT=0
       NN1=NN-1
-C     LIST POINTS OF ZERO DEGREE AND INCREMENT COUNTER KT.
+!     LIST POINTS OF ZERO DEGREE AND INCREMENT COUNTER KT.
       DO 10 I=1,NN
       IF(IDEG(I).GT.0) GO TO 10
       KT=KT+1
       IW(KT)=ILD(I)
    10 CONTINUE
       IF(KT.LE.0) GO TO 70
-C     SORT LIST OF RENUMBERED NUMBERS TO BE STACKED.
+!     SORT LIST OF RENUMBERED NUMBERS TO BE STACKED.
       CALL SORT(IW,KT)
-C     STACK POINTS OF ZERO DEGREE AT END OF NEW.
+!     STACK POINTS OF ZERO DEGREE AT END OF NEW.
       DO 40 L=1,KT
       I=IW(L)-L+1
       K=NEW(I)
@@ -5320,7 +5320,7 @@ C     STACK POINTS OF ZERO DEGREE AT END OF NEW.
    20 NEW(J)=NEW(J+1)
    30 NEW(NN)=K
    40 CONTINUE
-C     CORRECT ILD, THE INVERSE OF NEW.
+!     CORRECT ILD, THE INVERSE OF NEW.
    70 DO 80 I=1,NN
       K=NEW(I)
    80 ILD(K)=I
@@ -5331,37 +5331,37 @@ C     CORRECT ILD, THE INVERSE OF NEW.
 ! B////////////////////////////////////////////////////////////////////B
       SUBROUTINE SUMUP ( NEW_BW, DEN )
 ! E////////////////////////////////////////////////////////////////////E
-C
-C     PRINT BANDIT SUMMARY.
-C
+!
+!     PRINT BANDIT SUMMARY.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  IADD   ,IPARAM ,
-     &         MAXW0  ,MAXW1  ,MINDEG ,MM     ,
-     &         NBW    ,NCM    ,NEDGE  ,NEL    ,NEQ    ,NEQR   ,NLINK  ,
-     &         NN     ,NONZ   ,NP     ,NZERO
+      INTEGER  IADD   ,IPARAM ,                                                &
+               MAXW0  ,MAXW1  ,MINDEG ,MM     ,                                &
+               NBW    ,NCM    ,NEDGE  ,NEL    ,NEQ    ,NEQR   ,NLINK  ,        &
+               NN     ,NONZ   ,NP     ,NZERO
 
 ! B////////////////////////////////////////////////////////////////////B
       INTEGER  NEW_BW
 ! E////////////////////////////////////////////////////////////////////E
-      REAL     AN     ,ANN    ,AV1    ,AV2    ,
-     &         BRMS0  ,BRMS1  ,
-     &         DEN    ,DUM    ,DUMY   ,
-     &         rawf   ,rbw    ,RMS0   ,RMS1   ,rmwf   ,rp     ,
-     &         rrbw   ,rrwf
+      REAL     AN     ,ANN    ,AV1    ,AV2    ,                                &
+               BRMS0  ,BRMS1  ,                                                &
+               DEN    ,DUM    ,DUMY   ,                                        &
+               rawf   ,rbw    ,RMS0   ,RMS1   ,rmwf   ,rp     ,                &
+               rrbw   ,rrwf
 
 ! E////////////////////////////////////////////////////////////////////E
       COMMON /S/ NN,MM,DUM(3),NEDGE,IADD,MINDEG,DUMY
       COMMON /B/ IPARAM(20)
       COMMON /D/ OBW,NBW,OP,NP,NCM,NZERO,NEL,NEQ,NEQR,NLINK
       COMMON /W/ MAXW0,RMS0,MAXW1,RMS1,BRMS0,BRMS1
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       INTEGER OBW,OP
 ! B////////////////////////////////////////////////////////////////////B
       NEW_BW = NBW         ! New bandwidth printed out in this subr
@@ -5379,15 +5379,15 @@ C
       rawf=av2/av1
       rrwf=rms1/rms0
       rrbw=brms1/brms0
-      WRITE(IOU6,20) OBW,NBW,rbw,OP,NP,rp,MAXW0,MAXW1,rmwf,
-     -               AV1,AV2,rawf,RMS0,RMS1,rrwf,BRMS0,BRMS1,rrbw
-   20 FORMAT(/,'BANDIT Summary:'/39X,'Before',7X,'After',5x,'Ratio'/
-     - 5X,'Bandwidth (B)',15X,2I12,f10.3/
-     - 5X,'Profile (P)', 17X,2I12,f10.3/
-     - 5X,'Maximum Wavefront (C-MAX)',3X,2I12,f10.3/
-     - 5X,'Average Wavefront (C-AVG)',3X,2F12.3,f10.3/
-     - 5X,'RMS Wavefront (C-RMS)',7X,2F12.3,f10.3/
-     - 5X,'RMS Bandwidth (B-RMS)',7X,2F12.3,f10.3/)
+      WRITE(IOU6,20) OBW,NBW,rbw,OP,NP,rp,MAXW0,MAXW1,rmwf,                    &
+                     AV1,AV2,rawf,RMS0,RMS1,rrwf,BRMS0,BRMS1,rrbw
+   20 FORMAT(/,'BANDIT Summary:'/39X,'Before',7X,'After',5x,'Ratio'/           &
+       5X,'Bandwidth (B)',15X,2I12,f10.3/                                      &
+       5X,'Profile (P)', 17X,2I12,f10.3/                                       &
+       5X,'Maximum Wavefront (C-MAX)',3X,2I12,f10.3/                           &
+       5X,'Average Wavefront (C-AVG)',3X,2F12.3,f10.3/                         &
+       5X,'RMS Wavefront (C-RMS)',7X,2F12.3,f10.3/                             &
+       5X,'RMS Bandwidth (B-RMS)',7X,2F12.3,f10.3/)
       IF(IPARAM(6).EQ.10) WRITE(IOU6,24)
       IF(IPARAM(6).EQ.11) WRITE(IOU6,26)
       IF(IPARAM(6).EQ.12) WRITE(IOU6,28)
@@ -5403,42 +5403,42 @@ C
    32 FORMAT(5X,'Method Selected',35X,'CM')
    34 FORMAT(5X,'Method Selected',34X,'GPS')
       WRITE(IOU6,60) NN,NEL,NLINK,NCM,MM,MINDEG,NEDGE,DEN,NZERO,NEQR,NEQ
-   60 FORMAT(5X,'Number of Grid Points (N)',I27/
-     -       5X,'Number of Elements (Non-Rigid)',I22/
-     -       5X,'Number of Rigid Elements Processed',I18/
-     -       5X,'Number of Components',I32/
-     -       5X,'Maximum Nodal Degree',I32/
-     -       5X,'Minimum Nodal Degree',I32/
-     -       5X,'Number of Unique Edges',I30/
-     -       5X,'Matrix Density in Percent',F27.4/
-     -       5X,'Number of Points of Zero Degree',I21/
-     -       5X,'Number of Rigid Element MPC Equations',I15/
-     -       5X,'Number of MPC Equations Processed',I19)
+   60 FORMAT(5X,'Number of Grid Points (N)',I27/                               &
+             5X,'Number of Elements (Non-Rigid)',I22/                          &
+             5X,'Number of Rigid Elements Processed',I18/                      &
+             5X,'Number of Components',I32/                                    &
+             5X,'Maximum Nodal Degree',I32/                                    &
+             5X,'Minimum Nodal Degree',I32/                                    &
+             5X,'Number of Unique Edges',I30/                                  &
+             5X,'Matrix Density in Percent',F27.4/                             &
+             5X,'Number of Points of Zero Degree',I21/                         &
+             5X,'Number of Rigid Element MPC Equations',I15/                   &
+             5X,'Number of MPC Equations Processed',I19)
       WRITE(IOU6,80)
-80    FORMAT(/,'All BANDIT statistics use grid point, rather than',
-     - ' DOF, connectivity and'/
-     - 'include matrix diagonal terms.  Statistics such as',
-     - ' C-MAX, C-AVG, C-RMS,'/
-     - 'and N should each be multiplied by the average number',
-     - ' of DOF per grid point'/
-     - 'before estimating NASTRAN time and core requirements.')
+80    FORMAT(/,'All BANDIT statistics use grid point, rather than',            &
+       ' DOF, connectivity and'/                                               &
+       'include matrix diagonal terms.  Statistics such as',                   &
+       ' C-MAX, C-AVG, C-RMS,'/                                                &
+       'and N should each be multiplied by the average number',                &
+       ' of DOF per grid point'/                                               &
+       'before estimating NASTRAN time and core requirements.')
       RETURN
       END SUBROUTINE SUMUP
 
 ! ##################################################################################################################################
       SUBROUTINE TABLE2(IG,II1,NORIG,IP)
-C
-C     PRINT CONNECTION TABLE IN TERMS OF ORIGINAL GRID NUMBERS.
-C
+!
+!     PRINT CONNECTION TABLE IN TERMS OF ORIGINAL GRID NUMBERS.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IG     ,II1    ,IP     ,J      ,K      ,KMOD   ,
-     &         MAXDEG ,MAXGRD ,MM     ,NBITIN ,NN     ,NORIG
+      INTEGER  I      ,IG     ,II1    ,IP     ,J      ,K      ,KMOD   ,        &
+               MAXDEG ,MAXGRD ,MM     ,NBITIN ,NN     ,NORIG
 
       REAL     DUM    ,DUMBB 
 
@@ -5446,20 +5446,20 @@ C
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /S/ NN,MM,DUM(7)
       COMMON /BITS/ NBITIN,DUMBB(8)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
       DIMENSION IG(II1,*),IP(*),NORIG(*)
       IF((NN*MM).EQ.0) RETURN
       WRITE(IOU6,10)
-   10 FORMAT(/,'Original Grid Number Connection Table:'/
-     -       ' Label  Grid ID     Connections')
+   10 FORMAT(/,'Original Grid Number Connection Table:'/                       &
+             ' Label  Grid ID     Connections')
       DO 30 I=1,NN
       DO J=1,MM
          IP(J)=0
       end do
       DO 20 J=1,MM
       K=IG(I,J)
-CPACK K=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
+!PACK K=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
       IF(K.EQ.0) GO TO 30
    20 IP(J)=NORIG(K)
    30 WRITE(IOU6,40) I,NORIG(I),(IP(J),J=1,MM)
@@ -5469,11 +5469,11 @@ CPACK K=IUNPK(IG,MAXGRD*(J-1)+I,NBITIN)
 
 ! ##################################################################################################################################
       SUBROUTINE TAXI(KA,IOU6)
-C
-C     CHECK FOR AXIC BULK DATA CARD, AND, IF PRESENT, READ NUMBER OF
-C     HARMONICS.  NEGATIVE NUMBER OF HARMONICS IMPLIES SINGLE HARMONIC
-C     PROBLEM.  IT IS ASSUMED THAT THE MNEUMONIC IS LEFT-ADJUSTED.
-C
+!
+!     CHECK FOR AXIC BULK DATA CARD, AND, IF PRESENT, READ NUMBER OF
+!     HARMONICS.  NEGATIVE NUMBER OF HARMONICS IMPLIES SINGLE HARMONIC
+!     PROBLEM.  IT IS ASSUMED THAT THE MNEUMONIC IS LEFT-ADJUSTED.
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add this so when READIT is called with NAXIC we will use NAXIC_array
 ! instead. Needed so Lahey doesn't complain about shape of NAXIC being
@@ -5493,21 +5493,21 @@ C
       REAL     DUM
 
 ! E////////////////////////////////////////////////////////////////////E
-C
-C     CHECK FOR AXIC
-C
+!
+!     CHECK FOR AXIC
+!
       IF(KA(1).NE.A  ) RETURN
       IF(KA(2).NE.XIC) RETURN
-C
-C     LOOK FOR FIRST NON-BLANK IN FIELD 2 OF AXIC CARD
-C
+!
+!     LOOK FOR FIRST NON-BLANK IN FIELD 2 OF AXIC CARD
+!
       DO 10 I=4,11
       IF(KA(I).NE.BLANK) GO TO 20
 10    CONTINUE
       RETURN
-C
-C     READ AXIC INTEGER AND WRITE MESSAGE
-C
+!
+!     READ AXIC INTEGER AND WRITE MESSAGE
+!
 ! B////////////////////////////////////////////////////////////////////B
 20    CALL READIT(KA(I),1,12-I,NAXIC_array(1),NIP)
       NAXIC = NAXIC_array(1)
@@ -5515,32 +5515,32 @@ C
       IF(KA(I).EQ.MINUS) NAXIC=-NAXIC
       WRITE(IOU6,30) NAXIC
 30    FORMAT(/,'AXIC',I8,' card read.')
-C
+!
       RETURN
       END SUBROUTINE TAXI
 
 ! ##################################################################################################################################
       SUBROUTINE TIGER(IG,II1,LIST,NORIG,KG,MAXI,IER)
-C
-C     THIS ROUTINE MAKES ADDITIONS TO THE CONNECTION TABLE IG TO REFLECT
-C     THE PRESENCE OF MPC*S AND STORES THE DEPENDENT POINTS IN LIST.
-C
-C     NEQ = NUMBER OF MPC EQUATIONS.
-C
+!
+!     THIS ROUTINE MAKES ADDITIONS TO THE CONNECTION TABLE IG TO REFLECT
+!     THE PRESENCE OF MPC*S AND STORES THE DEPENDENT POINTS IN LIST.
+!
+!     NEQ = NUMBER OF MPC EQUATIONS.
+!
       INTEGER II1, MAXI
       DIMENSION IG(II1,*),LIST(*),NORIG(*)
       INTEGER KG(MAXI)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,
-     &         IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,
-     &         IOU19  ,IOU20
+      INTEGER  IOU5   ,IOU6   ,IOU7   ,IOU8   ,IOU9   ,IOU10  ,IOU11  ,        &
+               IOU12  ,IOU13  ,IOU14  ,IOU15  ,IOU16  ,IOU17  ,IOU18  ,        &
+               IOU19  ,IOU20
 
-      INTEGER  I      ,IER    ,IG     ,IGRID  ,II     ,IOPT   ,
-     &         J      ,KMOD   ,L      ,LIST   ,
-     &         MAXDEG ,MAXGRD ,MM     ,
-     &         NBITIN ,NEQ    ,NN     ,NORIG  ,NTERM
+      INTEGER  I      ,IER    ,IG     ,IGRID  ,II     ,IOPT   ,                &
+               J      ,KMOD   ,L      ,LIST   ,                                &
+               MAXDEG ,MAXGRD ,MM     ,                                        &
+               NBITIN ,NEQ    ,NN     ,NORIG  ,NTERM
 
       REAL     DUM    ,DUMBB  ,DUMD   ,DUMS
 
@@ -5549,24 +5549,24 @@ C
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /D/ DUM(7),NEQ,DUMD(2)
       COMMON /BITS/ NBITIN,DUMBB(8)
-      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,
-     -                IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
-C     IOPT=1 IF DEPENDENT POINTS ARE TO BE ACCUMULATED IN A LIST FOR
-C            LATER REMOVAL FROM THE CONNECTION TABLE IG (OTHERWISE 0)
+      COMMON /IOUNIT/ IOU5,IOU6,IOU7,IOU8,IOU9,IOU10,IOU11,IOU12,IOU13,        &
+                      IOU14,IOU15,IOU16,IOU17,IOU18,IOU19,IOU20
+!     IOPT=1 IF DEPENDENT POINTS ARE TO BE ACCUMULATED IN A LIST FOR
+!            LATER REMOVAL FROM THE CONNECTION TABLE IG (OTHERWISE 0)
       DATA IOPT/0/
       IF(NEQ.EQ.0)RETURN
       REWIND IOU12
-C     GENERATE NEW CONNECTIONS.
+!     GENERATE NEW CONNECTIONS.
       DO 30 II=1,NEQ
-C     READ MPC EQUATION.
+!     READ MPC EQUATION.
       READ(IOU12) NTERM,(KG(I),I=1,NTERM)
-C     IGRID=DEPENDENT GRID POINT IN AN MPC EQUATION.
+!     IGRID=DEPENDENT GRID POINT IN AN MPC EQUATION.
       IGRID=KG(1)
       IF(IOPT.EQ.1) LIST(IGRID)=IGRID
       DO 20 I=1,MAXDEG
          L=IG(IGRID,I)
-CPACK    L=IUNPK(IG,MAXGRD*(I-1)+IGRID,NBITIN)
-C        L=A GRID POINT THAT IGRID IS CONNECTED TO BEFORE THE MPC IS APPLIED
+!PACK    L=IUNPK(IG,MAXGRD*(I-1)+IGRID,NBITIN)
+!        L=A GRID POINT THAT IGRID IS CONNECTED TO BEFORE THE MPC IS APPLIED
          IF(L.LE.0) GO TO 30
          IF(NTERM.LT.2) GO TO 20
          DO J=2,NTERM
@@ -5576,21 +5576,21 @@ C        L=A GRID POINT THAT IGRID IS CONNECTED TO BEFORE THE MPC IS APPLIED
 20    CONTINUE
    30 CONTINUE
       REWIND IOU12
-c     ENDFILE IOU12
-c     REWIND IOU12
+!     ENDFILE IOU12
+!     REWIND IOU12
       RETURN
       END SUBROUTINE TIGER
 
 ! ##################################################################################################################################
       SUBROUTINE TIMER(T,IWALL,IOPT,IOU6)
-C
-C     RETURN IN T THE CURRENT VALUE OF THE CP CLOCK IN SECONDS.
-C     RETURN IN IWALL THE ELAPSED TIME IN INTEGER SECONDS.
-C     IOPT = 1 IF PRINTOUT OF TIME IS DESIRED, OTHERWISE 0 (INPUT)
-C
-c     real*4 tarray(2)
-c     integer*4 iwall,time
-c
+!
+!     RETURN IN T THE CURRENT VALUE OF THE CP CLOCK IN SECONDS.
+!     RETURN IN IWALL THE ELAPSED TIME IN INTEGER SECONDS.
+!     IOPT = 1 IF PRINTOUT OF TIME IS DESIRED, OTHERWISE 0 (INPUT)
+!
+!     real*4 tarray(2)
+!     integer*4 iwall,time
+!
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
@@ -5601,58 +5601,58 @@ c
 ! E////////////////////////////////////////////////////////////////////E
       t=0.
       iwall=0
-c-----------------------------------------------------------------------
-c     Cray:
-c     call second(t)
-c-----------------------------------------------------------------------
-c     HP workstation:
-c     etime on the HP requires the +U77 Fortran compile-line option.
-c     The etime function value is the sum of user and system time,
-c     where tarray(1)=user time, tarray(2)=system time.
-c     To use these calls, activate the next 3 lines and the real*4 and
-c     integer*4 lines above.
-c     t=etime(tarray)
-c     t=tarray(1)
-c     iwall=time(0.)
-c-----------------------------------------------------------------------
-c     PC using MS Fortran Powerstation or Compaq Visual Fortran:
-c     t=secnds(0.0)
-c-----------------------------------------------------------------------
-c     PC using G77 compiler:
-c     call second(t)
-c-----------------------------------------------------------------------
-c     PC using Lahey compiler or G77 compiler:
-c     G77's 'cpu_time' is an alias for 'second', so either can be used.
+!-----------------------------------------------------------------------
+!     Cray:
+!     call second(t)
+!-----------------------------------------------------------------------
+!     HP workstation:
+!     etime on the HP requires the +U77 Fortran compile-line option.
+!     The etime function value is the sum of user and system time,
+!     where tarray(1)=user time, tarray(2)=system time.
+!     To use these calls, activate the next 3 lines and the real*4 and
+!     integer*4 lines above.
+!     t=etime(tarray)
+!     t=tarray(1)
+!     iwall=time(0.)
+!-----------------------------------------------------------------------
+!     PC using MS Fortran Powerstation or Compaq Visual Fortran:
+!     t=secnds(0.0)
+!-----------------------------------------------------------------------
+!     PC using G77 compiler:
+!     call second(t)
+!-----------------------------------------------------------------------
+!     PC using Lahey compiler or G77 compiler:
+!     G77's 'cpu_time' is an alias for 'second', so either can be used.
       call cpu_time(t)
-c-----------------------------------------------------------------------
+!-----------------------------------------------------------------------
       IF(IOPT.GT.0) WRITE(IOU6,10) T
 10    FORMAT('CP time =',F12.3,' seconds')
       RETURN
       END SUBROUTINE TIMER
 
 ! ##################################################################################################################################
-      SUBROUTINE TREE(IROOT,NDSTK,NR,LVL,IWK,NDEG,LVLWTH,LVLBOT,
-     -                LVLN,MAXLW,IBORT)
-C
-C  TREE DROPS A TREE IN NDSTK FROM IROOT
-C
-C  LVL-         ARRAY INDICATING AVAILABLE NODES IN NDSTK WITH ZERO
-C               ENTRIES. TREE ENTERS LEVEL NUMBERS ASSIGNED
-C               DURING EXECUTION OF OF THIS PROCEDURE
-C  IWK-         ON OUTPUT CONTAINS NODE NUMBERS USED IN TREE
-C               ARRANGED BY LEVELS (IWK(LVLN) CONTAINS IROOT
-C               AND IWK(LVLBOT+LVLWTH-1) CONTAINS LAST NODE ENTERED)
-C  LVLWTH-      ON OUTPUT CONTAINS WIDTH OF LAST LEVEL
-C  LVLBOT-      ON OUTPUT CONTAINS INDEX INTO IWK OF FIRST
-C               NODE IN LAST LEVEL
-C  MAXLW-       ON OUTPUT CONTAINS THE MAXIMUM LEVEL WIDTH
-C  LVLN-        ON INPUT THE FIRST AVAILABLE LOCATION IN IWK
-C               USUALLY ONE BUT IF IWK IS USED TO STORE PREVIOUS
-C               CONNECTED COMPONENTS, LVLN IS NEXT AVAILABLE LOCATION.
-C               ON OUTPUT THE TOTAL NUMBER OF LEVELS + 1
-C  IBORT-       INPUT PARAM WHICH TRIGGERS EARLY RETURN IF
-C               MAXLW BECOMES .GE. IBORT
-C
+      SUBROUTINE TREE(IROOT,NDSTK,NR,LVL,IWK,NDEG,LVLWTH,LVLBOT,               &
+                      LVLN,MAXLW,IBORT)
+!
+!  TREE DROPS A TREE IN NDSTK FROM IROOT
+!
+!  LVL-         ARRAY INDICATING AVAILABLE NODES IN NDSTK WITH ZERO
+!               ENTRIES. TREE ENTERS LEVEL NUMBERS ASSIGNED
+!               DURING EXECUTION OF OF THIS PROCEDURE
+!  IWK-         ON OUTPUT CONTAINS NODE NUMBERS USED IN TREE
+!               ARRANGED BY LEVELS (IWK(LVLN) CONTAINS IROOT
+!               AND IWK(LVLBOT+LVLWTH-1) CONTAINS LAST NODE ENTERED)
+!  LVLWTH-      ON OUTPUT CONTAINS WIDTH OF LAST LEVEL
+!  LVLBOT-      ON OUTPUT CONTAINS INDEX INTO IWK OF FIRST
+!               NODE IN LAST LEVEL
+!  MAXLW-       ON OUTPUT CONTAINS THE MAXIMUM LEVEL WIDTH
+!  LVLN-        ON INPUT THE FIRST AVAILABLE LOCATION IN IWK
+!               USUALLY ONE BUT IF IWK IS USED TO STORE PREVIOUS
+!               CONNECTED COMPONENTS, LVLN IS NEXT AVAILABLE LOCATION.
+!               ON OUTPUT THE TOTAL NUMBER OF LEVELS + 1
+!  IBORT-       INPUT PARAM WHICH TRIGGERS EARLY RETURN IF
+!               MAXLW BECOMES .GE. IBORT
+!
       INTEGER NR
       DIMENSION NDSTK(NR,*),LVL(*),IWK(*),NDEG(*)
       COMMON /A/ MAXGRD,MAXDEG,KMOD
@@ -5660,11 +5660,11 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  IBORT  ,INOW   ,IROOT  ,ITEST  ,ITOP   ,IWK    ,IWKNOW ,
-     &         J      ,KMOD   ,
-     &         LVL    ,LVLBOT ,LVLN   ,LVLTOP ,LVLWTH ,
-     &         MAXDEG ,MAXGRD ,MAXLW  ,
-     &         NBITIN ,NDEG   ,NDROW  ,NDSTK
+      INTEGER  IBORT  ,INOW   ,IROOT  ,ITEST  ,ITOP   ,IWK    ,IWKNOW ,        &
+               J      ,KMOD   ,                                                &
+               LVL    ,LVLBOT ,LVLN   ,LVLTOP ,LVLWTH ,                        &
+               MAXDEG ,MAXGRD ,MAXLW  ,                                        &
+               NBITIN ,NDEG   ,NDROW  ,NDSTK
 
       REAL     DUMBB 
 
@@ -5682,7 +5682,7 @@ C
       NDROW=NDEG(IWKNOW)
       DO 40 J=1,NDROW
         ITEST=NDSTK(IWKNOW,J)
-CPACK   ITEST=IUNPK(NDSTK,MAXGRD*(J-1)+IWKNOW,NBITIN)
+!PACK   ITEST=IUNPK(NDSTK,MAXGRD*(J-1)+IWKNOW,NBITIN)
         IF(LVL(ITEST).NE.0) GO TO 40
         LVL(ITEST)=LVLN
         ITOP=ITOP+1
@@ -5700,42 +5700,42 @@ CPACK   ITEST=IUNPK(NDSTK,MAXGRD*(J-1)+IWKNOW,NBITIN)
       END SUBROUTINE TREE
 
 ! ##################################################################################################################################
-      SUBROUTINE WAVEY(IG,II1,ILD,NEW,NC,IC,KACT,MAXB,MAXW,AVERW,SUMW,
-     -                 RMS,BRMS)
-C
-C     COMPUTE WAVEFRONT AND ACTIVE COLUMN DATA - -
-C     MAXIMUM WAVEFRONT, AVERAGE WAVEFRONT, SUM OF ROW WAVEFRONTS,
-C     SUM OF SQUARES OF ROW WAVEFRONTS, RMS WAVEFRONT, BANDWIDTH,
-C     RMS BANDWIDTH, AND MINIMUM NODAL DEGREE.
-C     DIAGONAL TERMS ARE INCLUDED.
-C
-C     IG      = CONNECTION TABLE
-C     II1     = ROW DIMENSION OF IG
-C     ILD(I)  = NEW LABEL FOR NODE WITH ORIGINAL INTERNAL LABEL I
-C     NEW(I)  = INTERNAL LABEL CORRESPONDING TO NEW LABEL I
-C               NEW AND ILD ARE INVERSES OF EACH OTHER
-C     NC      = COMPONENT ID
-C               IF NC.LE.0, USE ALL COMPONENTS.
-C     IC(I)   = COMPONENT INDEX FOR ORIGINAL NODE I.
-C     KACT(I) = LIST OF ACTIVE COLUMN FLAGS (UPDATED FOR EACH ROW)
-C                 = 1 IF COL I IS ACTIVE AT GIVEN ROW
-C               KACT IS SCRATCH SPACE(TEMPORARY STORAGE)
-C     MAXB    = BANDWIDTH
-C     MAXW    = MAXIMUM WAVEFRONT
-C     AVERW   = AVERAGE WAVEFRONT
-C     SUMW    = SUM OF ROW WAVEFRONTS
-C     SUMSQ   = SUM OF SQUARES OF ROW WAVEFRONTS
-C     BSUMSQ  = SUM OF SQUARES OF ROW BANDWIDTHS
-C     RMS     = RMS WAVEFRONT
-C     BRMS    = RMS BANDWIDTH
-C     MINDEG  = MINIMUM NODAL DEGREE
-C     NN      = NUMBER OF NODES
-C     MM      = MAX NODAL DEGREE
-C     MAXGRD  = EFFECTIVE ROW DIMENSION OF IG
-C     NBITIN  = NUMBER OF BITS PER INTEGER(CDC)
-C     INPUT   - IG,II1,ILD,NN,MM,MAXGRD,NBITIN,NC,IC
-C     OUTPUT  - NEW,KACT,MAXW,AVERW,SUMW,RMS,MAXB,BRMS,MINDEG
-C
+      SUBROUTINE WAVEY(IG,II1,ILD,NEW,NC,IC,KACT,MAXB,MAXW,AVERW,SUMW,         &
+                       RMS,BRMS)
+!
+!     COMPUTE WAVEFRONT AND ACTIVE COLUMN DATA - -
+!     MAXIMUM WAVEFRONT, AVERAGE WAVEFRONT, SUM OF ROW WAVEFRONTS,
+!     SUM OF SQUARES OF ROW WAVEFRONTS, RMS WAVEFRONT, BANDWIDTH,
+!     RMS BANDWIDTH, AND MINIMUM NODAL DEGREE.
+!     DIAGONAL TERMS ARE INCLUDED.
+!
+!     IG      = CONNECTION TABLE
+!     II1     = ROW DIMENSION OF IG
+!     ILD(I)  = NEW LABEL FOR NODE WITH ORIGINAL INTERNAL LABEL I
+!     NEW(I)  = INTERNAL LABEL CORRESPONDING TO NEW LABEL I
+!               NEW AND ILD ARE INVERSES OF EACH OTHER
+!     NC      = COMPONENT ID
+!               IF NC.LE.0, USE ALL COMPONENTS.
+!     IC(I)   = COMPONENT INDEX FOR ORIGINAL NODE I.
+!     KACT(I) = LIST OF ACTIVE COLUMN FLAGS (UPDATED FOR EACH ROW)
+!                 = 1 IF COL I IS ACTIVE AT GIVEN ROW
+!               KACT IS SCRATCH SPACE(TEMPORARY STORAGE)
+!     MAXB    = BANDWIDTH
+!     MAXW    = MAXIMUM WAVEFRONT
+!     AVERW   = AVERAGE WAVEFRONT
+!     SUMW    = SUM OF ROW WAVEFRONTS
+!     SUMSQ   = SUM OF SQUARES OF ROW WAVEFRONTS
+!     BSUMSQ  = SUM OF SQUARES OF ROW BANDWIDTHS
+!     RMS     = RMS WAVEFRONT
+!     BRMS    = RMS BANDWIDTH
+!     MINDEG  = MINIMUM NODAL DEGREE
+!     NN      = NUMBER OF NODES
+!     MM      = MAX NODAL DEGREE
+!     MAXGRD  = EFFECTIVE ROW DIMENSION OF IG
+!     NBITIN  = NUMBER OF BITS PER INTEGER(CDC)
+!     INPUT   - IG,II1,ILD,NN,MM,MAXGRD,NBITIN,NC,IC
+!     OUTPUT  - NEW,KACT,MAXW,AVERW,SUMW,RMS,MAXB,BRMS,MINDEG
+!
       COMMON /S/ NN,MM,DUMS(5),MINDEG,DUMY
       COMMON /A/ MAXGRD,MAXDEG,KMOD
       COMMON /BITS/ NBITIN,DUMBB(8)
@@ -5746,18 +5746,18 @@ C
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
 
-      INTEGER  I      ,IB     ,IB1    ,IG     ,ILD    ,IWAVE  ,
-     &         J      ,K      ,KACT   ,KMOD   ,KT     ,L      ,
-     &         M      ,MAXB   ,MAXDEG ,MAXGRD ,MAXW   ,MINDEG ,MM     ,
-     &         NBITIN ,NC     ,NEW    ,NN
+      INTEGER  I      ,IB     ,IB1    ,IG     ,ILD    ,IWAVE  ,                &
+               J      ,K      ,KACT   ,KMOD   ,KT     ,L      ,                &
+               M      ,MAXB   ,MAXDEG ,MAXGRD ,MAXW   ,MINDEG ,MM     ,        &
+               NBITIN ,NC     ,NEW    ,NN
 
-      REAL     ANN    ,AVERW  ,BRMS   ,DUMBB  ,DUMS   ,DUMY   ,
-     &         RMS
+      REAL     ANN    ,AVERW  ,BRMS   ,DUMBB  ,DUMS   ,DUMY   ,                &
+               RMS
 
 ! E////////////////////////////////////////////////////////////////////E
-C
-C     INITIALIZE WAVEFRONT DATA.
-C
+!
+!     INITIALIZE WAVEFRONT DATA.
+!
       MAXB=0
       MAXW=0
       SUMW=0
@@ -5768,9 +5768,9 @@ C
       BRMS=0.
       MINDEG=MIN(MINDEG,MM)
       IF((NN*MM).LE.0) RETURN
-C
-C     INITIALIZE NEW, THE INVERSE OF ILD
-C
+!
+!     INITIALIZE NEW, THE INVERSE OF ILD
+!
       IF(NC.GT.0) GO TO 8
       DO 5 I=1,NN
       K=ILD(I)
@@ -5778,18 +5778,18 @@ C
       NEW(K)=I
     5 CONTINUE
     8 CONTINUE
-C
-C     INITIALIZE ACTIVE COLUMN FLAGS (1 FOR ACTIVE)
-C
+!
+!     INITIALIZE ACTIVE COLUMN FLAGS (1 FOR ACTIVE)
+!
       DO 10 I=1,NN
    10 KACT(I)=0
-C
-C     COMPUTE WAVEFRONT DATA.
-C
+!
+!     COMPUTE WAVEFRONT DATA.
+!
       IWAVE=1
       KT=0
       DO 40 I=1,NN
-C     COMPUTE NUMBER OF ACTIVE COLUMNS FOR ROW I
+!     COMPUTE NUMBER OF ACTIVE COLUMNS FOR ROW I
       K=NEW(I)
       IF(NC) 18,18,15
    15 IF(K.LE.0) GO TO 40
@@ -5798,7 +5798,7 @@ C     COMPUTE NUMBER OF ACTIVE COLUMNS FOR ROW I
       IB=0
       DO 28 J=1,MM
       L=IG(K,J)
-CPACK L=IUNPK(IG,MAXGRD*(J-1)+K,NBITIN)
+!PACK L=IUNPK(IG,MAXGRD*(J-1)+K,NBITIN)
       IF(L.EQ.0) GO TO 30
       M=ILD(L)
       IB=MAX(IB,I-M)
@@ -5812,16 +5812,16 @@ CPACK L=IUNPK(IG,MAXGRD*(J-1)+K,NBITIN)
       MINDEG=MIN(MINDEG,J-1)
    35 CONTINUE
       IB1=IB+1
-C     IB1=ROW BANDWIDTH FOR ROW I (DIAGONAL INCLUDED)
+!     IB1=ROW BANDWIDTH FOR ROW I (DIAGONAL INCLUDED)
       MAXB=MAX(MAXB,IB1)
       IF(KACT(I).EQ.1) IWAVE=IWAVE-1
-C   IWAVE=CURRENT NUMBER OF ACTIVE COLUMNS FOR ROW I (DIAGONAL INCLUDED)
+!   IWAVE=CURRENT NUMBER OF ACTIVE COLUMNS FOR ROW I (DIAGONAL INCLUDED)
       MAXW=MAX(MAXW,IWAVE)
       SUMW=SUMW+IWAVE
       SUMSQ=SUMSQ+FLOAT(IWAVE)*FLOAT(IWAVE)
       BSUMSQ=BSUMSQ+FLOAT(IB1)*FLOAT(IB1)
    40 CONTINUE
-C
+!
       ANN=FLOAT(KT)
       AVERW=FLOAT(SUMW)/ANN
       RMS=SQRT(SNGL(SUMSQ)/ANN)
@@ -5831,10 +5831,10 @@ C
 
 ! ##################################################################################################################################
       SUBROUTINE ZERO(LIST,NL)
-C
-C     DELETE ZEROS FROM A LIST OF INTEGERS ORIGINALLY OF LENGTH NL.
-C     A CORRECTED LENGTH NL IS RETURNED.
-C
+!
+!     DELETE ZEROS FROM A LIST OF INTEGERS ORIGINALLY OF LENGTH NL.
+!     A CORRECTED LENGTH NL IS RETURNED.
+!
       INTEGER LIST(*)
 ! B////////////////////////////////////////////////////////////////////B
 ! Add the following so we can use IMPLICIT NONE
