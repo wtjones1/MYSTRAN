@@ -1,0 +1,11 @@
+%.o %.$(FC_MODEXT): %.F90
+	$(AM_V_FC)$(FCCOMPILE) -c -o $*.o $<
+
+%.obj %.$(FC_MODEXT): %.F90
+	$(AM_V_FC)$(FCCOMPILE) -c -o $*.o `$(CYGPATH_W) '$<'`
+
+%.o %.$(FC_MODEXT): %.f90
+	$(AM_V_FC)$(FCCOMPILE) -c -o $*.o $<
+
+%.obj %.$(FC_MODEXT): %.f90
+	$(AM_V_FC)$(FCCOMPILE) -c -o $*.o `$(CYGPATH_W) '$<'`

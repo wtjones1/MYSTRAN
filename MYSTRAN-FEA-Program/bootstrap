@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -x # echo commands
+set -e # exit on first error
+set -u # Treat unset variables as error
+
+# Required empty directory not created by git
+if test ! -d config
+then
+  mkdir -p config
+fi
+
+aclocal --force -I ./aclocal \
+&& autoheader --force \
+&& automake --gnu --add-missing --copy \
+&& autoconf --force

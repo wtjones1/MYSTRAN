@@ -10,6 +10,7 @@
       USE PARAMS, ONLY                   :  EPSIL
       USE SUBR_BEGEND_LEVELS, ONLY       :  LAPACK_BEGEND
       USE LAPACK_BLAS_AUX
+      USE LAPACK_SYM_MAT_INV, ONLY       : DTRTRI
 
       USE OURTIM_Interface
       USE OUTA_HERE_Interface
@@ -296,11 +297,11 @@
                          NBMIN, NN
 !     ..
 !     .. External Functions ..
-      INTEGER            ILAENV
-      EXTERNAL           ILAENV
+!     INTEGER            ILAENV
+!     EXTERNAL           ILAENV
 !     ..
 !     .. External Subroutines ..
-      EXTERNAL           DGEMM, DGEMV, DSWAP, DTRSM, DTRTRI, XERBLA
+!     EXTERNAL           DGEMM, DGEMV, DSWAP, DTRSM, DTRTRI, XERBLA
 !     ..
 !     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN

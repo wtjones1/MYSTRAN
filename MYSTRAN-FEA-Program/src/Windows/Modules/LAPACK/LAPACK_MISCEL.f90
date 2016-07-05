@@ -1020,12 +1020,12 @@
                          TNRM
 !     ..
 !     .. External Functions ..
-      LOGICAL            LSAME
-      DOUBLE PRECISION   DLAMCH, DLANST
-      EXTERNAL           LSAME, DLAMCH, DLANST
+!     LOGICAL            LSAME
+!     DOUBLE PRECISION   DLAMCH, DLANST
+!     EXTERNAL           LSAME, DLAMCH, DLANST
 !     ..
 !     .. External Subroutines ..
-      EXTERNAL           DSCAL, DSTEQR, DSTERF, XERBLA
+!     EXTERNAL           DSCAL, DSTEQR, DSTERF, XERBLA
 !     ..
 !     .. Intrinsic Functions ..
       INTRINSIC          SQRT
@@ -1221,11 +1221,11 @@
       LOGICAL            NOUNIT
 !     ..
 !     .. External Functions ..
-      LOGICAL            LSAME
-      EXTERNAL           LSAME
+!     LOGICAL            LSAME
+!     EXTERNAL           LSAME
 !     ..
 !     .. External Subroutines ..
-      EXTERNAL           DTRSM, XERBLA
+!     EXTERNAL           DTRSM, XERBLA
 !     ..
 !     .. Intrinsic Functions ..
       INTRINSIC          MAX
