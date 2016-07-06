@@ -50,10 +50,7 @@ mystran_LDADD = \
 	$(BANDIT_DIR)/libbandit.a \
 	$(ARPACK_DIR)/libarpack.a \
 	$(MODULE_DIR)/libmystran.a \
-	/opt/intel/mkl/lib/libmkl_intel_lp64.a \
-	/opt/intel/mkl/lib/libmkl_intel_thread.a \
-	/opt/intel/mkl/lib/libmkl_core.a \
-	/opt/intel/composer_xe_2015.6.232/compiler/lib/libiomp5.a \
+	@intel_mkl_ldadd@ \
 	-lpthread
 
 mystran_SOURCES = \
