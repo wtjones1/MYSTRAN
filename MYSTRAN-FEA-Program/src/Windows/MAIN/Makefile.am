@@ -1,5 +1,7 @@
 bin_PROGRAMS = mystran
 
+bin_SCRIPTS = MYSTRAN.INI
+
 MODULE_DIR=@top_builddir@/src/Windows/Modules
 ARPACK_DIR=@top_builddir@/src/Windows/Modules/ARPACK
 BANDIT_DIR=@top_builddir@/src/Windows/Modules/BANDIT
@@ -16,16 +18,14 @@ AM_FCFLAGS = \
 	$(FC_MODINC)$(USEIFS_DIR)
 
 mystran_LDADD = \
-	@top_builddir@/src/Windows/UTIL/libutil.a \
-	@top_builddir@/src/Windows/LK9/LINK9/liblink9.a \
 	@top_builddir@/src/Windows/LK9/L92/libl92.a \
 	@top_builddir@/src/Windows/LK9/L91/libl91.a \
+	@top_builddir@/src/Windows/LK9/LINK9/liblink9.a \
 	@top_builddir@/src/Windows/LK6/liblk6.a \
 	@top_builddir@/src/Windows/LK5/liblk5.a \
 	@top_builddir@/src/Windows/LK4/liblk4.a \
 	@top_builddir@/src/Windows/LK3/liblk3.a \
 	@top_builddir@/src/Windows/LK2/liblk2.a \
-	@top_builddir@/src/Windows/LK1/LINK1/liblink1.a \
 	@top_builddir@/src/Windows/LK1/L1U/libl1u.a \
 	@top_builddir@/src/Windows/LK1/L1E/libl1e.a \
 	@top_builddir@/src/Windows/LK1/L1D/libl1d.a \
@@ -34,6 +34,7 @@ mystran_LDADD = \
 	@top_builddir@/src/Windows/LK1/L1A-CC/libl1acc.a \
 	@top_builddir@/src/Windows/LK1/L1A-BD/libl1abd.a \
 	@top_builddir@/src/Windows/LK1/L1A/libl1a.a \
+	@top_builddir@/src/Windows/LK1/LINK1/liblink1.a \
 	@top_builddir@/src/Windows/EMG/EMG8/libemg8.a \
 	@top_builddir@/src/Windows/EMG/EMG7/libemg7.a \
 	@top_builddir@/src/Windows/EMG/EMG6/libemg6.a \
@@ -44,12 +45,13 @@ mystran_LDADD = \
 	@top_builddir@/src/Windows/EMG/EMG1/libemg1.a \
 	@top_builddir@/src/Windows/BANDIT/libbandit.a \
 	@top_builddir@/src/Windows/ARPACK/libarpack.a \
+	@top_builddir@/src/Windows/UTIL/libutil.a \
 	$(USEIFS_DIR)/libuseifs.a \
 	$(INTERF_DIR)/libinterfaces.a \
+	$(MODULE_DIR)/libmystran.a \
 	$(LAPACK_DIR)/liblapack.a \
 	$(BANDIT_DIR)/libbandit.a \
 	$(ARPACK_DIR)/libarpack.a \
-	$(MODULE_DIR)/libmystran.a \
 	@intel_mkl_ldadd@ \
 	-lpthread
 
@@ -69,7 +71,12 @@ mystran_SOURCES += \
 #	GET_MYSTRAN_DIR.f90
 
 # remove *.mod *.interface when mod_suffix is repaired for OS X
-CLEANFILES = *.$(FC_MODEXT) *.interface *.d *.fh
+CLEANFILES = $(bin_SCRIPTS) *.$(FC_MODEXT)
+
+BUILT_SOURCES = MYSTRAN.INI
+
+MYSTRAN.INI:
+	@echo "UNLOCK 243064687785410053590938998052562" > $@
 
 mystran_f90s=$(mystran_SOURCES:.F90=.f90)
 
