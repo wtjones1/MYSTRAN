@@ -131,7 +131,6 @@ util_SOURCES = \
 	PRT_MATS_ON_RESTART.f90 \
 	READERR.f90 \
 	READ_CHK.f90 \
-	READ_CL.f90 \
 	READ_DOF_TABLES.f90 \
 	READ_IN4_FULL_MAT.f90 \
 	READ_L1A.f90 \
@@ -193,6 +192,14 @@ util_SOURCES = \
 	WRITE_USET.f90 \
 	WRITE_USETSTR.f90 \
 	WRITE_VECTOR.f90
+
+if BUILD_WINDOWS
+util_SOURCES += \
+	READ_CL.f90
+else
+util_SOURCES += \
+	$(top_srcdir)/src/Linux_differences/READ_CL.f90
+endif
 
 # remove *.mod *.interface when mod_suffix is repaired for OS X
 CLEANFILES = *.$(FC_MODEXT) *.interface *.d *.fh

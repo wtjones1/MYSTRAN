@@ -57,6 +57,8 @@ AC_FC_WRAPPERS
 
 AX_F90_FCFLAGS
 
+AX_WINDOWS_OS
+
 AX_INTEL_MKL
 
 # Done with checks

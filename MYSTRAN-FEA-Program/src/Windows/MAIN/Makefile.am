@@ -62,13 +62,15 @@ mystran_SOURCES = \
 	READ_INI.f90 \
 	READ_INPUT_FILE_NAME.f90
 
+if BUILD_WINDOWS
+mystran_SOURCES += \
+	GET_INI_FILNAM.f90 \
+	GET_MYSTRAN_DIR.f90
+else
 mystran_SOURCES += \
 	$(top_srcdir)/src/Linux_differences/GET_INI_FILNAM.f90 \
 	$(top_srcdir)/src/Linux_differences/GET_MYSTRAN_DIR.f90
-
-#mystran_SOURCES += \
-#	GET_INI_FILNAM.f90 \
-#	GET_MYSTRAN_DIR.f90
+endif
 
 # remove *.mod *.interface when mod_suffix is repaired for OS X
 CLEANFILES = $(bin_SCRIPTS) *.$(FC_MODEXT)
