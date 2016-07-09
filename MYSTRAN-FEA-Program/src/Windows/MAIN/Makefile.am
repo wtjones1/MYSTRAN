@@ -45,7 +45,15 @@ mystran_LDADD = \
 	@top_builddir@/src/Windows/EMG/EMG1/libemg1.a \
 	@top_builddir@/src/Windows/BANDIT/libbandit.a \
 	@top_builddir@/src/Windows/ARPACK/libarpack.a \
-	@top_builddir@/src/Windows/UTIL/libutil.a \
+	@top_builddir@/src/Windows/UTIL/libutil.a
+
+if BUILD_WINDOWS
+else
+mystran_LDADD += \
+	@top_builddir@/src/Linux_differences/liblinuxdiffs.a
+endif
+
+mystran_LDADD += \
 	$(USEIFS_DIR)/libuseifs.a \
 	$(INTERF_DIR)/libinterfaces.a \
 	$(MODULE_DIR)/libmystran.a \
@@ -66,10 +74,6 @@ if BUILD_WINDOWS
 mystran_SOURCES += \
 	GET_INI_FILNAM.f90 \
 	GET_MYSTRAN_DIR.f90
-else
-mystran_SOURCES += \
-	$(top_srcdir)/src/Linux_differences/GET_INI_FILNAM.f90 \
-	$(top_srcdir)/src/Linux_differences/GET_MYSTRAN_DIR.f90
 endif
 
 # remove *.mod *.interface when mod_suffix is repaired for OS X

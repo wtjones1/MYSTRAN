@@ -14,5 +14,5 @@ AC_DEFUN([AX_WINDOWS_OS],[
                           [*darwin*],[ax_cv_windows_os=false],
                           [ax_cv_windows_os=true])
                  ])
-  AM_CONDITIONAL(BUILD_WINDOWS,$ax_cv_windows_os)
+  AM_CONDITIONAL(BUILD_WINDOWS,[test x$ax_cv_windows_os = xtrue])
 ])

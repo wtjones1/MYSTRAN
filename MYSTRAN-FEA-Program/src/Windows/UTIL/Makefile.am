@@ -196,9 +196,6 @@ util_SOURCES = \
 if BUILD_WINDOWS
 util_SOURCES += \
 	READ_CL.f90
-else
-util_SOURCES += \
-	$(top_srcdir)/src/Linux_differences/READ_CL.f90
 endif
 
 # remove *.mod *.interface when mod_suffix is repaired for OS X
