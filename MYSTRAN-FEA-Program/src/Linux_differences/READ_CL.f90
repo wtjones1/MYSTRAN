@@ -16,6 +16,7 @@
  
       INTEGER(LONG), INTENT(OUT)      :: NC_FILNAM         ! Length, in chars, of FILNAM (with leading blanks removed)
       INTEGER(LONG)                   :: STATUS            ! Status from GETARG. If /= -1, it is the length of the argument
+      INTEGER(LONG)                   :: LENGTH            ! Status from GETARG. If /= -1, it is the length of the argument
  
       INTRINSIC                       :: GETARG
 
@@ -27,10 +28,10 @@
 
 ! Get command line string which should contain the file name of the input data deck. 
  
-      CALL GETARG ( 1, FILNAM, STATUS )
+      CALL GET_COMMAND_ARGUMENT ( 1, FILNAM, LENGTH, STATUS )
 
       IF (STATUS /= -1) THEN
-         NC_FILNAM = STATUS
+         NC_FILNAM = LENGTH
       ENDIF
  
       RETURN
