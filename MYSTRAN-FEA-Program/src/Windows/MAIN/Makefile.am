@@ -18,6 +18,7 @@ AM_FCFLAGS = \
 	$(FC_MODINC)$(USEIFS_DIR)
 
 mystran_LDADD = \
+	@top_builddir@/src/Windows/LK9/LINK9/liblink9.a \
 	@top_builddir@/src/Windows/LK9/L92/libl92.a \
 	@top_builddir@/src/Windows/LK9/L91/libl91.a \
 	@top_builddir@/src/Windows/LK9/LINK9/liblink9.a \
@@ -26,25 +27,27 @@ mystran_LDADD = \
 	@top_builddir@/src/Windows/LK4/liblk4.a \
 	@top_builddir@/src/Windows/LK3/liblk3.a \
 	@top_builddir@/src/Windows/LK2/liblk2.a \
-	@top_builddir@/src/Windows/LK1/L1U/libl1u.a \
-	@top_builddir@/src/Windows/LK1/L1E/libl1e.a \
-	@top_builddir@/src/Windows/LK1/L1D/libl1d.a \
-	@top_builddir@/src/Windows/LK1/L1C/libl1c.a \
-	@top_builddir@/src/Windows/LK1/L1B/libl1b.a \
-	@top_builddir@/src/Windows/LK1/L1A-CC/libl1acc.a \
-	@top_builddir@/src/Windows/LK1/L1A-BD/libl1abd.a \
-	@top_builddir@/src/Windows/LK1/L1A/libl1a.a \
 	@top_builddir@/src/Windows/LK1/LINK1/liblink1.a \
-	@top_builddir@/src/Windows/EMG/EMG8/libemg8.a \
-	@top_builddir@/src/Windows/EMG/EMG7/libemg7.a \
-	@top_builddir@/src/Windows/EMG/EMG6/libemg6.a \
-	@top_builddir@/src/Windows/EMG/EMG5/libemg5.a \
-	@top_builddir@/src/Windows/EMG/EMG4/libemg4.a \
-	@top_builddir@/src/Windows/EMG/EMG3/libemg3.a \
-	@top_builddir@/src/Windows/EMG/EMG2/libemg2.a \
+	@top_builddir@/src/Windows/UTIL/libutil.a \
+	@top_builddir@/src/Windows/LK1/L1A/libl1a.a \
+	@top_builddir@/src/Windows/LK1/L1A-BD/libl1abd.a \
+	@top_builddir@/src/Windows/LK1/L1A-CC/libl1acc.a \
+	@top_builddir@/src/Windows/LK1/L1A/libl1a.a \
+	@top_builddir@/src/Windows/LK1/L1B/libl1b.a \
+	@top_builddir@/src/Windows/LK1/L1C/libl1c.a \
+	@top_builddir@/src/Windows/LK1/L1D/libl1d.a \
+	@top_builddir@/src/Windows/LK1/L1E/libl1e.a \
+	@top_builddir@/src/Windows/LK1/L1U/libl1u.a \
+	@top_builddir@/src/Windows/LK1/LINK1/liblink1.a \
 	@top_builddir@/src/Windows/EMG/EMG1/libemg1.a \
-	@top_builddir@/src/Windows/BANDIT/libbandit.a \
-	@top_builddir@/src/Windows/ARPACK/libarpack.a \
+	@top_builddir@/src/Windows/EMG/EMG2/libemg2.a \
+	@top_builddir@/src/Windows/EMG/EMG3/libemg3.a \
+	@top_builddir@/src/Windows/EMG/EMG4/libemg4.a \
+	@top_builddir@/src/Windows/EMG/EMG1/libemg1.a \
+	@top_builddir@/src/Windows/EMG/EMG5/libemg5.a \
+	@top_builddir@/src/Windows/EMG/EMG6/libemg6.a \
+	@top_builddir@/src/Windows/EMG/EMG7/libemg7.a \
+	@top_builddir@/src/Windows/EMG/EMG8/libemg8.a \
 	@top_builddir@/src/Windows/UTIL/libutil.a
 
 if BUILD_WINDOWS
@@ -57,9 +60,11 @@ mystran_LDADD += \
 	$(USEIFS_DIR)/libuseifs.a \
 	$(INTERF_DIR)/libinterfaces.a \
 	$(MODULE_DIR)/libmystran.a \
-	$(LAPACK_DIR)/liblapack.a \
 	$(BANDIT_DIR)/libbandit.a \
 	$(ARPACK_DIR)/libarpack.a \
+	$(LAPACK_DIR)/liblapack.a \
+	@top_builddir@/src/Windows/BANDIT/libbandit.a \
+	@top_builddir@/src/Windows/ARPACK/libarpack.a \
 	@intel_mkl_ldadd@ \
 	-lpthread
 
