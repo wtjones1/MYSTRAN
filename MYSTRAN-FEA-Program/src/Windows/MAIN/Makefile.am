@@ -60,6 +60,7 @@ mystran_LDADD += \
 	$(USEIFS_DIR)/libuseifs.a \
 	$(INTERF_DIR)/libinterfaces.a \
 	$(MODULE_DIR)/libmystran.a \
+	$(MODULE_DIR)/libnocommon.a \
 	$(BANDIT_DIR)/libbandit.a \
 	$(ARPACK_DIR)/libarpack.a \
 	$(LAPACK_DIR)/liblapack.a \

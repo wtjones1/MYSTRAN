@@ -55,7 +55,7 @@ CHECK_IFORT_DARWIN
 # define macros to call C functions
 AC_FC_WRAPPERS
 
-AX_F90_FCFLAGS
+AX_F90_NOCOMMON
 
 AX_WINDOWS_OS
 

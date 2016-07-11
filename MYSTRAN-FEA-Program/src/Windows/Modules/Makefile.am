@@ -1,6 +1,6 @@
 SUBDIRS = . LAPACK ARPACK BANDIT
 
-noinst_LIBRARIES = libmystran.a
+noinst_LIBRARIES = libmystran.a libnocommon.a
 
 libmystran_a_LIBADD =
 libmystran_a_LINK = $(F90LINK)
@@ -38,7 +38,6 @@ mystran_SOURCES = \
 	LAPACK_DPB_MATRICES.f90 \
 	LINK9_STUFF.f90 \
 	LSQ_MYSTRAN.f90 \
-	MACHINE_PARAMS.f90 \
 	MISC_MATRICES.f90 \
 	MKL_DSS_PRIVATE.f90 \
 	MKL_DSS.f90 \
@@ -49,21 +48,32 @@ mystran_SOURCES = \
 	PARAMS.f90 \
 	RIGID_BODY_DISP_MATS.f90 \
 	SCRATCH_MATRICES.f90 \
-	SP_ENVIRON_VARS.f90 \
 	SPARSE_ALG_ARRAYS.f90 \
 	SPARSE_MATRICES.f90 \
 	STF_ARRAYS.f90 \
 	STF_TEMPLATE_ARRAYS.f90 \
-	SUBR_BEGEND_LEVELS.f90 \
+	SUBR_BEGEND_LEVELS.f90
+
+libnocommon_a_LIBADD =
+libnocommon_a_LINK = $(F90LINK)
+
+libnocommon_a_FCFLAGS = @ax_cv_no_common@
+
+nocommon_SOURCES = \
+	MACHINE_PARAMS.f90 \
+	SP_ENVIRON_VARS.f90 \
 	TIMDAT.f90
 
 # remove *.mod *.interface when mod_suffix is repaired for OS X
 CLEANFILES = *.$(FC_MODEXT) *.interface *.d *.fh
 
 mystran_f90s=$(mystran_SOURCES:.F90=.f90)
+nocommon_f90s=$(nocommon_SOURCES:.F90=.f90)
 
 lib_MODULES=$(mystran_f90s:.f90=.$(FC_MODEXT))
+lib_MODULES+=$(nocommon_f90s:.f90=.$(FC_MODEXT))
 
 include $(top_srcdir)/make.rules
 
 libmystran_a_SOURCES = $(mystran_SOURCES)
+libnocommon_a_SOURCES = $(nocommon_SOURCES)
